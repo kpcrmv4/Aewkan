@@ -71,7 +71,7 @@ test('P3-87 a destination that is not pickup-capable is 422 bad_destination', as
   expect((await res.json()).error.code).toBe('bad_destination');
 });
 
-test('P3-85 booking the return creates an awaiting_deposit one-way linked to the parent', async ({ request }) => {
+test('P3-85 booking the return creates an awaiting_deposit booking linked to the parent', async ({ request }) => {
   test.skip(!HAS_SECRET, 'NOT RUN: needs SUPABASE_SECRET_KEY');
   const res = await request.post(url(offer.customerToken), { data: body() });
   expect(res.status()).toBe(200);
@@ -79,7 +79,9 @@ test('P3-85 booking the return creates an awaiting_deposit one-way linked to the
   expect(out.status).toBe('awaiting_deposit');
   expect(out.customerPath).toMatch(/^\/j\/[A-Za-z0-9_-]{43}$/);
   const kid = await staff.from('bookings').select('id,status,parent_booking_id,return_discount_pct,mode,price_total').eq('booking_no', out.bookingNo).single();
-  expect(kid.data).toMatchObject({ status: 'awaiting_deposit', parent_booking_id: offer.id, return_discount_pct: 10, mode: 'oneway', price_total: out.total });
+  // one-way only prices into a far zone; a short return falls back to the best mode (buildReturnBooking)
+  expect(kid.data).toMatchObject({ status: 'awaiting_deposit', parent_booking_id: offer.id, return_discount_pct: 10, price_total: out.total });
+  expect(['oneway', 'hourly', 'daily', 'trip']).toContain(kid.data!.mode);
   made.push({ id: kid.data!.id, bookingNo: out.bookingNo, customerToken: '', driverToken: '' });
   const ro = await staff.from('return_offers').select('return_booking_id').eq('booking_id', offer.id).single();
   expect(ro.data!.return_booking_id).toBe(kid.data!.id);

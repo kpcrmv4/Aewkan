@@ -3,6 +3,7 @@ import { expect as baseExpect, test, type Page } from '@playwright/test';
 import { STAFF_STATE } from './global-setup';
 import {
   cleanupP4,
+  HAS_SECRET,
   lookups,
   makeP4Job,
   newClient,
@@ -82,15 +83,22 @@ test('P4-51 save PromptPay config + toggle; it persists after reload', async ({ 
   await expect(again.getByTestId('toggle-promptpay')).toHaveAttribute('aria-checked', 'true');
 });
 
-test('P4-55 test buttons: PromptPay is checked from config; others answer server_not_configured without the service role', async ({ page }) => {
+test('P4-55 test buttons: PromptPay is checked from config; others need the service role', async ({ page }) => {
   await open(page);
   await page.getByTestId('test-promptpay').click();
   await expect(page.getByText(/สร้าง QR ได้ · พร้อมเพย์ 081-234-5678/)).toBeVisible();
   await page.getByTestId('test-slip').click();
-  await expect(page.getByText(/SUPABASE_SECRET_KEY/)).toBeVisible();
   const res = await page.request.post('/api/admin/integrations/test', { data: { key: 'stripe' } });
-  expect(res.status()).toBe(503);
-  expect((await res.json()).error.code).toBe('server_not_configured');
+  if (HAS_SECRET) {
+    // key present: the secret is read from Vault; nothing is enabled in the test project, so no live call
+    await expect(page.getByText('ยังตั้งค่าไม่ครบหรือยังไม่ได้เปิดใช้งาน')).toBeVisible();
+    expect(res.status()).toBe(200);
+    expect(await res.json()).toMatchObject({ ok: false });
+  } else {
+    await expect(page.getByText(/SUPABASE_SECRET_KEY/)).toBeVisible();
+    expect(res.status()).toBe(503);
+    expect((await res.json()).error.code).toBe('server_not_configured');
+  }
 });
 
 test('P4-52 a secret is write-only: badge "ตั้งค่าแล้ว", empty input, never in the HTML or any response; clear removes it', async ({ page }) => {

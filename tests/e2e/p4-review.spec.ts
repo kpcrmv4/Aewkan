@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { expect as baseExpect, test, type Locator, type Page } from '@playwright/test';
 import { STAFF_STATE } from './global-setup';
-import { cleanupP4, lookups, makeP4Job, newClient, slipByRpc, staffClient, type P4Job, type Sb } from './p4-helpers';
+import { cleanupP4, HAS_SECRET, lookups, makeP4Job, newClient, slipByRpc, staffClient, type P4Job, type Sb } from './p4-helpers';
 
 /** P4 staff review of slips (/admin/payments) — staff session + RLS only, no service role */
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -71,7 +71,10 @@ test('P4-21 approve → payment paid, booking confirmed, customer sees the depos
   expect((view.data as { paid: number }).paid).toBe(900);
 });
 
-test('P4-42 notifyBooking without the service role logs "skipped · server_not_configured" (after the response)', async () => {
+test('P4-42 notifyBooking logs each channel after the response (skipped and why)', async () => {
+  // without the service role nothing can be read → server_not_configured; with it each channel
+  // says why it did not send (no LINE config, no push subscription on this test job)
+  const why = HAS_SECRET ? { push: 'no_subscription', line: 'line_not_configured' } : { push: 'server_not_configured', line: 'server_not_configured' };
   await expect
     .poll(async () => {
       const { data } = await staff.from('notification_log').select('channel, kind, status, error').eq('booking_id', R1.id);
@@ -79,8 +82,8 @@ test('P4-42 notifyBooking without the service role logs "skipped · server_not_c
     })
     .toEqual(
       expect.arrayContaining([
-        { channel: 'push', kind: 'confirmed', status: 'skipped', error: 'server_not_configured' },
-        { channel: 'line', kind: 'confirmed', status: 'skipped', error: 'server_not_configured' },
+        { channel: 'push', kind: 'confirmed', status: 'skipped', error: why.push },
+        { channel: 'line', kind: 'confirmed', status: 'skipped', error: why.line },
       ]),
     );
 });
