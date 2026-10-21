@@ -228,11 +228,8 @@ function Row({ time, title, sub, start, children }: { time: string; title: strin
 export function PricePanel({ job }: { job: JobModel }) {
   const { lang } = useLang();
   const t = useJt();
-  const lines = job.priceLines.length
-    ? job.priceLines
-    : job.quote
-      ? [{ key: 'price.quote', vars: {}, amount: job.quote.price }]
-      : [];
+  // a quoted booking is priced by staff: one line, whatever the reference lines say
+  const lines = job.quote && isQuoteFlow(job) ? [{ key: 'price.quote', vars: {}, amount: job.quote.price }] : job.priceLines;
   const afterDeposit = job.paid > 0;
   return (
     <Panel title={t('jlPrice')} right={t('jlRule', { v: job.ruleVersion })}>
