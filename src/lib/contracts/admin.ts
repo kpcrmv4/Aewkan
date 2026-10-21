@@ -18,6 +18,9 @@
  *   POST /api/admin/team/staff         UpdateStaffRequest          team.manage (P5)
  *   POST /api/admin/team/roles         UpsertRoleRequest           team.manage (P5)
  *   POST /api/admin/team/transfer      { newOwnerId }              owner only  (P5)
+ *   POST /api/admin/team/invite/revoke { inviteId }                team.manage (P5, schema in the route)
+ *   POST /api/admin/team/roles/archive { key }                     team.manage (P5, schema in the route)
+ *   POST /api/invite/accept            { token, fullName }         invitee session (P5, schema in the route)
  */
 import { z } from 'zod';
 import { baht, uuid, BOOKING_STATUSES } from './common';

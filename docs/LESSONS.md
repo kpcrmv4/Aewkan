@@ -49,3 +49,11 @@
 - หลักฐาน: timeout 60 s ×2 · pg_stat_activity 0 แถว · bookings ยังเป็น 1 แถว · migration เดียวกันที่ตัด drop 21 บรรทัดผ่านทันที
 - กฎ: migration ของ DB ใหม่ไม่ใส่ drop if exists และงาน cleanup ใน run ที่ไม่มีคนเฝ้าใช้ update สถานะแทน delete ผ่าน MCP
 - status: new
+- เกิดซ้ำ: P5 2026-10-21
+
+## L-003 · 2026-10-21 · kp-e2e-playwright-real-db · false-green
+- อาการ: spec "ผู้ไม่ได้ล็อกอินเปิดลิงก์เชิญ" ผ่าน แต่จริง ๆ เปิดด้วย session ทีมงาน
+- สาเหตุ: ภายใน `test.use({ storageState })` คำสั่ง `browser.newContext()` สืบทอด storageState ของ project/describe มาด้วย
+- หลักฐาน: P5 accept spec เห็นหน้า /admin แทนฟอร์มยอมรับ · แก้ด้วย `newContext({ storageState: { cookies: [], origins: [] } })` แล้ว 32 passed
+- กฎ: context ที่ตั้งใจให้เป็นผู้ไม่ได้ล็อกอินต้องส่ง storageState ว่างอย่างชัดเจนทุกครั้ง
+- status: new
