@@ -1,0 +1,11 @@
+{
+  "name": "แอ่วกัน · รถพร้อมคนขับเชียงใหม่",
+  "short_name": "แอ่วกัน",
+  "description": "วางทริปบนแผนที่ แล้วเห็นราคาทันที",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F3F6F1",
+  "theme_color": "#D2421D",
+  "lang": "th",
+  "icons": []
+}

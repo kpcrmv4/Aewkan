@@ -35,3 +35,10 @@
 -->
 
 ---
+
+## L-001 · 2026-10-21 · kp-e2e-playwright-real-db · env-drift
+- อาการ: Playwright 1.64.1 ล้มทุก spec ที่เปิดเบราว์เซอร์ "Executable doesn't exist … npx playwright install"
+- สาเหตุ: container มี Chromium build 1194 ติดตั้งไว้ แต่ @playwright/test เวอร์ชันล่าสุดชี้หา build ที่ใหม่กว่า
+- หลักฐาน: 6 failed · 4 passed (เฉพาะ spec ที่ใช้ request) → ตั้ง executablePath แล้ว 10 passed
+- กฎ: ใน cloud container ให้ playwright.config ชี้ executablePath ไป /opt/pw-browsers/chromium ถ้ามีอยู่ แทนการ playwright install
+- status: new
