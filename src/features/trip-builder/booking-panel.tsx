@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { tripText, CHANNEL_KEY, type TripKey } from '@/lib/copy/trip';
 import type { CreateBookingResponse } from '@/lib/contracts/booking';
+import { rememberTrip } from '@/lib/my-trips';
 import { baht, formatTripDate } from '@/lib/format';
 import { depositFor } from '@/lib/pricing';
 import { buildRequest, EMPTY_CONTACT, tripTitle, validateContact, type ContactErrors, type ContactForm } from './booking-request';
@@ -45,8 +46,7 @@ export function BookingPanel({ m, onReset }: { m: Model; onReset: () => void }) 
       if (resp.ok && data && !data.error) {
         setDone({ r: data, date: m.state.date, time: m.state.time });
         setStep('done');
-        // TODO(orchestrator): rememberTrip({ token: data.customerPath.slice(3), bookingNo: data.bookingNo, travelDate: m.state.date, title: tripTitle(m) })
-        void tripTitle;
+        rememberTrip({ token: data.customerPath.replace(/^\/j\//, ''), bookingNo: data.bookingNo, travelDate: m.state.date, title: tripTitle(m) });
         return;
       }
       const code = data?.error?.code;

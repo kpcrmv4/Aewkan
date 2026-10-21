@@ -47,13 +47,13 @@ export function TripPanel({ m, today, onPatch, onPax, onMove, onDwell, onRemove 
       <div className="p-4">
         <div className="grid grid-cols-2 gap-3">
           <Field label={t('fDate')}>
-            <input className="input-base" type="date" min={today} value={state.date} onChange={(e) => e.target.value && onPatch({ date: e.target.value })} />
+            <input className="input-base" aria-label={t('fDate')} type="date" min={today} value={state.date} onChange={(e) => e.target.value && onPatch({ date: e.target.value })} />
           </Field>
           <Field label={t('fTime')}>
-            <input className="input-base" type="time" step={900} value={state.time} onChange={(e) => e.target.value && onPatch({ time: e.target.value })} />
+            <input className="input-base" aria-label={t('fTime')} type="time" step={900} value={state.time} onChange={(e) => e.target.value && onPatch({ time: e.target.value })} />
           </Field>
           <Field label={t('fPax')}>
-            <select className="input-base" value={state.pax} onChange={(e) => onPax(Number(e.target.value))}>
+            <select className="input-base" aria-label={t('fPax')} value={state.pax} onChange={(e) => onPax(Number(e.target.value))}>
               {Array.from({ length: seats }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
                   {n}
@@ -62,7 +62,7 @@ export function TripPanel({ m, today, onPatch, onPax, onMove, onDwell, onRemove 
             </select>
           </Field>
           <Field label={t('fVehicle')}>
-            <select className="input-base" value={state.vehicle} onChange={(e) => onPatch({ vehicle: e.target.value })}>
+            <select className="input-base" aria-label={t('fVehicle')} value={state.vehicle} onChange={(e) => onPatch({ vehicle: e.target.value })}>
               {Object.entries(r.vehicles)
                 .sort((a, b) => a[1].sort - b[1].sort)
                 .map(([k]) => (
@@ -74,7 +74,7 @@ export function TripPanel({ m, today, onPatch, onPax, onMove, onDwell, onRemove 
           </Field>
           <div className="col-span-2">
             <Field label={t('fPickup')}>
-              <select className="input-base" value={state.pickupId} onChange={(e) => onPatch({ pickupId: e.target.value })}>
+              <select className="input-base" aria-label={t('fPickup')} value={state.pickupId} onChange={(e) => onPatch({ pickupId: e.target.value })}>
                 {pickupPlaces(catalog).map((p) => (
                   <option key={p.id} value={p.id}>
                     {nameOf(p, lang)}
