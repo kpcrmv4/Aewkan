@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { expect, test, type Page } from '@playwright/test';
 import { cleanup, driveToDone, HAS_SECRET, HAS_STAFF, lookups, makeJob, RUN, staffClient, type Catalogish, type Fixture } from './p3-helpers';
+import { slipByRpc } from './p4-helpers';
 
 test.skip(!HAS_STAFF, 'NOT RUN: needs E2E_STAFF_EMAIL / E2E_STAFF_PASSWORD');
 test.describe.configure({ mode: 'serial' });
@@ -194,8 +195,21 @@ test('P3-21 price lines and total (deposit-paid rows need a payment: see P3-21b)
   await expect(page.getByTestId('price-lines')).toContainText('ต้องโอนมัดจำภายใน');
 });
 
-test.skip('P3-21b deposit paid and balance lines', () => {
-  // NOT RUN: staff cannot insert payments (no grant; P4 owns payments), so `paid` stays 0 in this suite
+test('P3-21b deposit paid and balance lines', async ({ page }) => {
+  // the real path: the customer sends a slip on the link, staff approve it (admin_review_payment, as /api/admin/payments/confirm)
+  const P = await mk({ label: 'cust-paid', status: 'awaiting_deposit' });
+  const slip = await slipByRpc(P);
+  expect(slip.error).toBeNull();
+  const paymentId = (slip.data as { payment_id: string }).payment_id;
+  const ok = await staff.rpc('admin_review_payment', { p_payment: paymentId, p_approve: true });
+  expect(ok.error).toBeNull();
+  await open(page, P);
+  const p = page.getByTestId('price-lines');
+  await expect(p).toContainText('ราคารวม');
+  await expect(p).toContainText('฿3,000');
+  await expect(p).toContainText(/มัดจำชำระแล้ว\s*−\s*฿900/);
+  await expect(p).toContainText(/คงเหลือจ่ายคนขับหน้างาน \(เงินสดหรือโอน\)\s*฿2,100/);
+  await expect(p).not.toContainText('ราคาอ้างอิง ยังไม่ได้ชำระมัดจำ');
 });
 
 test('P3-22 proof lines for pickup and drop-off, and no photo anywhere on the customer page', async ({ page }) => {
