@@ -735,6 +735,8 @@ let RULES = {
   /* ค่าน้ำ: shop/attraction commissions. Only places listed in COMM pay one; the split preset says how it is shared and the policy text is what drivers read. */
   commission:{assumedSpend:800, splits:{driver:{th:'คนขับ 100%', en:'Driver 100%', d:100}, half:{th:'แบ่งคนละครึ่ง', en:'Split 50/50', d:50}, company:{th:'เข้าบริษัททั้งหมด', en:'Company 100%', d:0}},
     policy:'รับค่าน้ำได้เฉพาะจุดที่อยู่ในตารางนี้และตามสัดส่วนที่กำหนด แจ้งยอดจริงในแอปภายในวันเดียวกัน ห้ามพาลูกค้าแวะร้านนอกกำหนดการเพื่อค่าน้ำ ถ้าลูกค้าขอเพิ่มจุด ให้กดเพิ่มในแอปเพื่อให้ราคาและค่าน้ำถูกบันทึก'},
+  /* return-trip offer: after a one-way drop-off, push an offer to book the way back with everything prefilled */
+  returnOffer:{enabled:true, pct:10, defaultDays:2, validDays:7, sendWhen:'drop'},
   quote:{enabled:true, useRange:true, from:'2026-12-25', to:'2027-01-05', hours:2, pct:20, reason:'ช่วงปีใหม่ รถและคนขับมีจำกัด', reasonEn:'New Year period, cars and drivers are limited'},
 };
 const SPEED = {1:25, 2:45, 3:40, 4:60, mtn:35};
@@ -755,6 +757,8 @@ let MEAS = {
   'tp>mkp':     {km:50,  min:85,  src:'จากเช็กอินคนขับ 4 ทริป'},
   'tp>airport': {km:4,   min:15,  src:'จากเช็กอินคนขับ 22 ทริป'},
   'tp>pai':     {km:135, min:200, src:'ขับวัดจริง 3 ต.ค. 69'},
+  'pai>airport':{km:138, min:205, src:'ขับวัดจริง 3 ต.ค. 69'},
+  'pai>nimman': {km:133, min:198, src:'ขับวัดจริง 3 ต.ค. 69'},
   'tp>inthanon':{km:95,  min:150, src:'ขับวัดจริง 3 ต.ค. 69'},
 };
 const meas = (a, b) => MEAS[`${a.id}>${b.id}`] ?? MEAS[`${b.id}>${a.id}`] ?? null;
@@ -810,6 +814,9 @@ const T = {
     pushTitle:'แอ่วกัน · ราคาทริปของคุณมาแล้ว', pushBody:'{date} · {title} · {price} · โอนมัดจำ {dep} ภายใน {time}', pushOpen:'แตะเพื่อดูและชำระมัดจำ',
     qs1:'ขอราคา', qs2:'ได้รับราคา', qs3:'มัดจำ', qs4:'ยืนยันคนขับ', qs5:'ออกเดินทาง',
     jlQuoted:'เสนอราคาแล้ว รอมัดจำ', jlQuoteReq:'รอทีมงานเสนอราคา', jlExpired:'หมดเวลามัดจำ', lQuote:'ราคาเสนอโดยทีมงาน · {reason}', jlDue:'ต้องโอนมัดจำภายใน {t}',
+    retPushTitle:'แอ่วกัน · ขากลับเชียงใหม่ จองล่วงหน้าได้เลย', retPushBody:'คุณอยู่ที่{from} · ส่วนลดขากลับ {p}% · ใช้ข้อมูลเดิม เลือกแค่วัน เวลา และจุดส่ง', retPushOpen:'แตะเพื่อเลือกวันกลับ',
+    retTitle:'จองขากลับจาก{from}', retSub:'ใช้รถ จำนวนคน และผู้ติดต่อเดิม เลือกแค่วัน เวลา และจุดส่ง', retTo:'ส่งที่', retDate:'วันกลับ', retTime:'เวลารับ', retBase:'ราคาขาเดียวปกติ', retDisc:'ส่วนลดขากลับ {p}%',
+    retConfirm:'ยืนยันขากลับและชำระมัดจำ ฿{d}', retDoneTitle:'จองขากลับแล้ว', retDoneSub:'เลขที่จอง {id} · ทีมงานจะยืนยันคนขับและส่งลิงก์งานให้เหมือนเดิม', retValid:'ข้อเสนอนี้ใช้ได้ถึง {d}', retLater:'ไว้ก่อน', retRoute:'{km} กม. · ประมาณ {h}',
     dvStart:'เริ่มงาน · รับลูกค้า', dvPhotoPickup:'ถ่ายรูปลูกค้าตอนรับ', dvPhotoDrop:'ถ่ายรูปตอนส่งลูกค้า', dvPhotoWhy:'ถ่ายให้เห็นลูกค้ากับรถ ใช้ยืนยันการรับ-ส่งและคุ้มครองทั้งสองฝ่าย ระบบบันทึกเวลาและตำแหน่งให้อัตโนมัติ',
     dvConfirmStart:'ยืนยันรับลูกค้าแล้ว เริ่มงาน', dvFinish:'จบงาน · ส่งลูกค้า', dvCollected:'เงินที่รับหน้างาน (บาท)', dvClose:'ปิดงานและส่งรายงาน', dvNeedPhoto:'แนบรูปก่อนจึงกดได้', dvRetake:'ถ่ายใหม่', dvSample:'ใช้รูปตัวอย่าง (เดโม่)',
     dvDoneTitle:'ปิดงานแล้ว', dvDoneSub:'รายงานพร้อมรูปรับ-ส่งและยอดเงินถูกส่งเข้าระบบ แอดมินเห็นในงาน {id} แล้ว', pickedAt:'รับผู้โดยสารแล้ว {t}', droppedAt:'ส่งผู้โดยสารแล้ว {t}', photoProof:'มีรูปยืนยัน', stTravel:'กำลังเดินทาง', stDoneJob:'เสร็จสิ้น', taken:'ถ่ายเมื่อ {t}',
@@ -857,6 +864,9 @@ const T = {
     pushTitle:'Aewkan · Your trip price is ready', pushBody:'{date} · {title} · {price} · deposit {dep} due by {time}', pushOpen:'Tap to view and pay the deposit',
     qs1:'Requested', qs2:'Quoted', qs3:'Deposit', qs4:'Driver confirmed', qs5:'On the way',
     jlQuoted:'Quoted, deposit pending', jlQuoteReq:'Waiting for our quote', jlExpired:'Deposit deadline passed', lQuote:'Price quoted by our team · {reason}', jlDue:'Deposit due by {t}',
+    retPushTitle:'Aewkan · Book your ride back to Chiang Mai', retPushBody:'You are in {from} · {p}% off the return · same details, just pick date, time and drop-off', retPushOpen:'Tap to choose your return date',
+    retTitle:'Book the return from {from}', retSub:'Same vehicle, passengers and contact. Just pick the date, time and drop-off point.', retTo:'Drop-off', retDate:'Return date', retTime:'Pickup time', retBase:'Standard one-way price', retDisc:'Return discount {p}%',
+    retConfirm:'Confirm return and pay ฿{d} deposit', retDoneTitle:'Return trip booked', retDoneSub:'Booking {id} · we confirm the driver and send the job link as before', retValid:'Offer valid until {d}', retLater:'Maybe later', retRoute:'{km} km · about {h}',
     dvStart:'Start job · pick up', dvPhotoPickup:'Photo of the guests at pickup', dvPhotoDrop:'Photo at drop-off', dvPhotoWhy:'Show the guests with the car. It confirms pickup and drop-off and protects both sides. Time and location are recorded automatically.',
     dvConfirmStart:'Guests on board, start job', dvFinish:'Finish job · drop-off', dvCollected:'Cash collected (฿)', dvClose:'Close job and send report', dvNeedPhoto:'Attach a photo first', dvRetake:'Retake', dvSample:'Use a sample photo (demo)',
     dvDoneTitle:'Job closed', dvDoneSub:'The report with pickup and drop-off photos and the amount collected is in the system. Admin sees it on job {id}.', pickedAt:'Guests picked up {t}', droppedAt:'Guests dropped off {t}', photoProof:'photo attached', stTravel:'On the way', stDoneJob:'Completed', taken:'taken {t}',
@@ -876,7 +886,7 @@ const S = {
   lang:'th', pickup:'tp', stops:[{id:'suthep',dwell:60},{id:'monjam',dwell:90},{id:'maesa',dwell:60}],
   date:'2026-10-24', time:'08:00', pax:2, vehicle:'sedan', mode:null, ret:true, langDriver:false, season:false,
   cat:'all', step:0, booking:'none', driver:null, channel:'LINE', custName:'', custContact:'', role:'cust', jobFilter:'all', checked:{},
-  quote:null, pushOn:true, pushDismissed:false, commReport:{}, photos:{}, collected:null,
+  quote:null, pushOn:true, pushDismissed:false, commReport:{}, photos:{}, collected:null, returnOffer:null, returnBooking:null,
   bookingNo:'J-2569-118', link:'aewkan.app/j/8K2F7Q',
 };
 
@@ -914,10 +924,11 @@ function plan() {
   let ret = null;
   if (S.ret && S.stops.length) { const m = meas(cur, pk), d = m ? m.km : roadKm(cur, pk), z = zoneOf(cur), mins = m ? m.min : d / SPEED[z] * 60; ret = {d, mins, arrive: tm + mins, measured:!!m}; km += d; drive += mins; tm += mins; }
   const start = toMin(S.time), total = tm - start;
-  const lastZone = S.stops.length ? zoneOf(place(S.stops.at(-1).id)) : 1;
-  const emptyReturnKm = S.stops.length ? roadKm(place(S.stops.at(-1).id), pk) : 0;
+  const lastZone = S.stops.length ? zoneOf(place(S.stops.at(-1).id)) : 1, farZone = Math.max(lastZone, zoneOf(pk)), base = place('tp');
+  /* empty positioning: the car starts and ends at the company base in town, whichever end is far pays the deadhead */
+  const emptyReturnKm = S.stops.length ? Math.max(roadKm(place(S.stops.at(-1).id), base), roadKm(pk, base)) : 0;
   const emptyReturnMins = S.ret ? 0 : emptyReturnKm / SPEED[lastZone] * 60;
-  return {legs, ret, km, drive, dwell, total, billMin: total + emptyReturnMins, end: tm, start, maxZone, mtn, lastZone, emptyReturnKm, emptyReturnMins, night: start < 360 || tm > 1320};
+  return {legs, ret, km, drive, dwell, total, billMin: total + emptyReturnMins, end: tm, start, maxZone, mtn, lastZone, farZone, emptyReturnKm, emptyReturnMins, night: start < 360 || tm > 1320};
 }
 
 function price(P) {
@@ -946,7 +957,7 @@ function price(P) {
     out.trip = {...common(l), ok:true, why:t('whyTrip') + inclRet}; }
   // one-way
   { let ok = true, reason = '';
-    if (S.ret) { ok = false; reason = t('naReturn'); } else if (P.lastZone < 3) { ok = false; reason = t('naZone'); }
+    if (S.ret) { ok = false; reason = t('naReturn'); } else if (P.farZone < 3) { ok = false; reason = t('naZone'); }
     const kmR = Math.round(P.km), l = [{k:'lPerKm', v:{k:kmR, r:V.perKm}, a:kmR*V.perKm}];
     const er = Math.round(P.emptyReturnKm); if (er) l.push({k:'lEmpty', v:{k:er, p:RULES.emptyReturnPct}, a:r10(er*V.perKm*RULES.emptyReturnPct/100)});
     const mid = S.stops.slice(0, -1).filter(s => s.dwell > 0).length; if (mid) l.push({k:'lStopFee', v:{n:mid}, a:mid*RULES.stopFee});
@@ -1010,7 +1021,7 @@ function renderTemplates() {
     return `<button class="tpl" onclick="loadTemplate(${i})"><b>${esc(a)}</b><span>${esc(b)}</span></button>`; }).join('');
 }
 function loadTemplate(i) { const tp = TEMPLATES[i]; S.stops = tp.stops.map(s => ({...s})); S.ret = tp.ret; S.vehicle = tp.veh; if (tp.date) S.date = tp.date; S.mode = tp.ret ? null : 'oneway'; resetBooking(); renderAll(); }
-function resetBooking() { S.step = 0; S.booking = 'none'; S.driver = null; S.quote = null; S.pushDismissed = false; S.photos = {}; S.collected = null; S.checked = {}; }
+function resetBooking() { S.step = 0; S.booking = 'none'; S.driver = null; S.quote = null; S.pushDismissed = false; S.photos = {}; S.collected = null; S.checked = {}; S.returnOffer = null; S.returnBooking = null; }
 
 function renderMap() {
   const svg = document.getElementById('map'); let h = '';
@@ -1151,6 +1162,10 @@ const fmtRemain = ms => { if (ms <= 0) return '0:00:00'; const s = Math.floor(ms
 const fmtDateTh = iso => { const d = new Date(iso + 'T00:00:00'); return `${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MON[d.getMonth()]} ${d.getFullYear() + 543}`; };
 const tripTitle = () => S.stops.map(s => nm(place(s.id))).join(' · ');
 const tripTitleTh = () => S.stops.map(s => place(s.id).th).join(' · ');
+function pushHtml(title, body, meta, live, onClose) {
+  return `<div class="push ${live ? '' : 'static'}" role="status"><span class="app">แอ่ว</span><div class="grow"><div class="t">${title}</div><div class="b">${body}</div><div class="m">${meta}</div></div>
+    ${live ? `<button class="ib" aria-label="close" onclick="event.stopPropagation();${onClose}"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>` : ''}</div>`;
+}
 function pushCard(q, live) {
   return `<div class="push ${live ? '' : 'static'}" role="status"><span class="app">แอ่ว</span><div class="grow"><div class="t">${t('pushTitle')}</div>
     <div class="b">${t('pushBody', {date:fmtDate(S.date), title:esc(tripTitle()), price:baht(q.price), dep:baht(q.deposit), time:fmtClock(q.deadline)})}</div>
@@ -1158,9 +1173,47 @@ function pushCard(q, live) {
     ${live ? `<button class="ib" aria-label="close" onclick="event.stopPropagation();S.pushDismissed=true;renderPush()"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>` : ''}</div>`;
 }
 function renderPush() {
-  const show = S.booking === 'quoted' && S.quote && !S.pushDismissed && !document.getElementById('v-admin').classList.contains('on');
-  const el = document.getElementById('push'); el.innerHTML = show ? pushCard(S.quote, true) : '';
-  if (show) el.firstElementChild.onclick = () => { S.pushDismissed = true; view('job'); };
+  const admin = document.getElementById('v-admin').classList.contains('on'), el = document.getElementById('push');
+  const quoteShow = S.booking === 'quoted' && S.quote && !S.pushDismissed && !admin;
+  const ro = S.returnOffer, retShow = !quoteShow && ro && !ro.dismissed && !S.returnBooking && !admin;
+  el.innerHTML = quoteShow ? pushCard(S.quote, true) : retShow ? pushHtml(t('retPushTitle'), t('retPushBody', {from:esc(nm(place(ro.from))), p:RULES.returnOffer.pct}), t('retPushOpen'), true, 'S.returnOffer.dismissed=true;renderPush()') : '';
+  if (quoteShow) el.firstElementChild.onclick = () => { S.pushDismissed = true; view('job'); };
+  if (retShow) el.firstElementChild.onclick = () => { S.returnOffer.dismissed = true; view('job'); };
+}
+/* ═══════════════ return-trip offer ═══════════════ */
+const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+function openReturnOffer() {
+  if (!RULES.returnOffer.enabled || S.ret || !S.stops.length) return false;
+  S.returnOffer = {from:S.stops.at(-1).id, to:S.pickup, date:addDays(S.date, RULES.returnOffer.defaultDays), time:'10:00', dismissed:false, validUntil:addDays(S.date, RULES.returnOffer.validDays)};
+  return true;
+}
+function returnQuote(o) {
+  const saved = {pickup:S.pickup, stops:S.stops, ret:S.ret, date:S.date, time:S.time};
+  S.pickup = o.from; S.stops = [{id:o.to, dwell:0}]; S.ret = false; S.date = o.date; S.time = o.time;
+  try { const P = plan(), PR = price(P), ok = PR.oneway.ok, base = ok ? PR.oneway.total : (PR.best ? PR[PR.best].total : 0), disc = r10(base * RULES.returnOffer.pct/100); return {P, ok, base, disc, total: base - disc, dep: deposit(base - disc)}; }
+  finally { Object.assign(S, saved); }
+}
+function returnPanel() {
+  const o = S.returnOffer; if (!o) return '';
+  if (S.returnBooking) { const b = S.returnBooking; return `<div class="panel"><div class="panel-body"><div class="okbox" style="padding:8px 0 4px"><div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></div>
+      <h2 class="sec" style="justify-content:center;font-size:17px">${t('retDoneTitle')}</h2><p class="sub" style="max-width:44ch;margin:0 auto 8px">${t('retDoneSub', {id:b.id})}</p>
+      <div class="sub">${fmtDate(b.date)} · ${b.time} · ${esc(nm(place(b.from)))} → ${esc(nm(place(b.to)))} · <b style="color:var(--ink)">${baht(b.total)}</b> · ${t('jlPaid')} ${baht(b.dep)}</div></div></div></div>`; }
+  const rq = returnQuote(o), dests = PLACES.filter(p => (p.cat === 'pickup' || p.cat === 'city') && p.id !== o.from);
+  return `<div class="panel" style="border-color:var(--brand-solid)"><div class="panel-head">${t('retTitle', {from:esc(nm(place(o.from)))})}<span class="right">${t('retValid', {d:fmtDate(o.validUntil)})}</span></div><div class="panel-body">
+    <p class="sub" style="margin-bottom:12px">${t('retSub')}</p>
+    <div class="sub" style="margin-bottom:6px">${t('retTo')}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${dests.map(p => `<button class="pill ${o.to===p.id?'on':''}" onclick="S.returnOffer.to='${p.id}';renderJob()">${esc(nm(p))}</button>`).join('')}</div>
+    <div class="frow"><label class="f"><span>${t('retDate')}</span><input class="in" type="date" value="${o.date}" min="${S.date}" onchange="S.returnOffer.date=this.value||S.returnOffer.date;renderJob()"></label>
+      <label class="f"><span>${t('retTime')}</span><input class="in" type="time" step="900" value="${o.time}" onchange="S.returnOffer.time=this.value||S.returnOffer.time;renderJob()"></label></div>
+    <div class="lines" style="margin-top:14px"><div class="line"><span class="l">${esc(nm(place(o.from)))} → ${esc(nm(place(o.to)))} · ${t('retRoute', {km:Math.round(rq.P.km), h:fmtMins(rq.P.total)})} · ${esc(S.lang==='en'?RULES.vehicles[S.vehicle].en:RULES.vehicles[S.vehicle].th)} · ${S.pax} ${S.lang==='en'?'pax':'คน'}</span></div>
+      <div class="line"><span class="l">${t('retBase')}</span><span class="a tnum">${baht(rq.base)}</span></div>
+      <div class="line"><span class="l" style="color:var(--status-done)">${t('retDisc', {p:RULES.returnOffer.pct})}</span><span class="a tnum" style="color:var(--status-done)">− ${baht(rq.disc)}</span></div>
+      <div class="line total"><span class="l">${t('lTotal')}</span><span class="a tnum">${baht(rq.total)}</span></div></div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn" style="flex:1" onclick="bookReturn()">${t('retConfirm', {d:rq.dep.toLocaleString('en-US')})}</button><button class="btn ghost" onclick="S.returnOffer.dismissed=true;S.returnOffer=null;renderAll()">${t('retLater')}</button></div></div></div>`;
+}
+function bookReturn() {
+  const o = S.returnOffer, rq = returnQuote(o);
+  S.returnBooking = {id:'J-2569-121', from:o.from, to:o.to, date:o.date, time:o.time, total:rq.total, dep:rq.dep, km:Math.round(rq.P.km)};
+  renderAll(); toast(t('retDoneTitle') + ' · ' + S.returnBooking.id);
 }
 function quoteBox() {
   const q = S.quote;
@@ -1201,6 +1254,7 @@ function renderJob() {
     </div></div>`;
   if (qf && !paid) h += `<div class="panel"><div class="panel-body">${quoteBox()}</div></div>`;
   if (S.role === 'drv' && assigned) h += driverWorkPanel(total, dep);
+  if (S.role === 'cust' && done && S.returnOffer) h += returnPanel();
   if (S.role === 'cust' && (traveling || done)) h += `<div class="panel"><div class="panel-body" style="display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px">
       ${S.photos.pickup ? `<span><b style="color:var(--status-done)">✓</b> ${t('pickedAt', {t:fmtClock(S.photos.pickup.at)})} · <span class="sub">${t('photoProof')}</span></span>` : ''}
       ${S.photos.dropoff ? `<span><b style="color:var(--status-done)">✓</b> ${t('droppedAt', {t:fmtClock(S.photos.dropoff.at)})} · <span class="sub">${t('photoProof')}</span></span>` : ''}</div></div>`;
@@ -1264,11 +1318,16 @@ function driverWorkPanel(total, dep) {
     <button class="btn w" style="margin-top:14px" ${S.photos.pickup ? '' : 'disabled'} onclick="S.booking='traveling';renderAll();toast(t('pickedAt',{t:fmtClock(S.photos.pickup.at)}))">${S.photos.pickup ? t('dvConfirmStart') : t('dvNeedPhoto')}</button></div></div>`;
   if (S.booking === 'traveling') return `<div class="panel"><div class="panel-head">${t('dvFinish')}<span class="right"><span class="sub">${t('pickedAt', {t:fmtClock(S.photos.pickup?.at ?? Date.now())})}</span></span></div><div class="panel-body">${photoSlot('dropoff')}
     <label class="f" style="margin-top:12px;max-width:260px"><span>${t('dvCollected')}</span><input class="in tnum" type="number" step="100" id="collected" value="${S.collected ?? (total - dep)}"></label>
-    <button class="btn w" style="margin-top:14px" ${S.photos.dropoff ? '' : 'disabled'} onclick="S.collected=Number(document.getElementById('collected').value);S.booking='done';renderAll();toast(t('dvDoneTitle'))">${S.photos.dropoff ? t('dvClose') : t('dvNeedPhoto')}</button></div></div>`;
+    <button class="btn w" style="margin-top:14px" ${S.photos.dropoff ? '' : 'disabled'} onclick="closeJob()">${S.photos.dropoff ? t('dvClose') : t('dvNeedPhoto')}</button></div></div>`;
   return `<div class="panel"><div class="panel-body"><div class="okbox" style="padding:10px 0 16px"><div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></div>
     <h2 class="sec" style="justify-content:center;font-size:17px">${t('dvDoneTitle')}</h2><p class="sub" style="max-width:44ch;margin:0 auto">${t('dvDoneSub', {id:S.bookingNo})}</p></div>
     <div style="display:flex;gap:14px;flex-wrap:wrap">${['pickup','dropoff'].map(k => S.photos[k] ? `<div style="flex:1;min-width:160px"><img class="photo" src="${S.photos[k].url}" alt=""><div class="sub" style="margin-top:4px">${t(k === 'pickup' ? 'pickedAt' : 'droppedAt', {t:fmtClock(S.photos[k].at)})}</div></div>` : '').join('')}</div>
     <div class="line" style="margin-top:10px;font-weight:600"><span class="l">${t('dvCollected')}</span><span class="a tnum">${baht(S.collected ?? 0)}</span></div></div></div>`;
+}
+function closeJob() {
+  S.collected = Number(document.getElementById('collected').value); S.booking = 'done';
+  const offered = openReturnOffer(); renderAll();
+  toast(t('dvDoneTitle') + (offered ? (S.lang === 'en' ? ' · return-trip offer sent to the customer' : ' · ระบบส่งข้อเสนอขากลับให้ลูกค้าแล้ว') : ''), 5000);
 }
 function takePhoto(kind, input) {
   const f = input.files && input.files[0]; if (!f) return;
@@ -1301,7 +1360,12 @@ function liveJob() {
     status: ({none:'draft', quote_requested:'quote_req', quoted:'quoted', expired:'expired', requested:'pending', assigned:'assigned', traveling:'traveling', done:'done'})[S.booking],
     driver: S.booking === 'quoted' && q ? `มัดจำภายใน ${fmtClock(q.deadline)}` : DRIVERS.find(x => x.id === S.driver)?.nick};
 }
-function allJobs() { return JOBS.map(j => j.live ? liveJob() : j).filter(j => j.status !== 'draft'); }
+function allJobs() {
+  const rows = JOBS.map(j => j.live ? liveJob() : j).filter(j => j.status !== 'draft');
+  if (S.returnBooking) { const b = S.returnBooking, d = new Date(b.date + 'T00:00:00');
+    rows.splice(1, 0, {id:b.id, title:`ขากลับ: ${place(b.from).th} → ${place(b.to).th}`, cust:`${S.custName || 'กานต์ธิดา ศรีสุข'} · ${S.pax} คน · ต่อจาก ${S.bookingNo}`, when:`${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MON[d.getMonth()]} ${String(d.getFullYear()+543).slice(2)} · ${b.time}`, veh:RULES.vehicles[S.vehicle].th.split(' (')[0], mode:`ขาเดียว · ส่วนลดขากลับ ${RULES.returnOffer.pct}%`, total:b.total, status:'pending'}); }
+  return rows;
+}
 function renderAdmin() {
   const jobs = allJobs(), pend = jobs.filter(j => j.status === 'pending').length, qreq = jobs.filter(j => j.status === 'quote_req').length, today = jobs.filter(j => j.when.startsWith('พ. 21')).length;
   document.getElementById('ruleVer2').textContent = RULES.version;
@@ -1428,6 +1492,14 @@ function renderPricing() {
         </div>
         <p class="sub" style="margin-top:12px">ทริปตัวอย่างวันที่ ${fmtDateTh(S.date)}: <b style="color:var(--ink)">${quoteActive() ? 'เข้าโหมดเสนอราคา' : 'จองทันทีตามกฎราคา'}</b></p>
       </div></div>
+    <div class="panel"><div class="panel-head">ข้อเสนอขากลับอัตโนมัติ<span class="right"><label style="display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" ${RULES.returnOffer.enabled?'checked':''} onchange="RULES.returnOffer.enabled=this.checked;renderAll()" style="width:17px;height:17px;accent-color:var(--brand-solid)"> เปิดใช้</label></span></div>
+      <div class="panel-body"><p class="sub" style="margin-bottom:12px">เมื่อคนขับปิดงานขาเดียว ระบบส่งแจ้งเตือนให้ลูกค้าจองขากลับโดยใช้รถ จำนวนคน และผู้ติดต่อเดิม ลูกค้าเลือกแค่วัน เวลา และจุดส่ง ราคาคิดจากกฎขาเดียวแล้วหักส่วนลดขากลับ</p>
+        <div class="frow">
+          <label class="f"><span>ส่งเมื่อ</span><select class="in" onchange="RULES.returnOffer.sendWhen=this.value;renderAll()"><option value="drop" ${RULES.returnOffer.sendWhen==='drop'?'selected':''}>ทันทีที่คนขับปิดงาน</option><option value="morning" ${RULES.returnOffer.sendWhen==='morning'?'selected':''}>เช้าวันถัดไป 09:00</option></select></label>
+          <label class="f"><span>ส่วนลดขากลับ (%)</span><input class="in tnum" type="number" step="5" value="${RULES.returnOffer.pct}" onchange="RULES.returnOffer.pct=Number(this.value);renderAll()"></label>
+          <label class="f"><span>วันกลับที่เสนอเริ่มต้น (วันหลังจากส่ง)</span><input class="in tnum" type="number" value="${RULES.returnOffer.defaultDays}" onchange="RULES.returnOffer.defaultDays=Number(this.value);renderAll()"></label>
+          <label class="f"><span>ข้อเสนอใช้ได้ (วัน)</span><input class="in tnum" type="number" value="${RULES.returnOffer.validDays}" onchange="RULES.returnOffer.validDays=Number(this.value);renderAll()"></label>
+        </div></div></div>
     <div class="panel"><div class="panel-head">ระยะทางและเวลาจริงรายช่วง<span class="right">ใช้แทนค่าประมาณทั้งสองทิศทาง</span></div>
       <div class="panel-body" style="padding-bottom:0"><p class="sub">ช่วงที่ขับวัดจริงแล้ว หรือที่ระบบสรุปจากเวลาเช็กอินของคนขับ จะถูกใช้คิดเวลาและราคาแทนค่าประมาณจากระยะเส้นตรง ช่วงที่ยังไม่มีข้อมูลใช้ตัวคูณถนน ${RULES.roadFactor} และความเร็วเฉลี่ยตามโซน</p></div>
       <div class="tblwrap"><table class="tbl"><thead><tr><th>จาก</th><th>ถึง</th><th>กม.</th><th>นาที</th><th>ที่มา</th><th></th></tr></thead><tbody>
