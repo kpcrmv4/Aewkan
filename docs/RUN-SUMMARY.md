@@ -7,8 +7,8 @@ Mode รุม (3 workers per wave) · loop everything · verification เร็
 | Gate (final, whole branch) | Result |
 |---|---|
 | typecheck · build · verify (portability, route guards) · types:check · lessons:check | pass |
-| unit (vitest) | 168 passed |
-| E2E (Playwright, desktop + phone, real Supabase) | **505 passed · 0 failed · 27 not run** |
+| unit (vitest) | 191 passed |
+| E2E (Playwright, desktop + phone, real Supabase) | **548 passed · 0 failed · 28 not run** |
 | Supabase advisors — security | only intended items: token-checked RPCs for links/payments, permission-checked SECURITY DEFINER functions, "leaked password protection" off |
 | Supabase advisors — performance | unused indexes only (new database) |
 
@@ -24,6 +24,7 @@ Mode รุม (3 workers per wave) · loop everything · verification เร็
 | P4 | PromptPay QR + slip, slip check (SlipOK / EasySlip), Stripe, Beam, LINE OA, web push, การเชื่อมต่อ, การเงิน | done (live paths need keys) |
 | P5 | team, invites, roles editor, ownership transfer | done |
 | P6 | demo seed / every acceptance row run | **blocked** — see below |
+| + | customer e-mail via Resend (R-018) · owner's logo + icons (R-019) · SEO: /en, place pages, sitemap, robots, OG, JSON-LD | done |
 
 ## Not run (27 E2E rows) and why
 
@@ -35,13 +36,16 @@ Mode รุม (3 workers per wave) · loop everything · verification เร็
 
 ## Owner actions (in order)
 
+0. `SUPABASE_SECRET_KEY` is set in the environment — open a **new** session so it loads, then run the full suite (the 28 not-run rows).
+
 1. Add `SUPABASE_SECRET_KEY` to the environment (cloud environment settings / Vercel env) — never in chat.
 2. Open `/admin/setup` → create the owner account.
 3. Before real customers: run `supabase/cleanup/before-go-live.sql` in the Supabase SQL editor (removes ~786 test bookings and other E2E rows, resets booking numbers).
-4. `/admin/integrations`: PromptPay ID + name · slip provider + key · Stripe secret + webhook secret · Beam merchant / key / HMAC · LINE basic id + channel secret + access token + staff group · routing provider + key · web push subject. Copy the webhook URLs shown there into Stripe / Beam / LINE Developers.
-5. Supabase Auth: custom SMTP + redirect URL `<site>/admin/invite/**` (R-014), and turn on leaked-password protection.
+4. `/admin/integrations`: e-mail (Resend sender + key, domain verified in Resend) · PromptPay ID + name · slip provider + key · Stripe secret + webhook secret · Beam merchant / key / HMAC · LINE basic id + channel secret + access token + staff group · routing provider + key · web push subject. Copy the webhook URLs shown there into Stripe / Beam / LINE Developers.
+5. Supabase Auth: custom SMTP via Resend (smtp.resend.com:465, user `resend`) + redirect URL `<site>/admin/invite/**` (R-014), and turn on leaked-password protection.
 6. `/admin/pricing`: replace the provisional v1 prices (R-005).
-7. After deploy: schedule `/api/cron/notify` every 5 min via pg_cron + pg_net with `CRON_SECRET` (R-017).
+7. Vercel: `NEXT_PUBLIC_SITE_URL` = real domain (canonicals, sitemap, JSON-LD, e-mail logo) · submit the sitemap in Google Search Console.
+8. After deploy: schedule `/api/cron/notify` every 5 min via pg_cron + pg_net with `CRON_SECRET` (R-017).
 
 ## Decisions made for you (docs/RULINGS.md)
 
