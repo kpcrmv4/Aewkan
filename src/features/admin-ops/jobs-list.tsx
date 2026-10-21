@@ -102,14 +102,18 @@ async function renderJobs(staff: StaffSession, query: JobsQuery) {
 
   return (
     <>
+      <div data-testid="jobs-kpi">
       <MetricBar>
         <Metric label={JOBS_COPY.kpi.quoteRequested} value={byStatus.quote_requested} tone="urgent" href={hrefWith('/admin/jobs', params, { status: 'quote_requested' })} />
         <Metric label={JOBS_COPY.kpi.awaitingDriver} value={byStatus.confirmed} tone="progress" href={hrefWith('/admin/jobs', params, { status: 'confirmed' })} />
         <Metric label={JOBS_COPY.kpi.today} value={todayRes.count ?? 0} />
         {revenue !== null && <Metric label={JOBS_COPY.kpi.monthRevenue} value={baht(revenue)} />}
       </MetricBar>
+      </div>
 
+      <div data-testid="jobs-filters">
       <ListToolbar basePath="/admin/jobs" q={search} filters={filters} activeFilter={status} placeholder={JOBS_COPY.searchPlaceholder} />
+      </div>
 
       {rows.length === 0 ? (
         <EmptyState
