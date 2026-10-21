@@ -284,7 +284,7 @@
   .joblink { max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
   .urlbar { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); flex-wrap:wrap; }
   .urlbar code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; background:var(--surface); border:1px solid var(--line); padding:4px 8px; border-radius:var(--r-sm); color:var(--ink-2); }
-  .stepper { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .stepper { display:grid; grid-template-columns:repeat(auto-fit,minmax(0,1fr)); gap:6px; }
   .stepper .sp { text-align:center; font-size:12px; color:var(--muted); position:relative; padding-top:18px; }
   .stepper .sp::before { content:""; position:absolute; top:5px; left:0; right:0; height:4px; border-radius:2px; background:var(--surface-3); }
   .stepper .sp.done::before { background:var(--ink); } .stepper .sp.now::before { background:var(--brand-solid); }
@@ -405,6 +405,17 @@
   .preview { position:sticky; top:60px; }
   .ver { display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:13px; color:var(--muted); }
 
+  .banner { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:var(--r-md); background:var(--hl); color:var(--hl-ink); margin-bottom:14px; font-size:14px; line-height:1.45; }
+  .banner .icon { margin-top:2px; }
+  .push { position:fixed; top:calc(54px + env(safe-area-inset-top,0px)); left:50%; transform:translateX(-50%); width:min(440px, calc(100vw - 24px)); z-index:45; cursor:pointer;
+          background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--sh-3); padding:12px 14px; display:flex; gap:10px; align-items:flex-start; }
+  .push.static { position:static; transform:none; width:auto; box-shadow:var(--sh-2); cursor:default; }
+  .push .app { width:36px; height:36px; border-radius:var(--r-sm); background:var(--brand-solid); color:var(--on-brand); display:grid; place-items:center; font-family:var(--font-display); font-weight:600; font-size:12px; flex:none; }
+  .push .grow { flex:1; min-width:0; } .push .t { font-weight:600; font-size:14px; } .push .b { font-size:13px; color:var(--ink-2); } .push .m { font-size:12px; color:var(--muted); margin-top:4px; }
+  .cd { font-family:var(--font-display); font-weight:600; font-size:28px; letter-spacing:-.01em; font-variant-numeric:tabular-nums; line-height:1.1; }
+  .quotebox { border:1.5px solid var(--brand-solid); border-radius:var(--r-md); padding:14px 16px; background:var(--brand-tint); color:var(--brand-on-tint); }
+  .ta { width:100%; min-height:110px; resize:vertical; border:1px solid var(--line-strong); border-radius:var(--r-sm); padding:10px 12px; background:var(--surface); font:inherit; color:var(--ink); line-height:1.5; }
+  .ta:focus { border-color:var(--brand); outline:none; box-shadow:0 0 0 3px var(--ring); }
   .toast { position:fixed; left:50%; bottom:calc(84px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px); opacity:0; z-index:50;
            background:var(--ink); color:var(--canvas); padding:11px 18px; border-radius:var(--r-pill); font-size:13.5px; box-shadow:var(--sh-3); transition:.25s; pointer-events:none; max-width:calc(100vw - 32px); }
   .toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -420,6 +431,7 @@
   <button class="chip" data-view="job" onclick="view('job')">ลิงก์รายละเอียดงาน</button>
   <span class="sep"></span>
   <button class="chip" data-view="admin" onclick="view('admin')">แอดมิน: งานเข้า</button>
+  <button class="chip" data-view="quote" onclick="view('quote')">เสนอราคา</button>
   <button class="chip" data-view="assign" onclick="view('assign')">จัดคนขับ</button>
   <button class="chip" data-view="pricing" onclick="view('pricing')">ตั้งค่าราคา</button>
   <span class="spacer"></span>
@@ -508,10 +520,11 @@
         <div class="panel" style="margin-top:14px" id="pricePanel">
           <div class="panel-head">
             <svg class="icon sm" viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3.5-5-3.5S7 4.6 7 6.5 9.2 10 12 10s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5"/></svg>
-            <span data-i18n="priceTitle">ราคา 4 แบบจากทริปเดียวกัน</span>
+            <span data-i18n="priceTitle" id="priceTitle">ราคา 4 แบบจากทริปเดียวกัน</span>
             <span class="right" id="ruleVer"></span>
           </div>
           <div class="panel-body">
+            <div id="quoteBanner"></div>
             <div class="modes" id="modes"></div>
             <div class="lines" id="lines"></div>
           </div>
@@ -543,6 +556,7 @@
     <div class="slogo"><div class="logo"><span class="mark">แอ่ว</span><span>แอ่วกัน</span></div><div class="sub" style="font-size:12px;margin-top:2px">หลังบ้านทีมงาน</div></div>
     <div class="cat">งาน</div>
     <a href="#" class="active" data-nav="admin" onclick="return nav('admin',this)"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 10l3 3 5-6"/></svg><span class="txt">งานเข้า<span class="sub">รอจัดคนขับและงานทั้งหมด</span></span></a>
+    <a href="#" data-nav="quote" onclick="return nav('quote',this)"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9.5 8.5h3.5a1.5 1.5 0 0 1 0 3H11"/></svg><span class="txt">เสนอราคา<span class="sub">คำขอราคาช่วงเทศกาล</span></span></a>
     <a href="#" data-nav="assign" onclick="return nav('assign',this)"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M16 11l2 2 4-4"/></svg><span class="txt">จัดคนขับ<span class="sub">เลือกคนขับและส่งลิงก์งาน</span></span></a>
     <a href="#" onclick="toast('หน้าปฏิทินคนขับอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg><span class="txt">ปฏิทินคนขับ<span class="sub">ตารางงานและวันหยุด</span></span></a>
     <div class="cat">ตั้งค่า</div>
@@ -571,6 +585,14 @@
       <div class="two" id="assignBody"></div>
     </section>
 
+    <!-- ── เสนอราคา ── -->
+    <section id="s-quote" class="screen">
+      <div class="topbar">
+        <div><h1>เสนอราคา</h1><div class="sub" id="quoteSub"></div></div>
+      </div>
+      <div class="two" id="quoteBody"></div>
+    </section>
+
     <!-- ── กฎราคา ── -->
     <section id="s-pricing" class="screen">
       <div class="topbar">
@@ -592,7 +614,7 @@
     <a href="#" class="active" data-nav="admin" onclick="return nav('admin',this)"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 10l3 3 5-6"/></svg><span>งาน</span></a>
     <a href="#" data-nav="assign" onclick="return nav('assign',this)"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M16 11l2 2 4-4"/></svg><span>คนขับ</span></a>
     <a href="#" class="center" aria-label="สร้างงานแทนลูกค้า" onclick="view('cust');return false"><span class="fab"><svg class="icon" style="width:26px;height:26px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></a>
-    <a href="#" data-nav="pricing" onclick="return nav('pricing',this)"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3.5-5-3.5S7 4.6 7 6.5 9.2 10 12 10s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5"/></svg><span>ราคา</span></a>
+    <a href="#" data-nav="quote" onclick="return nav('quote',this)"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9.5 8.5h3.5a1.5 1.5 0 0 1 0 3H11"/></svg><span>เสนอราคา</span></a>
     <a href="#" onclick="sheet(true);return false"><svg class="icon" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>เพิ่มเติม</span></a>
   </nav>
 </div>
@@ -601,6 +623,7 @@
 <div class="sheet" role="dialog" aria-label="เพิ่มเติม">
   <div class="grab"></div>
   <div class="sec">เมนูอื่น</div>
+  <a href="#" onclick="sheet(false);nav('pricing');return false"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3.5-5-3.5S7 4.6 7 6.5 9.2 10 12 10s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5"/></svg>กฎราคาและโหมดเสนอราคา</a>
   <a href="#" onclick="sheet(false);toast('หน้าปฏิทินคนขับอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>ปฏิทินคนขับ</a>
   <a href="#" onclick="sheet(false);toast('หน้าคนขับและรถอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><path d="M5 17h14l1-6-2-5H6L4 11z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>คนขับและรถ</a>
   <div class="sec">บัญชี</div>
@@ -609,6 +632,7 @@
   <p class="sec" data-demo-only>เดโม่นี้ใช้ข้อมูลสมมติ</p>
 </div>
 
+<div id="push"></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -649,6 +673,8 @@ const TEMPLATES = [
    stops:[{id:'chiangdao',dwell:60},{id:'pai',dwell:0}], ret:false, veh:'sedan'},
   {th:['ดอยอินทนนท์ เต็มวัน', 'ยอดสูงสุดในไทย · นางพญาเสือโคร่ง ม.ค.'], en:['Doi Inthanon full day', 'Highest peak · cherry blossoms in Jan'],
    stops:[{id:'inthanon',dwell:150},{id:'ratcha',dwell:60}], ret:true, veh:'suv'},
+  {th:['ส่งท้ายปี: อ่างขาง + เชียงดาว', '31 ธ.ค. · ช่วงเทศกาล เปิดโหมดเสนอราคา'], en:['New Year: Ang Khang + Chiang Dao', '31 Dec · festival period, quote mode'],
+   stops:[{id:'angkhang',dwell:120},{id:'chiangdao',dwell:60}], ret:true, veh:'suv', date:'2026-12-31'},
 ];
 const DRIVERS = [
   {id:'sombat', name:'สมบัติ ใจดี', nick:'ลุงสมบัติ', en:'Sombat', langs:['ไทย','อังกฤษพื้นฐาน'], langsEn:['Thai','Basic English'], vehicle:'sedan', car:'Toyota Altis สีขาว', carEn:'Toyota Altis, white', plate:'กษ 2471', rating:4.9, jobs:14, years:12, avail:'free', note:'ถนัดทางดอย ขับนิ่ง', phone:'081-234-5678', line:'@sombat.cm'},
@@ -658,6 +684,8 @@ const DRIVERS = [
 ];
 const JOBS = [
   {id:'J-2569-118', live:true},
+  {id:'J-2569-120', title:'ปาย 2 วัน 1 คืน (ปีใหม่)', cust:'คุณณัฐพล · 4 คน', when:'ศ. 1 ม.ค. 70 · 08:00', veh:'SUV', mode:'เสนอราคา', total:0, status:'quote_req'},
+  {id:'J-2569-119', title:'ดอยอ่างขาง + ถ้ำเชียงดาว 2 วัน (ปีใหม่)', cust:'Chen family (CN) · 6 คน', when:'พฤ. 31 ธ.ค. 69 · 07:00', veh:'รถตู้ VIP', mode:'เสนอราคา', total:14800, status:'quoted', driver:'มัดจำภายใน 18:30 วันนี้'},
   {id:'J-2569-117', title:'แม่กำปอง · น้ำพุร้อนสันกำแพง · บ่อสร้าง', cust:'Chen Yu (CN) · 4 คน', when:'พฤ. 22 ต.ค. 69 · 08:30', veh:'รถตู้ VIP', mode:'เหมาวัน', total:5600, status:'assigned', driver:'พี่เอก'},
   {id:'J-2569-116', title:'ส่งปาย แวะถ้ำเชียงดาว', cust:'Lukas Weber (DE) · 2 คน', when:'ศ. 23 ต.ค. 69 · 09:00', veh:'รถเก๋ง', mode:'ขาเดียว', total:3900, status:'assigned', driver:'ลุงสมบัติ'},
   {id:'J-2569-115', title:'สนามบิน → โรงแรมแม่ริม (รับ-ส่ง)', cust:'คุณพิมพ์ชนก · 3 คน', when:'พ. 21 ต.ค. 69 · 14:40', veh:'SUV', mode:'เหมาชั่วโมง', total:1400, status:'traveling', driver:'น้องแม้ว'},
@@ -671,6 +699,9 @@ const STATUS = {
   traveling:{th:'กำลังเดินทาง', cls:'b-progress'},
   done:     {th:'เสร็จสิ้น', cls:'b-done'},
   cancelled:{th:'ยกเลิก', cls:'b-pending'},
+  quote_req:{th:'รอเสนอราคา', cls:'b-urgent'},
+  quoted:   {th:'เสนอราคาแล้ว รอมัดจำ', cls:'b-info'},
+  expired:  {th:'หมดเวลามัดจำ', cls:'b-pending'},
 };
 
 /* ═══════════════ pricing rules (admin-editable; versioned per booking) ═══════════════ */
@@ -689,6 +720,8 @@ let RULES = {
   },
   minHours:4, dailyIncHours:10, dailyIncKm:150, otPerHour:300, extraKmRate:10, maxDayHours:14,
   tripPct:15, mountain:300, nightPct:15, seasonPct:10, langDriver:200, depositPct:30, emptyReturnPct:40, stopFee:150, roadFactor:1.3,
+  /* quote mode: instead of instant booking, the customer submits the trip, staff set the price and push it back with a deposit deadline */
+  quote:{enabled:true, useRange:true, from:'2026-12-25', to:'2027-01-05', hours:2, pct:20, reason:'ช่วงปีใหม่ รถและคนขับมีจำกัด', reasonEn:'New Year period, cars and drivers are limited'},
 };
 const SPEED = {1:25, 2:45, 3:40, 4:60, mtn:35};
 
@@ -721,6 +754,17 @@ const T = {
     sp1:'จองแล้ว', sp2:'ยืนยันคนขับ', sp3:'ออกเดินทาง', sp4:'เสร็จสิ้น', years:'{n} ปี', jobsMonth:'{n} งานเดือนนี้',
     dvCust:'ลูกค้า', dvChecklist:'เช็กอินแต่ละจุด', dvCheck:'ถึงแล้ว', dvNavigate:'นำทาง', dvPickupNote:'รับที่ล็อบบี้ ลูกค้ารอหน้าโรงแรม',
     vehicleUp:'ปรับเป็น', addToTrip:'เพิ่มในทริป', inTrip:'อยู่ในทริปแล้ว', pickupHere:'จุดรับ',
+    stWait:'รอราคา', reqQuote:'ส่งคำขอราคา', reqQuoteSub:'ทีมงานตรวจสอบรถที่ว่างแล้วแจ้งราคาผ่านการแจ้งเตือนภายใน 30 นาที ยังไม่ต้องชำระเงิน',
+    quoteOn:'ช่วงนี้เปิดโหมดเสนอราคา', quoteBanner:'ส่งทริปของคุณมาก่อน ทีมงานจะแจ้งราคาจริงผ่านการแจ้งเตือนภายใน 30 นาที พร้อมเวลาที่ต้องโอนมัดจำ ราคาด้านล่างเป็นราคาอ้างอิงจากกฎปกติ',
+    refTitle:'ราคาอ้างอิง 4 แบบ (ราคาจริงทีมงานจะแจ้งอีกครั้ง)', refPrice:'ราคาอ้างอิงจากกฎปกติ ยังไม่ใช่ราคาสุดท้าย และยังไม่ต้องชำระมัดจำ',
+    pushOpt:'รับแจ้งเตือนราคาบนเครื่องนี้ (push)', pushFallback:'ถ้าไม่เปิด push ทีมงานจะส่งทาง LINE / WhatsApp ตามที่ให้ไว้',
+    qrOkTitle:'ส่งคำขอราคาแล้ว', qrOkSub:'ทีมงานจะแจ้งราคาผ่านการแจ้งเตือนภายใน 30 นาที พร้อมกำหนดเวลาโอนมัดจำ', simAdmin:'จำลอง: ไปหน้าแอดมินเสนอราคา',
+    quoteTitle:'ราคาที่ทีมงานเสนอ', quoteDeadline:'โอนมัดจำภายใน {t}', payDeposit:'ชำระมัดจำ ฿{d}', simExpire:'จำลองหมดเวลา',
+    expiredTitle:'หมดเวลาโอนมัดจำ', expiredSub:'ราคาที่เสนอไว้ถูกยกเลิก คุณขอราคาใหม่ได้ ทีมงานอาจเสนอราคาต่างจากเดิมตามรถที่เหลืออยู่', requote:'ขอราคาใหม่',
+    pushTitle:'แอ่วกัน · ราคาทริปของคุณมาแล้ว', pushBody:'{date} · {title} · {price} · โอนมัดจำ {dep} ภายใน {time}', pushOpen:'แตะเพื่อดูและชำระมัดจำ',
+    qs1:'ขอราคา', qs2:'ได้รับราคา', qs3:'มัดจำ', qs4:'ยืนยันคนขับ', qs5:'ออกเดินทาง',
+    jlQuoted:'เสนอราคาแล้ว รอมัดจำ', jlQuoteReq:'รอทีมงานเสนอราคา', jlExpired:'หมดเวลามัดจำ', lQuote:'ราคาเสนอโดยทีมงาน · {reason}', jlDue:'ต้องโอนมัดจำภายใน {t}',
+    toastQuoteReq:'ส่งคำขอราคาแล้ว · เข้าคิวหลังบ้านเป็น "รอเสนอราคา"', toastPaid:'รับมัดจำแล้ว · งานเข้าคิวหลังบ้านเป็น "รอจัดคนขับ"',
   },
   en:{ myBooking:'My booking', heroTitle:'Draw your trip on the map and see the price instantly',
     heroSub:'Private car with driver in Chiang Mai. Pick the places you want, and we price the same trip four ways and tell you which is cheapest. No waiting for a quote.',
@@ -749,6 +793,17 @@ const T = {
     sp1:'Booked', sp2:'Driver confirmed', sp3:'On the way', sp4:'Completed', years:'{n} yrs', jobsMonth:'{n} jobs this month',
     dvCust:'Customer', dvChecklist:'Check in at each stop', dvCheck:'Arrived', dvNavigate:'Navigate', dvPickupNote:'Pick up at the lobby, guest waits in front of the hotel',
     vehicleUp:'Switched to', addToTrip:'Add to trip', inTrip:'In trip', pickupHere:'Pickup',
+    stWait:'Quote', reqQuote:'Request a quote', reqQuoteSub:'We check available cars and send your price as a notification within 30 minutes. No payment yet.',
+    quoteOn:'Quote mode is on for these dates', quoteBanner:'Send us your trip first. We confirm the real price by notification within 30 minutes, with a deadline for the deposit. The prices below are references from our standard rules.',
+    refTitle:'Four reference prices (the final price follows by notification)', refPrice:'Reference price from standard rules. Not final, and no deposit yet.',
+    pushOpt:'Notify me on this device (push)', pushFallback:'Without push we send the quote by LINE / WhatsApp instead.',
+    qrOkTitle:'Quote request sent', qrOkSub:'We will send your price as a notification within 30 minutes, with the deposit deadline.', simAdmin:'Demo: open the admin quote screen',
+    quoteTitle:'Your quoted price', quoteDeadline:'Deposit due by {t}', payDeposit:'Pay ฿{d} deposit', simExpire:'Simulate expiry',
+    expiredTitle:'Deposit deadline passed', expiredSub:'The quote was cancelled. You can request a new one. The price may differ depending on what is still available.', requote:'Request a new quote',
+    pushTitle:'Aewkan · Your trip price is ready', pushBody:'{date} · {title} · {price} · deposit {dep} due by {time}', pushOpen:'Tap to view and pay the deposit',
+    qs1:'Requested', qs2:'Quoted', qs3:'Deposit', qs4:'Driver confirmed', qs5:'On the way',
+    jlQuoted:'Quoted, deposit pending', jlQuoteReq:'Waiting for our quote', jlExpired:'Deposit deadline passed', lQuote:'Price quoted by our team · {reason}', jlDue:'Deposit due by {t}',
+    toastQuoteReq:'Quote request sent · it is now "awaiting quote" in the admin queue', toastPaid:'Deposit received · job is now "awaiting driver" in the admin queue',
   }
 };
 const t = (k, v={}) => (T[S.lang][k] ?? T.th[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => v[n] ?? '');
@@ -759,6 +814,7 @@ const S = {
   lang:'th', pickup:'tp', stops:[{id:'suthep',dwell:60},{id:'monjam',dwell:90},{id:'maesa',dwell:60}],
   date:'2026-10-24', time:'08:00', pax:2, vehicle:'sedan', mode:null, ret:true, langDriver:false, season:false,
   cat:'all', step:0, booking:'none', driver:null, channel:'LINE', custName:'', custContact:'', role:'cust', jobFilter:'all', checked:{},
+  quote:null, pushOn:true, pushDismissed:false,
   bookingNo:'J-2569-118', link:'aewkan.app/j/8K2F7Q',
 };
 
@@ -859,7 +915,8 @@ function renderTemplates() {
   document.getElementById('tpls').innerHTML = TEMPLATES.map((tp, i) => { const [a, b] = S.lang === 'en' ? tp.en : tp.th;
     return `<button class="tpl" onclick="loadTemplate(${i})"><b>${esc(a)}</b><span>${esc(b)}</span></button>`; }).join('');
 }
-function loadTemplate(i) { const tp = TEMPLATES[i]; S.stops = tp.stops.map(s => ({...s})); S.ret = tp.ret; S.vehicle = tp.veh; S.mode = tp.ret ? null : 'oneway'; S.step = 0; S.booking = 'none'; S.driver = null; renderAll(); }
+function loadTemplate(i) { const tp = TEMPLATES[i]; S.stops = tp.stops.map(s => ({...s})); S.ret = tp.ret; S.vehicle = tp.veh; if (tp.date) S.date = tp.date; S.mode = tp.ret ? null : 'oneway'; resetBooking(); renderAll(); }
+function resetBooking() { S.step = 0; S.booking = 'none'; S.driver = null; S.quote = null; S.pushDismissed = false; }
 
 function renderMap() {
   const svg = document.getElementById('map'); let h = '';
@@ -894,7 +951,7 @@ function renderMap() {
 function toggleStop(id) {
   const i = S.stops.findIndex(s => s.id === id);
   if (i >= 0) S.stops.splice(i, 1); else S.stops.push({id, dwell: place(id).dwell ?? 60});
-  S.step = 0; S.booking = 'none'; S.driver = null; renderAll();
+  resetBooking(); renderAll();
 }
 function moveStop(i, d) { const j = i + d; if (j < 0 || j >= S.stops.length) return; [S.stops[i], S.stops[j]] = [S.stops[j], S.stops[i]]; renderAll(); }
 function setDwell(i, v) { S.stops[i].dwell = Number(v); renderAll(); }
@@ -902,6 +959,7 @@ function setDwell(i, v) { S.stops[i].dwell = Number(v); renderAll(); }
 function renderTrip() {
   const {P} = current(), pk = place(S.pickup);
   document.getElementById('tripDate').textContent = fmtDate(S.date);
+  document.getElementById('fDate').value = S.date; document.getElementById('fTime').value = S.time;
   const vsel = document.getElementById('fVehicle'); vsel.innerHTML = Object.entries(RULES.vehicles).map(([k, v]) => `<option value="${k}" ${k===S.vehicle?'selected':''}>${esc(S.lang==='en'?v.en:v.th)}</option>`).join('');
   const psel = document.getElementById('fPickup'); psel.innerHTML = PLACES.filter(p => p.cat === 'pickup' || p.cat === 'city').map(p => `<option value="${p.id}" ${p.id===S.pickup?'selected':''}>${esc(nm(p))}</option>`).join('');
   document.getElementById('optReturn').checked = S.ret; document.getElementById('optLang').checked = S.langDriver; document.getElementById('optSeason').checked = S.season;
@@ -938,33 +996,48 @@ function renderTrip() {
 function renderPrice() {
   const {PR, mode, sel} = current();
   document.getElementById('ruleVer').textContent = t('jlRule', {v:RULES.version});
+  const qa = quoteActive();
+  document.getElementById('priceTitle').textContent = qa ? t('refTitle') : t('priceTitle');
+  document.getElementById('quoteBanner').innerHTML = qa ? `<div class="banner"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><div><b>${t('quoteOn')}</b> · ${esc(quoteReason())}<br>${t('quoteBanner')}</div></div>` : '';
   document.getElementById('modes').innerHTML = ['hourly','daily','trip','oneway'].map(k => { const m = PR[k];
     return `<button class="mode ${k===mode?'on':''} ${m.ok?'':'na'}" ${m.ok?`onclick="S.mode='${k}';renderPrice()"`:'disabled'} aria-pressed="${k===mode}">
       ${PR.best===k ? `<span class="best">${t('best')}</span>` : ''}
       <div class="nm">${t(MODE_KEYS[k])}</div><div class="pr tnum">${m.ok ? baht(m.total) : t('na')}</div><div class="why">${esc(m.why)}</div></button>`; }).join('');
   if (!sel || !S.stops.length) { document.getElementById('lines').innerHTML = ''; document.getElementById('bookArea').innerHTML = ''; return; }
-  const dep = deposit(sel.total);
-  document.getElementById('lines').innerHTML = sel.lines.map(l => `<div class="line"><span class="l">${esc(t(l.k, l.v))}</span><span class="a tnum">${baht(l.a)}</span></div>`).join('')
-    + `<div class="line total"><span class="l">${t('lTotal')}</span><span class="a tnum">${baht(sel.total)}</span></div>
-       <div class="line dep"><span class="l">${t('lDeposit', {p:RULES.depositPct})}</span><span class="a tnum">${baht(dep)}</span></div>`;
+  const dep = deposit(sel.total), q = inQuoteFlow() ? S.quote : null;
+  if (q) document.getElementById('lines').innerHTML = `<div class="line"><span class="l">${esc(t('lQuote', {reason:quoteReason()}))}</span><span class="a tnum">${baht(q.price)}</span></div>
+       <div class="line total"><span class="l">${t('lTotal')}</span><span class="a tnum">${baht(q.price)}</span></div>
+       <div class="line dep"><span class="l">${S.booking === 'quoted' ? t('jlDue', {t:fmtClock(q.deadline)}) : t('jlPaid')}</span><span class="a tnum">${baht(q.deposit)}</span></div>`;
+  else document.getElementById('lines').innerHTML = sel.lines.map(l => `<div class="line"><span class="l">${esc(t(l.k, l.v))}</span><span class="a tnum">${baht(l.a)}</span></div>`).join('')
+    + `<div class="line total"><span class="l">${t('lTotal')}</span><span class="a tnum">${baht(sel.total)}</span></div>`
+    + (qa || inQuoteFlow() ? `<div class="line dep"><span class="l">${t('refPrice')}</span></div>` : `<div class="line dep"><span class="l">${t('lDeposit', {p:RULES.depositPct})}</span><span class="a tnum">${baht(dep)}</span></div>`);
   renderBook(sel, dep);
 }
 function renderBook(sel, dep) {
-  const steps = ['stTrip','stInfo','stPay','stDone'].map((k, i) => `<div class="st ${i<S.step?'done':''} ${i===S.step?'on':''}"><span>${t(k)}</span></div>`).join('');
+  const qa = quoteActive() || inQuoteFlow();
+  if (qa && S.quote) dep = S.quote.deposit;
+  const keys = qa ? ['stTrip','stInfo','stWait','stPay','stDone'] : ['stTrip','stInfo','stPay','stDone'];
+  const payStep = qa ? 3 : 2, doneStep = qa ? 4 : 3;
+  const steps = keys.map((k, i) => `<div class="st ${i<S.step?'done':''} ${i===S.step?'on':''}"><span>${t(k)}</span></div>`).join('');
   let body = '';
-  if (S.step === 0) body = `<button class="btn w" onclick="S.step=1;renderPrice()">${t('book', {d:dep.toLocaleString('en-US')})}</button><p class="sub" style="text-align:center;margin-top:8px">${t('bookSub')}</p>`;
+  if (S.step === 0) body = qa
+    ? `<button class="btn w" onclick="S.step=1;renderPrice()">${t('reqQuote')}</button><p class="sub" style="text-align:center;margin-top:8px">${t('reqQuoteSub')}</p>`
+    : `<button class="btn w" onclick="S.step=1;renderPrice()">${t('book', {d:dep.toLocaleString('en-US')})}</button><p class="sub" style="text-align:center;margin-top:8px">${t('bookSub')}</p>`;
   else if (S.step === 1) body = `<div class="frow">
       <label class="f" style="grid-column:1/-1"><span>${t('sName')}</span><input class="in" id="bName" value="${esc(S.custName)}" placeholder="${S.lang==='en'?'Lukas Weber':'กานต์ธิดา ศรีสุข'}"></label>
       <label class="f"><span>${t('sContact')}</span><input class="in" id="bContact" value="${esc(S.custContact)}" placeholder="${S.lang==='en'?'+49 171 555 0199':'@kantida หรือ 081-xxx-xxxx'}"></label>
       <label class="f"><span>${t('sHotel')}</span><input class="in" id="bHotel" placeholder="${S.lang==='en'?'Rachamankha Hotel':'โรงแรมราชมรรคา'}"></label>
       <label class="f" style="grid-column:1/-1"><span>${t('sNote')}</span><input class="in" id="bNote" placeholder="${S.lang==='en'?'We have a child seat request':'มีเด็กเล็ก 1 คน ขอคาร์ซีท'}"></label></div>
+    ${qa ? `<div class="opts" style="margin-top:12px"><label><input type="checkbox" id="bPush" ${S.pushOn?'checked':''}> <span>${t('pushOpt')}</span></label><p class="sub" style="margin-left:25px">${t('pushFallback')}</p></div>` : ''}
     <div style="display:flex;gap:8px;margin-top:14px"><button class="btn sec" onclick="S.step=0;renderPrice()">${t('backStep')}</button>
-      <button class="btn" style="flex:1" onclick="S.custName=document.getElementById('bName').value||'${S.lang==='en'?'Lukas Weber':'กานต์ธิดา ศรีสุข'}';S.custContact=document.getElementById('bContact').value||'LINE @kantida';S.step=2;renderPrice()">${t('next')}</button></div>`;
-  else if (S.step === 2) body = `<h2 class="sec" style="justify-content:center">${t('payTitle')}</h2>
+      <button class="btn" style="flex:1" onclick="saveContact();${qa ? "S.pushOn=document.getElementById('bPush').checked;S.step=2;S.booking='quote_requested';renderAll();toast(t('toastQuoteReq'))" : "S.step=2;renderPrice()"}">${qa ? t('reqQuote') : t('next')}</button></div>`;
+  else if (qa && S.step === 2) body = quoteBox();
+  else if (S.step === payStep) body = `<h2 class="sec" style="justify-content:center">${t('payTitle')}</h2>
     <div class="qr" data-demo-only><svg class="icon" style="width:40px;height:40px;stroke-width:1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2v2"/></svg><div style="margin-top:8px">${t('payQr', {d:dep.toLocaleString('en-US')})}</div></div>
+    ${qa && S.quote ? `<p class="sub" style="text-align:center;margin-top:10px">${t('quoteDeadline', {t:fmtClock(S.quote.deadline)})} · <span data-countdown>${fmtRemain(S.quote.deadline - Date.now())}</span></p>` : ''}
     <p class="sub" style="text-align:center;margin:10px 0 14px">${t('payCard')}</p>
-    <div style="display:flex;gap:8px"><button class="btn sec" onclick="S.step=1;renderPrice()">${t('backStep')}</button>
-      <button class="btn" style="flex:1" onclick="S.step=3;S.booking='requested';renderAll();toast('${S.lang==='en'?'Deposit received · job J-2569-118 is now in the admin queue':'รับมัดจำแล้ว · งาน J-2569-118 เข้าคิวหลังบ้าน'}')">${t('paid')}</button></div>`;
+    <div style="display:flex;gap:8px"><button class="btn sec" onclick="S.step=${qa?2:1};renderPrice()">${t('backStep')}</button>
+      <button class="btn" style="flex:1" onclick="S.step=${doneStep};S.booking='requested';S.pushDismissed=true;renderAll();toast(t('toastPaid'))">${t('paid')}</button></div>`;
   else body = `<div class="okbox"><div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></div>
     <h2 class="sec" style="justify-content:center;font-size:18px">${t('okTitle')}</h2>
     <p class="sub" style="max-width:40ch;margin:0 auto 14px">${t('okSub', {c:S.channel})}</p>
@@ -972,78 +1045,172 @@ function renderBook(sel, dep) {
     <div><button class="btn" onclick="view('job')">${t('openLink')}</button></div></div>`;
   document.getElementById('bookArea').innerHTML = `<div class="panel"><div class="panel-body"><div class="steps">${steps}</div>${body}</div></div>`;
 }
+function saveContact() { S.custName = document.getElementById('bName').value || (S.lang==='en' ? 'Lukas Weber' : 'กานต์ธิดา ศรีสุข'); S.custContact = document.getElementById('bContact').value || 'LINE @kantida'; }
+
+/* ═══════════════ quote mode ═══════════════ */
+function quoteActive() { const q = RULES.quote; if (!q.enabled) return false; if (!q.useRange) return true; return S.date >= q.from && S.date <= q.to; }
+const inQuoteFlow = () => ['quote_requested','quoted','expired'].includes(S.booking) || (!!S.quote && ['requested','assigned'].includes(S.booking));
+const quoteReason = () => S.lang === 'en' ? RULES.quote.reasonEn : RULES.quote.reason;
+const fmtClock = ts => { const d = new Date(ts); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+const fmtRemain = ms => { if (ms <= 0) return '0:00:00'; const s = Math.floor(ms/1000); return `${Math.floor(s/3600)}:${String(Math.floor(s%3600/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; };
+const fmtDateTh = iso => { const d = new Date(iso + 'T00:00:00'); return `${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MON[d.getMonth()]} ${d.getFullYear() + 543}`; };
+const tripTitle = () => S.stops.map(s => nm(place(s.id))).join(' · ');
+const tripTitleTh = () => S.stops.map(s => place(s.id).th).join(' · ');
+function pushCard(q, live) {
+  return `<div class="push ${live ? '' : 'static'}" role="status"><span class="app">แอ่ว</span><div class="grow"><div class="t">${t('pushTitle')}</div>
+    <div class="b">${t('pushBody', {date:fmtDate(S.date), title:esc(tripTitle()), price:baht(q.price), dep:baht(q.deposit), time:fmtClock(q.deadline)})}</div>
+    <div class="m">${live ? `<span data-countdown>${fmtRemain(q.deadline - Date.now())}</span> · ` : ''}${t('pushOpen')}</div></div>
+    ${live ? `<button class="ib" aria-label="close" onclick="event.stopPropagation();S.pushDismissed=true;renderPush()"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>` : ''}</div>`;
+}
+function renderPush() {
+  const show = S.booking === 'quoted' && S.quote && !S.pushDismissed && !document.getElementById('v-admin').classList.contains('on');
+  const el = document.getElementById('push'); el.innerHTML = show ? pushCard(S.quote, true) : '';
+  if (show) el.firstElementChild.onclick = () => { S.pushDismissed = true; view('job'); };
+}
+function quoteBox() {
+  const q = S.quote;
+  if (S.booking === 'quoted' && q) return `<div class="quotebox"><div style="font-size:13px;opacity:.85">${t('quoteTitle')} · ${esc(quoteReason())}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:6px"><div><div class="cd">${baht(q.price)}</div><div style="font-size:13px">${t('lTotal')}</div></div>
+    <div style="text-align:right"><div class="cd" data-countdown>${fmtRemain(q.deadline - Date.now())}</div><div style="font-size:13px">${t('quoteDeadline', {t:fmtClock(q.deadline)})}</div></div></div>
+    ${q.msg ? `<p style="margin-top:10px;font-size:13.5px">${esc(q.msg)}</p>` : ''}
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center"><button class="btn" style="flex:1" onclick="S.step=3;view('cust');renderPrice()">${t('payDeposit', {d:q.deposit.toLocaleString('en-US')})}</button>
+    <button class="btn ghost sm" data-demo-only onclick="S.quote.deadline=Date.now()">${t('simExpire')}</button></div></div>`;
+  if (S.booking === 'expired') return `<div class="quotebox" style="background:var(--urgent-bg);color:var(--urgent);border-color:var(--urgent-ring)"><div style="font-weight:600;font-size:16px">${t('expiredTitle')}</div><p style="font-size:13.5px;margin:4px 0 12px">${t('expiredSub')}</p>
+    <button class="btn sec sm" onclick="S.booking='quote_requested';S.quote=null;S.step=2;renderAll()">${t('requote')}</button></div>`;
+  return `<div class="okbox" style="padding:18px 8px"><div class="ic" style="background:var(--status-progress-bg);color:var(--status-progress)"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <h2 class="sec" style="justify-content:center;font-size:17px">${t('qrOkTitle')}</h2><p class="sub" style="max-width:40ch;margin:0 auto 12px">${t('qrOkSub')}</p>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn sec sm" onclick="view('job')">${t('openLink')}</button><button class="btn sm" data-demo-only onclick="view('quote')">${t('simAdmin')}</button></div></div>`;
+}
+setInterval(() => {
+  if (!S.quote) return; const rem = S.quote.deadline - Date.now();
+  document.querySelectorAll('[data-countdown]').forEach(el => el.textContent = fmtRemain(rem));
+  if (rem <= 0 && S.booking === 'quoted') { S.booking = 'expired'; renderAll(); }
+}, 1000);
 
 /* ═══════════════ render: job detail link ═══════════════ */
 function renderJob() {
-  const {P, sel, mode} = current(), dep = sel ? deposit(sel.total) : 0, drv = DRIVERS.find(d => d.id === S.driver);
-  const assigned = S.booking === 'assigned' && drv, stage = assigned ? 2 : 1;
+  const {P, sel, mode} = current(), drv = DRIVERS.find(d => d.id === S.driver), qf = inQuoteFlow(), q = qf ? S.quote : null;
+  const total = q ? q.price : (sel ? sel.total : 0), dep = q ? q.deposit : (sel ? deposit(sel.total) : 0);
+  const assigned = S.booking === 'assigned' && drv, paid = ['requested','assigned'].includes(S.booking);
+  const keys = qf ? ['qs1','qs2','qs3','qs4','qs5'] : ['sp1','sp2','sp3','sp4'];
+  const stage = qf ? ({quote_requested:1, quoted:2, expired:2, requested:3, assigned:4})[S.booking] : (assigned ? 2 : 1);
+  const badge = {quote_requested:['b-urgent', t('jlQuoteReq')], quoted:['b-info', t('jlQuoted')], expired:['b-pending', t('jlExpired')], requested:['b-progress', S.lang==='en'?'Assigning driver':'รอจัดคนขับ'], assigned:['b-info', t('sp2')]}[S.booking] ?? ['b-pending', '—'];
   const name = S.custName || (S.lang === 'en' ? 'Lukas Weber' : 'กานต์ธิดา ศรีสุข');
   let h = `<div class="urlbar"><svg class="icon sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><code>${S.link}${S.role==='drv'?'?d=1':''}</code>
       <button class="btn ghost sm" onclick="copyText('https://${S.link}')">${t('jlCopy')}</button><span style="margin-left:auto" class="sub">${t('jlRule', {v:RULES.version})}</span></div>
     <div class="panel"><div class="panel-body">
       <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px">
         <div><h1>${t('jlTitle')} · ${S.bookingNo}</h1><div class="sub">${fmtDate(S.date)} · ${t('start')} ${S.time} · ${esc(nm(place(S.pickup)))} · ${esc(S.lang==='en'?RULES.vehicles[S.vehicle].en:RULES.vehicles[S.vehicle].th)} · ${S.pax} ${S.lang==='en'?'pax':'คน'}</div></div>
-        <span class="badge ${assigned?'b-info':'b-progress'}">${assigned ? t('sp2') : (S.lang==='en'?'Assigning driver':'รอจัดคนขับ')}</span></div>
-      <div class="stepper">${['sp1','sp2','sp3','sp4'].map((k, i) => `<div class="sp ${i<stage?'done':''} ${i===stage?'now':''}">${t(k)}</div>`).join('')}</div>
+        <span class="badge ${badge[0]}">${badge[1]}</span></div>
+      <div class="stepper">${keys.map((k, i) => `<div class="sp ${i<stage?'done':''} ${i===stage?'now':''}">${t(k)}</div>`).join('')}</div>
     </div></div>`;
+  if (qf && !paid) h += `<div class="panel"><div class="panel-body">${quoteBox()}</div></div>`;
   if (S.role === 'drv') h += `<div class="panel"><div class="panel-head">${t('dvCust')}</div><div class="panel-body driver">
       <span class="avatar">${esc(name.slice(0,2))}</span><div class="grow"><div class="nm">${esc(name)}</div><div class="sub">${esc(S.custContact || 'LINE @kantida')} · ${S.pax} ${S.lang==='en'?'pax':'คน'} · ${S.langDriver ? (S.lang==='en'?'needs English/Chinese':'ต้องการภาษาอังกฤษ/จีน') : (S.lang==='en'?'Thai is fine':'ภาษาไทยได้')}</div>
       <div class="sub">${t('dvPickupNote')}</div></div></div></div>`;
-  h += `<div class="panel"><div class="panel-head">${t('jlDriver')}</div><div class="panel-body">`;
-  if (assigned) h += `<div class="driver"><span class="avatar">${esc(drv.nick.slice(0,2))}</span><div class="grow"><div class="nm">${esc(S.lang==='en'?drv.en:drv.nick)} <span class="sub" style="font-weight:400">· ${esc(drv.name)}</span></div>
-      <div class="sub">${esc(S.lang==='en'?drv.carEn:drv.car)} · ★ ${drv.rating} · ${t('years', {n:drv.years})}</div>
-      <div class="chips">${(S.lang==='en'?drv.langsEn:drv.langs).map(l => `<span class="chip"><span>${esc(l)}</span></span>`).join('')}</div></div>
-      <span class="plate">${drv.plate}</span></div>
-    <div class="contact" style="margin-top:14px"><span class="sub">${t('jlContact')}</span><span class="num">${drv.phone}</span><button class="btn ghost sm" onclick="copyText('${drv.phone}')">${t('jlCopy')}</button><span class="chip"><span>LINE ${drv.line}</span></span></div>`;
-  else h += `<div class="empty" style="padding:18px 8px"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M19 8v6M22 11h-6"/></svg><p>${t('jlWaiting')}</p></div>`;
-  h += `</div></div>`;
-  // itinerary
+  if (paid) {
+    h += `<div class="panel"><div class="panel-head">${t('jlDriver')}</div><div class="panel-body">`;
+    if (assigned) h += `<div class="driver"><span class="avatar">${esc(drv.nick.slice(0,2))}</span><div class="grow"><div class="nm">${esc(S.lang==='en'?drv.en:drv.nick)} <span class="sub" style="font-weight:400">· ${esc(drv.name)}</span></div>
+        <div class="sub">${esc(S.lang==='en'?drv.carEn:drv.car)} · ★ ${drv.rating} · ${t('years', {n:drv.years})}</div>
+        <div class="chips">${(S.lang==='en'?drv.langsEn:drv.langs).map(l => `<span class="chip"><span>${esc(l)}</span></span>`).join('')}</div></div>
+        <span class="plate">${drv.plate}</span></div>
+      <div class="contact" style="margin-top:14px"><span class="sub">${t('jlContact')}</span><span class="num">${drv.phone}</span><button class="btn ghost sm" onclick="copyText('${drv.phone}')">${t('jlCopy')}</button><span class="chip"><span>LINE ${drv.line}</span></span></div>`;
+    else h += `<div class="empty" style="padding:18px 8px"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M19 8v6M22 11h-6"/></svg><p>${t('jlWaiting')}</p></div>`;
+    h += `</div></div>`;
+  }
   h += `<div class="panel"><div class="panel-head">${t('jlItin')}<span class="right">${Math.round(P.km)} ${t('km')} · ${(P.total/60).toFixed(1).replace(/\.0$/,'')} ${t('hr')}</span></div><div class="panel-body"><div class="timeline">
     <div class="tl"><div class="tm tnum">${S.time}</div><div class="dot"><i class="s"></i></div><div class="bd"><div class="t">${esc(nm(place(S.pickup)))}</div><div class="s">${t('start')}</div></div></div>`;
   P.legs.forEach((L, i) => h += `<div class="tl"><div class="tm tnum">${fmtT(L.arrive)}</div><div class="dot"><i></i></div><div class="bd"><div class="t">${i+1}. ${esc(nm(L.p))}</div><div class="s">${L.dwell ? `${t('stay')} ${L.dwell} ${t('min')} · ` : ''}${t('drive')} ${Math.round(L.mins)} ${t('min')} · ${L.d.toFixed(0)} ${t('km')}</div>
-    ${S.role==='drv' ? `<div class="checkrow" style="border:none;padding:6px 0 0"><button class="btn sec sm" onclick="S.checked[${i}]=!S.checked[${i}];renderJob()">${S.checked[i] ? '✓ ' : ''}${t('dvCheck')}</button><button class="btn ghost sm">${t('dvNavigate')}</button></div>` : ''}</div></div>`);
+    ${S.role==='drv' && assigned ? `<div class="checkrow" style="border:none;padding:6px 0 0"><button class="btn sec sm" onclick="S.checked[${i}]=!S.checked[${i}];renderJob()">${S.checked[i] ? '✓ ' : ''}${t('dvCheck')}</button><button class="btn ghost sm">${t('dvNavigate')}</button></div>` : ''}</div></div>`);
   if (P.ret) h += `<div class="tl"><div class="tm tnum">${fmtT(P.ret.arrive)}</div><div class="dot"><i class="s"></i></div><div class="bd"><div class="t">${t('back')}</div></div></div>`;
-  h += `</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px"><button class="btn sec sm" onclick="toast(t('jlAddStopNote'),6000)">${t('jlAddStop')}</button><span class="sub" style="flex:1;min-width:200px">${t('jlAddStopNote')}</span></div></div></div>`;
-  // price
-  if (sel) h += `<div class="panel"><div class="panel-head">${t('jlPrice')}<span class="right">${t(MODE_KEYS[mode])}</span></div><div class="panel-body">
-    ${sel.lines.map(l => `<div class="line"><span class="l">${esc(t(l.k, l.v))}</span><span class="a tnum">${baht(l.a)}</span></div>`).join('')}
-    <div class="line total"><span class="l">${t('lTotal')}</span><span class="a tnum">${baht(sel.total)}</span></div>
-    <div class="line"><span class="l" style="color:var(--status-done)">${t('jlPaid')}</span><span class="a tnum" style="color:var(--status-done)">− ${baht(dep)}</span></div>
-    <div class="line" style="font-weight:600"><span class="l">${t('jlRest')}</span><span class="a tnum">${baht(sel.total - dep)}</span></div></div></div>`;
+  h += `</div>${paid ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px"><button class="btn sec sm" onclick="toast(t('jlAddStopNote'),6000)">${t('jlAddStop')}</button><span class="sub" style="flex:1;min-width:200px">${t('jlAddStopNote')}</span></div>` : ''}</div></div>`;
+  if (sel) {
+    const lines = q ? [{k:'lQuote', v:{reason:quoteReason()}, a:q.price}] : sel.lines;
+    h += `<div class="panel"><div class="panel-head">${t('jlPrice')}<span class="right">${q ? t('quoteTitle') : t(MODE_KEYS[mode])}</span></div><div class="panel-body">
+    ${lines.map(l => `<div class="line"><span class="l">${esc(t(l.k, l.v))}</span><span class="a tnum">${baht(l.a)}</span></div>`).join('')}
+    <div class="line total"><span class="l">${t('lTotal')}</span><span class="a tnum">${baht(total)}</span></div>`;
+    if (paid) h += `<div class="line"><span class="l" style="color:var(--status-done)">${t('jlPaid')}</span><span class="a tnum" style="color:var(--status-done)">− ${baht(dep)}</span></div>
+    <div class="line" style="font-weight:600"><span class="l">${t('jlRest')}</span><span class="a tnum">${baht(total - dep)}</span></div>`;
+    else if (S.booking === 'quoted') h += `<div class="line" style="font-weight:600"><span class="l">${t('jlDue', {t:fmtClock(q.deadline)})}</span><span class="a tnum">${baht(dep)}</span></div>`;
+    else h += `<div class="line"><span class="l sub">${t('refPrice')}</span></div>`;
+    h += `</div></div>`;
+  }
   document.getElementById('joblink').innerHTML = h;
 }
 function setRole(r) { S.role = r; document.getElementById('role-cust').classList.toggle('on', r==='cust'); document.getElementById('role-drv').classList.toggle('on', r==='drv'); renderJob(); }
 
 /* ═══════════════ render: admin ═══════════════ */
 function liveJob() {
-  const {P, sel, mode} = current(), title = S.stops.map(s => place(s.id).th).join(' · ') || 'ยังไม่มีจุดหมาย';
+  const {P, sel, mode} = current(), title = tripTitleTh() || 'ยังไม่มีจุดหมาย', q = inQuoteFlow() ? S.quote : null;
   const d = new Date(S.date + 'T00:00:00');
   return {id:S.bookingNo, title: S.ret ? title : `${title} (ขาเดียว)`, cust:`${S.custName || 'กานต์ธิดา ศรีสุข'} · ${S.pax} คน${S.langDriver?' · ต้องการภาษาต่างประเทศ':''}`,
     when:`${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MON[d.getMonth()]} ${String(d.getFullYear()+543).slice(2)} · ${S.time}`,
-    veh:RULES.vehicles[S.vehicle].th.split(' (')[0], mode: T.th[MODE_KEYS[mode]] ?? '', total: sel?.total ?? 0, km: Math.round(P.km), hours:(P.total/60).toFixed(1),
-    status: S.booking === 'none' ? 'draft' : S.booking === 'requested' ? 'pending' : 'assigned', driver: DRIVERS.find(x => x.id === S.driver)?.nick};
+    veh:RULES.vehicles[S.vehicle].th.split(' (')[0], mode: inQuoteFlow() ? 'เสนอราคา' : (T.th[MODE_KEYS[mode]] ?? ''), total: q ? q.price : (inQuoteFlow() ? 0 : (sel?.total ?? 0)), km: Math.round(P.km), hours:(P.total/60).toFixed(1),
+    status: ({none:'draft', quote_requested:'quote_req', quoted:'quoted', expired:'expired', requested:'pending', assigned:'assigned'})[S.booking],
+    driver: S.booking === 'quoted' && q ? `มัดจำภายใน ${fmtClock(q.deadline)}` : DRIVERS.find(x => x.id === S.driver)?.nick};
 }
 function allJobs() { return JOBS.map(j => j.live ? liveJob() : j).filter(j => j.status !== 'draft'); }
 function renderAdmin() {
-  const jobs = allJobs(), pend = jobs.filter(j => j.status === 'pending').length, today = jobs.filter(j => j.when.startsWith('พ. 21')).length;
+  const jobs = allJobs(), pend = jobs.filter(j => j.status === 'pending').length, qreq = jobs.filter(j => j.status === 'quote_req').length, today = jobs.filter(j => j.when.startsWith('พ. 21')).length;
   document.getElementById('ruleVer2').textContent = RULES.version;
   document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="n tnum" style="color:var(--urgent)">${qreq}</div><div class="l">รอเสนอราคา · โหมดเสนอราคา${RULES.quote.enabled ? (RULES.quote.useRange ? ` ${fmtDateTh(RULES.quote.from)} – ${fmtDateTh(RULES.quote.to)}` : ' เปิดตลอด') : ' ปิด'}</div></div>
     <div class="kpi"><div class="n tnum" style="color:var(--status-progress)">${pend}</div><div class="l">รอจัดคนขับ</div></div>
     <div class="kpi"><div class="n tnum">${today}</div><div class="l">งานวันนี้</div></div>
-    <div class="kpi"><div class="n tnum">3 / 4</div><div class="l">คนขับว่างพรุ่งนี้</div></div>
     <div class="kpi"><div class="n tnum">฿186,400</div><div class="l">ยอดจองเดือนนี้ · มัดจำรับแล้ว ฿55,900</div></div>`;
-  const F = [['all','ทั้งหมด'],['pending','รอจัดคนขับ'],['assigned','จัดคนขับแล้ว'],['traveling','กำลังเดินทาง'],['done','เสร็จสิ้น'],['cancelled','ยกเลิก']];
-  document.getElementById('jobFilters').innerHTML = F.map(([k, l]) => `<button class="pill ${S.jobFilter===k?'on':''}" onclick="S.jobFilter='${k}';renderAdmin()">${l}${k==='pending'&&pend?` · ${pend}`:''}</button>`).join('');
+  const F = [['all','ทั้งหมด'],['quote_req','รอเสนอราคา'],['quoted','รอมัดจำ'],['pending','รอจัดคนขับ'],['assigned','จัดคนขับแล้ว'],['traveling','กำลังเดินทาง'],['done','เสร็จสิ้น'],['cancelled','ยกเลิก']];
+  document.getElementById('jobFilters').innerHTML = F.map(([k, l]) => `<button class="pill ${S.jobFilter===k?'on':''}" onclick="S.jobFilter='${k}';renderAdmin()">${l}${k==='quote_req'&&qreq?` · ${qreq}`:''}${k==='pending'&&pend?` · ${pend}`:''}</button>`).join('');
   const list = jobs.filter(j => S.jobFilter === 'all' || j.status === S.jobFilter);
+  const act = j => {
+    const live = j.id === S.bookingNo, demo = "toast('งานตัวอย่าง: ใช้งาน J-2569-118 ที่มาจากหน้าลูกค้าเพื่อดูการทำงานจริง')";
+    if (j.status === 'quote_req') return `<button class="btn sm" onclick="${live ? "nav('quote')" : demo}">เสนอราคา</button>`;
+    if (j.status === 'expired') return `<button class="btn sec sm" onclick="${live ? "nav('quote')" : demo}">เสนอราคาใหม่</button>`;
+    if (j.status === 'pending') return `<button class="btn sm" onclick="${live ? "nav('assign')" : demo}">จัดคนขับ</button>`;
+    return `<button class="btn ghost sm" onclick="${live ? "view('job')" : "toast('ลิงก์งานตัวอย่าง: aewkan.app/j/'+Math.random().toString(36).slice(2,8).toUpperCase())"}">ดูลิงก์</button>`;
+  };
   document.getElementById('jobList').innerHTML = list.length ? list.map(j => `<div class="row">
-      <div class="grow"><div class="t">${esc(j.title)}</div><div class="s">${j.id} · ${esc(j.cust)} · ${j.when} · ${j.veh} · ${j.mode}${j.driver ? ` · คนขับ: ${j.driver}` : ''}</div></div>
-      <span class="amt tnum">${baht(j.total)}</span><span class="badge ${STATUS[j.status].cls}">${STATUS[j.status].th}</span>
-      <div class="acts">${j.status === 'pending' ? `<button class="btn sm" onclick="nav('assign')">จัดคนขับ</button>` : `<button class="btn ghost sm" onclick="${j.id===S.bookingNo?"view('job')":"toast('ลิงก์งานตัวอย่าง: aewkan.app/j/'+Math.random().toString(36).slice(2,8).toUpperCase())"}">ดูลิงก์</button>`}</div></div>`).join('')
+      <div class="grow"><div class="t">${esc(j.title)}</div><div class="s">${j.id} · ${esc(j.cust)} · ${j.when} · ${j.veh} · ${j.mode}${j.driver ? ` · ${j.status==='quoted' ? '' : 'คนขับ: '}${j.driver}` : ''}</div></div>
+      <span class="amt tnum">${j.total ? baht(j.total) : '—'}</span><span class="badge ${STATUS[j.status].cls}">${STATUS[j.status].th}</span>
+      <div class="acts">${act(j)}</div></div>`).join('')
     : `<div class="empty"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 10l3 3 5-6"/></svg><p>ไม่มีงานในสถานะนี้</p></div>`;
+}
+function renderQuote() {
+  const j = liveJob(), {P, PR} = current(), q = RULES.quote, active = ['quote_req','quoted','expired'].includes(j.status);
+  document.getElementById('quoteSub').textContent = active ? `${j.id} · ${j.when} · ${j.veh} · ${j.km} กม. · ${j.hours} ชม. · ${STATUS[j.status].th}` : 'ไม่มีคำขอราคาจากทริปตัวอย่าง';
+  if (!active) { document.getElementById('quoteBody').innerHTML = `<div class="panel" style="grid-column:1/-1"><div class="empty"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <p style="margin-bottom:12px">ยังไม่มีคำขอราคาที่รอดำเนินการ ลูกค้าจะส่งคำขอได้เมื่อวันเดินทางอยู่ในช่วงที่เปิดโหมดเสนอราคา${q.enabled && q.useRange ? ` (${fmtDateTh(q.from)} – ${fmtDateTh(q.to)})` : ''}</p>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="loadTemplate(${TEMPLATES.length-1});view('cust')">ลองทริปตัวอย่างช่วงปีใหม่</button><button class="btn sec" onclick="nav('pricing')">ตั้งค่าโหมดเสนอราคา</button></div></div></div>`; return; }
+  const ref = PR.best ? PR[PR.best].total : 0, sugg = Math.round(ref * (1 + q.pct/100) / 100) * 100;
+  const price = S.quote?.price ?? sugg, dep = S.quote?.deposit ?? Math.max(100, Math.round(price * RULES.depositPct/100/100) * 100), hours = S.quote?.hours ?? q.hours;
+  const left = `<div class="panel"><div class="panel-head">คำขอราคา<span class="right"><span class="badge ${STATUS[j.status].cls}">${STATUS[j.status].th}</span></span></div><div class="panel-body">
+      <div style="font-weight:600;font-size:15px;margin-bottom:6px">${esc(j.title)}</div>
+      <dl class="kv"><dt>ลูกค้า</dt><dd>${esc(j.cust)}</dd><dt>ติดต่อ</dt><dd>${esc(S.custContact || 'LINE @kantida')}</dd><dt>แจ้งเตือน</dt><dd>${S.pushOn ? 'เปิดรับ push บนมือถือแล้ว' : 'ไม่ได้เปิด push · จะส่งทาง LINE แทน'}</dd>
+      <dt>รับ</dt><dd>${j.when} · ${esc(place(S.pickup).th)}</dd><dt>เส้นทาง</dt><dd>${j.km} กม. · ${j.hours} ชม. · จบ ${fmtT(P.end)} · โซนไกลสุด ${P.maxZone} · ทางภูเขา ${P.mtn} จุด</dd>
+      <dt>ภาษา</dt><dd>${S.langDriver ? 'ต้องการคนขับภาษาต่างประเทศ' : 'ภาษาไทยได้'}</dd></dl></div></div>
+    <div class="panel" style="margin-top:14px"><div class="panel-head">ราคาอ้างอิงจากกฎ ${RULES.version}<span class="right">${esc(q.reason)}</span></div><div class="panel-body">
+      ${['hourly','daily','trip','oneway'].map(k => `<div class="line"><span class="l">${T.th[MODE_KEYS[k]]}</span><span class="a tnum">${PR[k].ok ? baht(PR[k].total) : '<span class="sub">ไม่เข้าเงื่อนไข</span>'}</span></div>`).join('')}
+      <div class="line total"><span class="l">ราคาแนะนำ · ${T.th[MODE_KEYS[PR.best]]} +${q.pct}%</span><span class="a tnum">${baht(sugg)}</span></div></div></div>`;
+  const right = `<div class="panel"><div class="panel-head">เสนอราคาและกำหนดเวลาโอนมัดจำ</div><div class="panel-body">
+      <div class="frow"><label class="f"><span>ราคาเสนอ (บาท)</span><input class="in tnum" type="number" step="100" id="qPrice" value="${price}" oninput="quotePreview()"></label>
+        <label class="f"><span>มัดจำ (บาท)</span><input class="in tnum" type="number" step="100" id="qDep" value="${dep}" oninput="quotePreview()"></label>
+        <label class="f"><span>โอนมัดจำภายใน</span><select class="in" id="qHours" onchange="quotePreview()">${[1,2,3,6,12,24].map(h => `<option value="${h}" ${h===hours?'selected':''}>${h} ชั่วโมง</option>`).join('')}</select></label></div>
+      <label class="f" style="margin-top:10px"><span>ข้อความถึงลูกค้า</span><textarea class="ta" id="qMsg">${esc(S.quote?.msg ?? defaultQuoteMsg(price, dep, hours))}</textarea></label>
+      <div class="sub" style="margin:12px 0 6px">ตัวอย่างการแจ้งเตือนที่ลูกค้าจะเห็น · ${S.pushOn ? 'push บนมือถือ' : 'LINE (ลูกค้าไม่ได้เปิด push)'}</div>
+      <div id="qPreview">${pushCard({price, deposit:dep, deadline: Date.now() + hours*3600e3}, false)}</div>
+      <button class="btn w" style="margin-top:14px" onclick="sendQuote()">${S.booking === 'quoted' ? 'ส่งราคาใหม่และรีเซ็ตเวลามัดจำ' : 'ส่งแจ้งเตือนเสนอราคา'}</button>
+      ${S.booking === 'quoted' ? `<button class="btn sec w" style="margin-top:8px" onclick="view('job')">ดูที่ลูกค้าเห็น</button>` : ''}
+      <p class="sub" style="margin-top:10px">เมื่อหมดเวลา ระบบปล่อยคิวรถให้คำขออื่นอัตโนมัติ และแจ้งลูกค้าว่าขอราคาใหม่ได้</p></div></div>`;
+  document.getElementById('quoteBody').innerHTML = left + right;
+}
+function defaultQuoteMsg(price, dep, hours) { return `ราคาทริป ${tripTitleTh()} วันที่ ${fmtDateTh(S.date)} รวม ${baht(price)} (รวมน้ำมัน ทางด่วน ค่าจอด) โอนมัดจำ ${baht(dep)} ภายใน ${hours} ชั่วโมงเพื่อล็อกรถและคนขับ ส่วนที่เหลือจ่ายคนขับหน้างานค่ะ`; }
+function quotePreview() { const price = +document.getElementById('qPrice').value || 0, dep = +document.getElementById('qDep').value || 0, hours = +document.getElementById('qHours').value; document.getElementById('qPreview').innerHTML = pushCard({price, deposit:dep, deadline: Date.now() + hours*3600e3}, false); }
+function sendQuote() {
+  const price = +document.getElementById('qPrice').value || 0, dep = +document.getElementById('qDep').value || 0, hours = +document.getElementById('qHours').value, msg = document.getElementById('qMsg').value;
+  S.quote = {price, deposit:dep, hours, msg, deadline: Date.now() + hours*3600e3, sentAt: Date.now()}; S.booking = 'quoted'; S.step = 2; S.pushDismissed = false; renderAll();
+  toast(`ส่ง${S.pushOn ? ' push' : ' LINE'} เสนอราคา ${baht(price)} แล้ว · ลูกค้าต้องโอนมัดจำภายใน ${fmtClock(S.quote.deadline)}`);
 }
 function renderAssign() {
   const j = liveJob(), {P} = current();
-  const fmtDateTh = iso => { const d = new Date(iso + 'T00:00:00'); return `${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MON[d.getMonth()]} ${d.getFullYear() + 543}`; };
   document.getElementById('assignSub').textContent = j.status === 'draft' ? 'ยังไม่มีงานรอจัด ลองให้ลูกค้าจองจากหน้าวางทริปก่อน' : `${j.id} · ${j.when} · ${j.veh} · ${j.mode} · ${baht(j.total)}`;
   if (j.status === 'draft') { document.getElementById('assignBody').innerHTML = `<div class="panel" style="grid-column:1/-1"><div class="empty"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M16 11l2 2 4-4"/></svg><p style="margin-bottom:12px">ยังไม่มีงานรอจัดคนขับ</p><button class="btn" onclick="view('cust')">ไปหน้าวางทริปของลูกค้า</button></div></div>`; return; }
   const left = `<div class="panel"><div class="panel-head">งานที่ต้องจัด<span class="right"><span class="badge ${STATUS[j.status].cls}">${STATUS[j.status].th}</span></span></div><div class="panel-body">
@@ -1089,9 +1256,24 @@ function renderPricing() {
     <div class="panel"><div class="panel-head">ค่าเพิ่มและมัดจำ</div><div class="tblwrap"><table class="tbl"><tbody>
       <tr><td>ค่าทางภูเขา (บาท/จุด)</td><td>${num('mountain', RULES.mountain, 50)}</td><td>คนขับภาษาต่างประเทศ (บาท)</td><td>${num('langDriver', RULES.langDriver, 50)}</td></tr>
       <tr><td>กลางคืน 22:00–06:00 (%)</td><td>${num('nightPct', RULES.nightPct)}</td><td>เทศกาล / วันหยุดยาว (%)</td><td>${num('seasonPct', RULES.seasonPct)}</td></tr>
-      <tr><td>มัดจำ (%)</td><td>${num('depositPct', RULES.depositPct, 5)}</td><td></td><td></td></tr></tbody></table></div></div>`;
+      <tr><td>มัดจำ (%)</td><td>${num('depositPct', RULES.depositPct, 5)}</td><td></td><td></td></tr></tbody></table></div></div>
+    <div class="panel"><div class="panel-head">โหมดเสนอราคา<span class="right"><label style="display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" data-q="enabled" ${RULES.quote.enabled?'checked':''} onchange="setQuote(this)" style="width:17px;height:17px;accent-color:var(--brand-solid)"> เปิดใช้</label></span></div>
+      <div class="panel-body">
+        <p class="sub" style="margin-bottom:12px">เมื่อเปิด ลูกค้าที่เลือกวันในช่วงนี้จะส่งทริปมาเป็นคำขอราคาแทนการจองทันที ทีมงานกำหนดราคาเองแล้วส่งแจ้งเตือน (push หรือ LINE) พร้อมเวลาที่ต้องโอนมัดจำ</p>
+        <div class="frow">
+          <label class="f"><span>ช่วงที่ใช้</span><select class="in" data-q="useRange" onchange="setQuote(this)"><option value="1" ${RULES.quote.useRange?'selected':''}>เฉพาะช่วงวันที่</option><option value="0" ${!RULES.quote.useRange?'selected':''}>ทุกวัน</option></select></label>
+          <label class="f"><span>ตั้งแต่</span><input class="in" type="date" data-q="from" value="${RULES.quote.from}" onchange="setQuote(this)" ${RULES.quote.useRange?'':'disabled'}></label>
+          <label class="f"><span>ถึง</span><input class="in" type="date" data-q="to" value="${RULES.quote.to}" onchange="setQuote(this)" ${RULES.quote.useRange?'':'disabled'}></label>
+          <label class="f"><span>เวลาโอนมัดจำเริ่มต้น</span><select class="in" data-q="hours" onchange="setQuote(this)">${[1,2,3,6,12,24].map(h => `<option value="${h}" ${h===RULES.quote.hours?'selected':''}>${h} ชั่วโมง</option>`).join('')}</select></label>
+          <label class="f"><span>ราคาแนะนำ บวกจากกฎปกติ (%)</span><input class="in tnum" type="number" step="5" data-q="pct" value="${RULES.quote.pct}" onchange="setQuote(this)"></label>
+          <label class="f" style="grid-column:1/-1"><span>เหตุผลที่แสดงให้ลูกค้า (ไทย)</span><input class="in" data-q="reason" value="${esc(RULES.quote.reason)}" onchange="setQuote(this)"></label>
+          <label class="f" style="grid-column:1/-1"><span>Reason shown to customers (English)</span><input class="in" data-q="reasonEn" value="${esc(RULES.quote.reasonEn)}" onchange="setQuote(this)"></label>
+        </div>
+        <p class="sub" style="margin-top:12px">ทริปตัวอย่างวันที่ ${fmtDateTh(S.date)}: <b style="color:var(--ink)">${quoteActive() ? 'เข้าโหมดเสนอราคา' : 'จองทันทีตามกฎราคา'}</b></p>
+      </div></div>`;
   renderRulePreview();
 }
+function setQuote(el) { const k = el.dataset.q; const q = RULES.quote; q[k] = el.type === 'checkbox' ? el.checked : k === 'useRange' ? el.value === '1' : (k === 'hours' || k === 'pct') ? Number(el.value) : el.value; renderAll(); }
 function setRule(el) { const v = Number(el.value); if (!Number.isFinite(v)) return; const path = el.dataset.rule.split('.'); let o = RULES; while (path.length > 1) o = o[path.shift()]; o[path[0]] = v; renderRulePreview(); renderMap(); }
 function renderRulePreview() {
   const {P, PR} = current(), j = liveJob();
@@ -1106,17 +1288,18 @@ function view(v) {
   document.querySelectorAll('.demobar [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === v));
   document.getElementById('v-cust').classList.toggle('on', v === 'cust');
   document.getElementById('v-job').classList.toggle('on', v === 'job');
-  const admin = ['admin','assign','pricing'].includes(v);
+  const admin = ['admin','assign','quote','pricing'].includes(v);
   document.getElementById('v-admin').classList.toggle('on', admin);
   if (admin) nav(v);
   if (v === 'job') renderJob();
+  renderPush();
   window.scrollTo({top:0});
 }
 function nav(id, el) {
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 's-' + id));
   document.querySelectorAll('.sidebar a, .bottomnav a').forEach(a => a.classList.toggle('active', a.dataset.nav === id));
   document.querySelectorAll('.demobar [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === id));
-  if (id === 'admin') renderAdmin(); if (id === 'assign') renderAssign(); if (id === 'pricing') renderPricing();
+  if (id === 'admin') renderAdmin(); if (id === 'assign') renderAssign(); if (id === 'quote') renderQuote(); if (id === 'pricing') renderPricing();
   return false;
 }
 function sheet(open) { document.querySelectorAll('.sheet, .sheet-bg').forEach(e => e.classList.toggle('on', open)); }
@@ -1133,9 +1316,11 @@ function renderAll() {
   if (document.getElementById('v-job').classList.contains('on')) renderJob();
   if (document.getElementById('s-admin').classList.contains('on')) renderAdmin();
   if (document.getElementById('s-assign').classList.contains('on')) renderAssign();
+  if (document.getElementById('s-quote').classList.contains('on')) renderQuote();
   if (document.getElementById('s-pricing').classList.contains('on')) renderPricing();
+  renderPush();
 }
-document.getElementById('fDate').addEventListener('change', e => { S.date = e.target.value || S.date; renderAll(); });
+document.getElementById('fDate').addEventListener('change', e => { S.date = e.target.value || S.date; if (S.booking === 'none') S.step = 0; renderAll(); });
 document.getElementById('fTime').addEventListener('change', e => { S.time = e.target.value || S.time; renderAll(); });
 document.getElementById('fPax').addEventListener('change', e => { S.pax = Number(e.target.value); if (S.pax > RULES.vehicles[S.vehicle].seats) { const up = Object.entries(RULES.vehicles).find(([, v]) => v.seats >= S.pax); if (up) { S.vehicle = up[0]; toast(t('autoVeh', {n:S.pax, v: S.lang==='en'?up[1].en:up[1].th})); } } renderAll(); });
 document.getElementById('fVehicle').addEventListener('change', e => { S.vehicle = e.target.value; renderAll(); });
