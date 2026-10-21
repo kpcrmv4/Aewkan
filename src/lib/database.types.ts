@@ -1273,6 +1273,7 @@ export type Database = {
         Args: { p_email: string; p_role: string; p_token: string }
         Returns: Json
       }
+      cron_notify: { Args: never; Returns: number }
       current_owner_id: { Args: never; Returns: string }
       deposit_due: { Args: { p_booking: string }; Returns: number }
       deposit_open: {

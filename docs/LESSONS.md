@@ -50,6 +50,7 @@
 - กฎ: migration ของ DB ใหม่ไม่ใส่ drop if exists และงาน cleanup ใน run ที่ไม่มีคนเฝ้าใช้ update สถานะแทน delete ผ่าน MCP
 - status: new
 - เกิดซ้ำ: P5 2026-10-21
+- เกิดซ้ำ: cron-notify 2026-10-21
 
 ## L-003 · 2026-10-21 · kp-e2e-playwright-real-db · false-green
 - อาการ: spec "ผู้ไม่ได้ล็อกอินเปิดลิงก์เชิญ" ผ่าน แต่จริง ๆ เปิดด้วย session ทีมงาน

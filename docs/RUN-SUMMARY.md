@@ -45,7 +45,7 @@ Mode รุม (3 workers per wave) · loop everything · verification เร็
 5. Supabase Auth: custom SMTP via Resend (smtp.resend.com:465, user `resend`) + redirect URL `<site>/admin/invite/**` (R-014), and turn on leaked-password protection.
 6. `/admin/pricing`: replace the provisional v1 prices (R-005).
 7. Vercel: `NEXT_PUBLIC_SITE_URL` = real domain (canonicals, sitemap, JSON-LD, e-mail logo) · submit the sitemap in Google Search Console.
-8. After deploy: schedule `/api/cron/notify` every 5 min via pg_cron + pg_net with `CRON_SECRET` (R-017).
+8. pg_cron job `aewkan-notify` (every 5 min) is set; the cron secret is in Vault (`aewkan_cron_secret`, same value as Vercel `CRON_SECRET`). After deploy, in the SQL editor: `select vault.create_secret('https://<domain>', 'aewkan_site_url');` — until then the job does nothing. Optional: `drop extension pg_net; create extension pg_net with schema extensions;` (advisor: extension in public).
 
 ## Decisions made for you (docs/RULINGS.md)
 
