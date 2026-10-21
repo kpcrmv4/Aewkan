@@ -1,8 +1,8 @@
 {
   "project": "aewkan",
   "run": {
-    "status": "running",
-    "iteration": 2,
+    "status": "finished",
+    "iteration": 3,
     "budget": 60,
     "started": "2026-10-21T13:00+07:00",
     "batch": {
@@ -113,17 +113,17 @@
         {
           "id": "P2-05",
           "name": "Pricing rules editor + publish version",
-          "status": "doing"
+          "status": "done"
         },
         {
           "id": "P2-06",
           "name": "Places (link/coords/map click) + measured segments",
-          "status": "doing"
+          "status": "done"
         },
         {
           "id": "P2-07",
           "name": "Commission policy table + splits",
-          "status": "doing"
+          "status": "done"
         }
       ]
     },
@@ -134,27 +134,27 @@
         {
           "id": "P4-01",
           "name": "PromptPay QR + slip upload + slip verify adapter",
-          "status": "doing"
+          "status": "done"
         },
         {
           "id": "P4-02",
           "name": "Stripe + Beam checkout and webhooks",
-          "status": "doing"
+          "status": "done"
         },
         {
           "id": "P4-03",
           "name": "LINE OA messages + web push + service worker",
-          "status": "doing"
+          "status": "done"
         },
         {
           "id": "P4-04",
           "name": "Integrations settings page (Vault)",
-          "status": "doing"
+          "status": "done"
         },
         {
           "id": "P4-05",
           "name": "Routing API adapter feeding segments",
-          "status": "doing"
+          "status": "done"
         }
       ]
     },
@@ -165,12 +165,12 @@
         {
           "id": "P5-01",
           "name": "Team list, invites, accept page",
-          "status": "doing"
+          "status": "done"
         },
         {
           "id": "P5-02",
           "name": "Roles + permission editor, ownership transfer",
-          "status": "doing"
+          "status": "done"
         }
       ]
     },
@@ -181,12 +181,12 @@
         {
           "id": "P6-01",
           "name": "Demo seed covering every status",
-          "status": "todo"
+          "status": "blocked"
         },
         {
           "id": "P6-02",
           "name": "Full suite + acceptance matrices closed",
-          "status": "todo"
+          "status": "blocked"
         }
       ]
     }
@@ -200,6 +200,15 @@
       "unit": "77 passed",
       "e2e": "309 passed, 21 not run (secret key / P4) + cross 19 passed",
       "advisors": "security: intentional token RPCs only; performance: unused indexes only"
+    },
+    {
+      "at": "2026-10-21T17:45+07:00",
+      "wave": 2,
+      "typecheck": "pass",
+      "build": "pass",
+      "unit": "168 passed",
+      "e2e": "505 passed, 27 not run (secret key / limited account), 0 failed",
+      "advisors": "security: token RPCs + permission-checked definer functions only; performance: unused indexes only"
     }
   ]
 }
