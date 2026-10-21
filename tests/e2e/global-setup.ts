@@ -1,18 +1,21 @@
 import { chromium, type FullConfig } from '@playwright/test';
 import { existsSync, mkdirSync } from 'node:fs';
 
+export const STAFF_STATE = 'tests/e2e/.auth/staff.json';
+
 /**
  * Sign each staff role in ONCE and persist its storageState
  * (per-test logins hit Supabase Auth's rate limit).
- * Credentials come from the environment only: E2E_OWNER_EMAIL / E2E_OWNER_PASSWORD.
+ * Credentials come from the environment only: E2E_STAFF_EMAIL / E2E_STAFF_PASSWORD
+ * (a non-owner test account with every permission — role `e2e_all`).
  * Missing → staff specs must report "did not run", never pass empty.
  */
 export default async function globalSetup(config: FullConfig) {
   mkdirSync('tests/e2e/.auth', { recursive: true });
-  const email = process.env.E2E_OWNER_EMAIL;
-  const password = process.env.E2E_OWNER_PASSWORD;
+  const email = process.env.E2E_STAFF_EMAIL;
+  const password = process.env.E2E_STAFF_PASSWORD;
   if (!email || !password) {
-    console.warn('[e2e] E2E_OWNER_EMAIL/PASSWORD not set — staff specs will be skipped and reported as not run');
+    console.warn('[e2e] E2E_STAFF_EMAIL/PASSWORD not set — staff specs will be skipped and reported as not run');
     return;
   }
   const baseURL = config.projects[0]?.use.baseURL ?? 'http://127.0.0.1:3100';
@@ -24,6 +27,6 @@ export default async function globalSetup(config: FullConfig) {
   await page.getByLabel('รหัสผ่าน').fill(password);
   await page.getByRole('button', { name: 'เข้าสู่ระบบ', exact: true }).click();
   await page.waitForURL(/\/admin\/(?!login)/);
-  await page.context().storageState({ path: 'tests/e2e/.auth/owner.json' });
+  await page.context().storageState({ path: STAFF_STATE });
   await browser.close();
 }

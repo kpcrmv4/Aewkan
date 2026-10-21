@@ -1,6 +1,13 @@
 import { existsSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
 
+// Playwright does not read .env.local; Node 22 can (E2E_* credentials live there, never in git)
+try {
+  process.loadEnvFile('.env.local');
+} catch {
+  /* no file: specs that need credentials report "not run" */
+}
+
 // cloud containers ship one Chromium; use it instead of downloading the version this
 // @playwright/test pins (kp-cross-platform: never `playwright install` there)
 const PREINSTALLED = '/opt/pw-browsers/chromium';
