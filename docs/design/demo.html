@@ -721,9 +721,31 @@ let RULES = {
   minHours:4, dailyIncHours:10, dailyIncKm:150, otPerHour:300, extraKmRate:10, maxDayHours:14,
   tripPct:15, mountain:300, nightPct:15, seasonPct:10, langDriver:200, depositPct:30, emptyReturnPct:40, stopFee:150, roadFactor:1.3,
   /* quote mode: instead of instant booking, the customer submits the trip, staff set the price and push it back with a deposit deadline */
+  /* ค่าน้ำ: shop/attraction commissions. Only places listed in COMM pay one; the split preset says how it is shared and the policy text is what drivers read. */
+  commission:{assumedSpend:800, splits:{driver:{th:'คนขับ 100%', en:'Driver 100%', d:100}, half:{th:'แบ่งคนละครึ่ง', en:'Split 50/50', d:50}, company:{th:'เข้าบริษัททั้งหมด', en:'Company 100%', d:0}},
+    policy:'รับค่าน้ำได้เฉพาะจุดที่อยู่ในตารางนี้และตามสัดส่วนที่กำหนด แจ้งยอดจริงในแอปภายในวันเดียวกัน ห้ามพาลูกค้าแวะร้านนอกกำหนดการเพื่อค่าน้ำ ถ้าลูกค้าขอเพิ่มจุด ให้กดเพิ่มในแอปเพื่อให้ราคาและค่าน้ำถูกบันทึก'},
   quote:{enabled:true, useRange:true, from:'2026-12-25', to:'2027-01-05', hours:2, pct:20, reason:'ช่วงปีใหม่ รถและคนขับมีจำกัด', reasonEn:'New Year period, cars and drivers are limited'},
 };
 const SPEED = {1:25, 2:45, 3:40, 4:60, mtn:35};
+/* commission policy per place: type head = per passenger, booking = per trip, sale = % of what the customer buys */
+let COMM = {
+  bosang:   {type:'head',    amount:100, split:'driver',  note:'ร้านร่มและผ้าไหมจ่ายเมื่อพาลูกค้าเข้าชม'},
+  baantawai:{type:'sale',    amount:10,  split:'half',    note:'ร้านไม้แกะสลักจ่ายจากยอดซื้อ ต้องแจ้งยอดจริง'},
+  ratcha:   {type:'booking', amount:150, split:'company', note:'ค่าแนะนำจากอุทยาน โอนเข้าบัญชีบริษัท'},
+  hotspring:{type:'head',    amount:20,  split:'driver',  note:'บัตรเข้าชมแบบกรุ๊ป'},
+};
+const COMM_TYPES = {none:{th:'ไม่มีค่าน้ำ', en:'No commission'}, head:{th:'ต่อหัว (บาท/คน)', en:'Per passenger'}, booking:{th:'ต่อทริป (บาท)', en:'Per trip'}, sale:{th:'% ของยอดซื้อ', en:'% of purchases'}};
+function commEst(spec, actualSale) {
+  const total = spec.type === 'head' ? spec.amount * S.pax : spec.type === 'booking' ? spec.amount : Math.round((actualSale ?? RULES.commission.assumedSpend * S.pax) * spec.amount / 100);
+  const d = RULES.commission.splits[spec.split].d; return {total, driver: Math.round(total * d/100), company: total - Math.round(total * d/100), est: spec.type === 'sale' && actualSale == null};
+}
+const commLabel = spec => spec.type === 'head' ? t('commHead', {a:spec.amount}) : spec.type === 'booking' ? t('commBooking', {a:spec.amount}) : t('commSale', {a:spec.amount});
+const splitLabel = key => S.lang === 'en' ? RULES.commission.splits[key].en : RULES.commission.splits[key].th;
+function commChip(p) {
+  const spec = COMM[p.id];
+  if (!spec) return `<div class="chips" style="margin-top:4px"><span class="chip"><span>${t('commNone')}</span></span></div>`;
+  return `<div class="chips" style="margin-top:4px"><span class="chip" style="background:var(--brand-tint);color:var(--brand-on-tint);box-shadow:inset 0 0 0 1px var(--brand-tint-strong)"><span>${t('commLbl')} ${commLabel(spec)} · ${splitLabel(spec.split)}</span></span></div>`;
+}
 
 /* ═══════════════ i18n (customer-facing screens only) ═══════════════ */
 const T = {
@@ -764,6 +786,9 @@ const T = {
     pushTitle:'แอ่วกัน · ราคาทริปของคุณมาแล้ว', pushBody:'{date} · {title} · {price} · โอนมัดจำ {dep} ภายใน {time}', pushOpen:'แตะเพื่อดูและชำระมัดจำ',
     qs1:'ขอราคา', qs2:'ได้รับราคา', qs3:'มัดจำ', qs4:'ยืนยันคนขับ', qs5:'ออกเดินทาง',
     jlQuoted:'เสนอราคาแล้ว รอมัดจำ', jlQuoteReq:'รอทีมงานเสนอราคา', jlExpired:'หมดเวลามัดจำ', lQuote:'ราคาเสนอโดยทีมงาน · {reason}', jlDue:'ต้องโอนมัดจำภายใน {t}',
+    commLbl:'ค่าน้ำ', commNone:'ไม่มีค่าน้ำ', commHead:'฿{a}/คน', commBooking:'฿{a}/ทริป', commSale:'{a}% ของยอดซื้อ', commTitle:'ค่าน้ำในทริปนี้',
+    commEst:'ประมาณ', commDriver:'ส่วนของคนขับ', commCompany:'ส่วนของบริษัท', commReport:'ยอดซื้อจริง (บาท)', commPolicy:'นโยบายค่าน้ำ', commNoneTrip:'ทริปนี้ไม่มีจุดที่มีค่าน้ำ รับค่าตอบแทนจากค่าจ้างทริปเท่านั้น',
+    commTotalDriver:'รวมส่วนของคนขับ', commTotalCompany:'รวมส่วนบริษัท (แจ้งยอดหลังทริป)',
     toastQuoteReq:'ส่งคำขอราคาแล้ว · เข้าคิวหลังบ้านเป็น "รอเสนอราคา"', toastPaid:'รับมัดจำแล้ว · งานเข้าคิวหลังบ้านเป็น "รอจัดคนขับ"',
   },
   en:{ myBooking:'My booking', heroTitle:'Draw your trip on the map and see the price instantly',
@@ -803,6 +828,9 @@ const T = {
     pushTitle:'Aewkan · Your trip price is ready', pushBody:'{date} · {title} · {price} · deposit {dep} due by {time}', pushOpen:'Tap to view and pay the deposit',
     qs1:'Requested', qs2:'Quoted', qs3:'Deposit', qs4:'Driver confirmed', qs5:'On the way',
     jlQuoted:'Quoted, deposit pending', jlQuoteReq:'Waiting for our quote', jlExpired:'Deposit deadline passed', lQuote:'Price quoted by our team · {reason}', jlDue:'Deposit due by {t}',
+    commLbl:'Commission', commNone:'No commission', commHead:'฿{a}/pax', commBooking:'฿{a}/trip', commSale:'{a}% of purchases', commTitle:'Commissions on this trip',
+    commEst:'approx.', commDriver:'Driver share', commCompany:'Company share', commReport:'Actual purchases (฿)', commPolicy:'Commission policy', commNoneTrip:'No commission stops on this trip. Pay comes from the trip fee only.',
+    commTotalDriver:'Total driver share', commTotalCompany:'Total company share (report after the trip)',
     toastQuoteReq:'Quote request sent · it is now "awaiting quote" in the admin queue', toastPaid:'Deposit received · job is now "awaiting driver" in the admin queue',
   }
 };
@@ -814,7 +842,7 @@ const S = {
   lang:'th', pickup:'tp', stops:[{id:'suthep',dwell:60},{id:'monjam',dwell:90},{id:'maesa',dwell:60}],
   date:'2026-10-24', time:'08:00', pax:2, vehicle:'sedan', mode:null, ret:true, langDriver:false, season:false,
   cat:'all', step:0, booking:'none', driver:null, channel:'LINE', custName:'', custContact:'', role:'cust', jobFilter:'all', checked:{},
-  quote:null, pushOn:true, pushDismissed:false,
+  quote:null, pushOn:true, pushDismissed:false, commReport:{},
   bookingNo:'J-2569-118', link:'aewkan.app/j/8K2F7Q',
 };
 
@@ -1121,9 +1149,22 @@ function renderJob() {
   h += `<div class="panel"><div class="panel-head">${t('jlItin')}<span class="right">${Math.round(P.km)} ${t('km')} · ${(P.total/60).toFixed(1).replace(/\.0$/,'')} ${t('hr')}</span></div><div class="panel-body"><div class="timeline">
     <div class="tl"><div class="tm tnum">${S.time}</div><div class="dot"><i class="s"></i></div><div class="bd"><div class="t">${esc(nm(place(S.pickup)))}</div><div class="s">${t('start')}</div></div></div>`;
   P.legs.forEach((L, i) => h += `<div class="tl"><div class="tm tnum">${fmtT(L.arrive)}</div><div class="dot"><i></i></div><div class="bd"><div class="t">${i+1}. ${esc(nm(L.p))}</div><div class="s">${L.dwell ? `${t('stay')} ${L.dwell} ${t('min')} · ` : ''}${t('drive')} ${Math.round(L.mins)} ${t('min')} · ${L.d.toFixed(0)} ${t('km')}</div>
+    ${S.role==='drv' ? commChip(L.p) : ''}
     ${S.role==='drv' && assigned ? `<div class="checkrow" style="border:none;padding:6px 0 0"><button class="btn sec sm" onclick="S.checked[${i}]=!S.checked[${i}];renderJob()">${S.checked[i] ? '✓ ' : ''}${t('dvCheck')}</button><button class="btn ghost sm">${t('dvNavigate')}</button></div>` : ''}</div></div>`);
   if (P.ret) h += `<div class="tl"><div class="tm tnum">${fmtT(P.ret.arrive)}</div><div class="dot"><i class="s"></i></div><div class="bd"><div class="t">${t('back')}</div></div></div>`;
   h += `</div>${paid ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px"><button class="btn sec sm" onclick="toast(t('jlAddStopNote'),6000)">${t('jlAddStop')}</button><span class="sub" style="flex:1;min-width:200px">${t('jlAddStopNote')}</span></div>` : ''}</div></div>`;
+  if (S.role === 'drv') {
+    const rows = P.legs.map((L, i) => ({L, i, spec: COMM[L.p.id]})).filter(r => r.spec);
+    let td = 0, tc = 0;
+    h += `<div class="panel"><div class="panel-head">${t('commTitle')}<span class="right">${t('commPolicy')} ${RULES.version}</span></div><div class="panel-body">`;
+    if (!rows.length) h += `<p class="sub">${t('commNoneTrip')}</p>`;
+    rows.forEach(({L, i, spec}) => { const e = commEst(spec, S.commReport[i]); td += e.driver; tc += e.company;
+      h += `<div class="line" style="align-items:flex-start"><div class="l" style="flex:1"><div style="font-weight:500">${i+1}. ${esc(nm(L.p))}</div><div class="sub">${commLabel(spec)} · ${splitLabel(spec.split)}${spec.note ? ` · ${esc(spec.note)}` : ''}</div>
+        ${spec.type === 'sale' ? `<label class="f" style="margin-top:6px;max-width:220px"><span>${t('commReport')}</span><input class="in tnum" type="number" step="100" value="${S.commReport[i] ?? ''}" placeholder="${RULES.commission.assumedSpend * S.pax}" onchange="S.commReport[${i}]=this.value===''?undefined:Number(this.value);renderJob()"></label>` : ''}</div>
+        <div style="text-align:right"><div class="tnum" style="font-weight:600">${e.est ? t('commEst') + ' ' : ''}${baht(e.driver)}</div><div class="sub">${t('commDriver')}${e.company ? ` · ${t('commCompany')} ${baht(e.company)}` : ''}</div></div></div>`; });
+    if (rows.length) h += `<div class="line total"><span class="l">${t('commTotalDriver')}</span><span class="a tnum">${baht(td)}</span></div>${tc ? `<div class="line"><span class="l sub">${t('commTotalCompany')}</span><span class="a tnum">${baht(tc)}</span></div>` : ''}`;
+    h += `<p class="sub" style="margin-top:10px;border-top:1px solid var(--line-soft);padding-top:10px">${esc(RULES.commission.policy)}</p></div></div>`;
+  }
   if (sel) {
     const lines = q ? [{k:'lQuote', v:{reason:quoteReason()}, a:q.price}] : sel.lines;
     h += `<div class="panel"><div class="panel-head">${t('jlPrice')}<span class="right">${q ? t('quoteTitle') : t(MODE_KEYS[mode])}</span></div><div class="panel-body">
@@ -1216,7 +1257,7 @@ function renderAssign() {
   const left = `<div class="panel"><div class="panel-head">งานที่ต้องจัด<span class="right"><span class="badge ${STATUS[j.status].cls}">${STATUS[j.status].th}</span></span></div><div class="panel-body">
       <div style="font-weight:600;font-size:15px;margin-bottom:6px">${esc(j.title)}</div>
       <dl class="kv"><dt>ลูกค้า</dt><dd>${esc(j.cust)}</dd><dt>ติดต่อ</dt><dd>${esc(S.custContact || 'LINE @kantida')}</dd><dt>รับ</dt><dd>${j.when} · ${esc(place(S.pickup).th)}</dd>
-      <dt>เส้นทาง</dt><dd>${j.km} กม. · ${j.hours} ชม. · จบ ${fmtT(P.end)}</dd><dt>ราคา</dt><dd class="tnum">${baht(j.total)} (${j.mode}) · มัดจำรับแล้ว ${baht(deposit(j.total))}</dd><dt>กฎราคา</dt><dd>${RULES.version}</dd></dl></div></div>
+      <dt>เส้นทาง</dt><dd>${j.km} กม. · ${j.hours} ชม. · จบ ${fmtT(P.end)}</dd><dt>ราคา</dt><dd class="tnum">${baht(j.total)} (${j.mode}) · มัดจำรับแล้ว ${baht(deposit(j.total))}</dd><dt>ค่าน้ำ</dt><dd>${commSummaryTh()}</dd><dt>กฎราคา</dt><dd>${RULES.version}</dd></dl></div></div>
     <div class="panel" style="margin-top:14px"><div class="panel-head">ข้อความที่จะส่งเมื่อยืนยัน<span class="right"><div class="seg">${['LINE','WhatsApp','อีเมล'].map(c => `<button class="${S.channel===c?'on':''}" onclick="S.channel='${c}';renderAssign()">${c}</button>`).join('')}</div></span></div>
       <div class="panel-body"><div class="msgprev">${esc(messageText())}</div></div></div>`;
   const drivers = DRIVERS.map(d => { const match = d.vehicle === S.vehicle, dis = d.avail === 'off' || !match;
@@ -1231,6 +1272,11 @@ function renderAssign() {
         ${j.status==='assigned' ? `<button class="btn sec w" style="margin-top:8px" onclick="view('job')">ดูลิงก์ที่ลูกค้าเห็น</button>` : ''}
       </div></div>`;
   document.getElementById('assignBody').innerHTML = left + right;
+}
+function commSummaryTh() {
+  const rows = S.stops.map(s => COMM[s.id]).filter(Boolean); if (!rows.length) return 'ไม่มีจุดที่มีค่าน้ำ';
+  let d = 0, c = 0; rows.forEach(sp => { const e = commEst(sp); d += e.driver; c += e.company; });
+  return `${rows.length} จุด · คนขับ ~${baht(d)} · บริษัท ~${baht(c)}`;
 }
 function messageText() {
   const d = DRIVERS.find(x => x.id === S.driver), en = S.lang === 'en', name = S.custName || (en ? 'Lukas' : 'กานต์ธิดา');
@@ -1270,9 +1316,28 @@ function renderPricing() {
           <label class="f" style="grid-column:1/-1"><span>Reason shown to customers (English)</span><input class="in" data-q="reasonEn" value="${esc(RULES.quote.reasonEn)}" onchange="setQuote(this)"></label>
         </div>
         <p class="sub" style="margin-top:12px">ทริปตัวอย่างวันที่ ${fmtDateTh(S.date)}: <b style="color:var(--ink)">${quoteActive() ? 'เข้าโหมดเสนอราคา' : 'จองทันทีตามกฎราคา'}</b></p>
+      </div></div>
+    <div class="panel"><div class="panel-head">นโยบายค่าน้ำ<span class="right">จุดที่ไม่อยู่ในตาราง = ไม่มีค่าน้ำ</span></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>จุด</th><th>ประเภท</th><th>จำนวน</th><th>การแบ่ง</th><th>หมายเหตุถึงคนขับ</th><th></th></tr></thead><tbody>
+        ${Object.entries(COMM).map(([id, c]) => `<tr><td style="white-space:nowrap">${esc(place(id).th)}</td>
+          <td><select class="in" style="min-height:34px;padding:4px 8px;width:auto" onchange="setComm('${id}','type',this.value)">${Object.entries(COMM_TYPES).filter(([k]) => k !== 'none').map(([k, v]) => `<option value="${k}" ${k===c.type?'selected':''}>${v.th}</option>`).join('')}</select></td>
+          <td><input type="number" value="${c.amount}" step="${c.type==='sale'?1:10}" onchange="setComm('${id}','amount',Number(this.value))"></td>
+          <td><select class="in" style="min-height:34px;padding:4px 8px;width:auto" onchange="setComm('${id}','split',this.value)">${Object.entries(RULES.commission.splits).map(([k, v]) => `<option value="${k}" ${k===c.split?'selected':''}>${v.th}</option>`).join('')}</select></td>
+          <td><input type="text" style="width:220px;text-align:left" value="${esc(c.note)}" onchange="setComm('${id}','note',this.value)"></td>
+          <td><button class="ib" aria-label="ลบ" onclick="delete COMM['${id}'];renderAll()"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></td></tr>`).join('')}
+        <tr><td colspan="6"><select class="in" style="min-height:36px;width:auto" onchange="if(this.value){COMM[this.value]={type:'head',amount:50,split:'driver',note:''};renderAll()}"><option value="">+ เพิ่มจุดที่มีค่าน้ำ…</option>${PLACES.filter(p => p.cat !== 'pickup' && !COMM[p.id]).map(p => `<option value="${p.id}">${esc(p.th)}</option>`).join('')}</select></td></tr>
+      </tbody></table></div>
+      <div class="panel-body" style="border-top:1px solid var(--line-soft)">
+        <div class="frow">
+          ${Object.entries(RULES.commission.splits).map(([k, v]) => `<label class="f"><span>${v.th} · ส่วนคนขับ (%)</span><input class="in tnum" type="number" step="5" min="0" max="100" value="${v.d}" onchange="RULES.commission.splits['${k}'].d=Number(this.value);renderAll()"></label>`).join('')}
+          <label class="f"><span>ยอดซื้อที่ใช้ประมาณการ (บาท/คน)</span><input class="in tnum" type="number" step="100" value="${RULES.commission.assumedSpend}" onchange="RULES.commission.assumedSpend=Number(this.value);renderAll()"></label>
+        </div>
+        <label class="f" style="margin-top:10px"><span>ข้อความนโยบายที่คนขับเห็นในลิงก์งาน</span><textarea class="ta" style="min-height:84px" onchange="RULES.commission.policy=this.value;renderAll()">${esc(RULES.commission.policy)}</textarea></label>
+        <p class="sub" style="margin-top:10px">ทริปตัวอย่าง: ${commSummaryTh()} · ลูกค้าไม่เห็นข้อมูลค่าน้ำ คนขับเห็นทุกจุดในมุมมองคนขับของลิงก์งาน</p>
       </div></div>`;
   renderRulePreview();
 }
+function setComm(id, k, v) { COMM[id][k] = v; renderAll(); }
 function setQuote(el) { const k = el.dataset.q; const q = RULES.quote; q[k] = el.type === 'checkbox' ? el.checked : k === 'useRange' ? el.value === '1' : (k === 'hours' || k === 'pct') ? Number(el.value) : el.value; renderAll(); }
 function setRule(el) { const v = Number(el.value); if (!Number.isFinite(v)) return; const path = el.dataset.rule.split('.'); let o = RULES; while (path.length > 1) o = o[path.shift()]; o[path[0]] = v; renderRulePreview(); renderMap(); }
 function renderRulePreview() {
