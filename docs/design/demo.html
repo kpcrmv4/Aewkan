@@ -207,6 +207,16 @@
   .place:hover { border-color:var(--ink); }
   .place.sel { background:var(--brand-tint); border-color:var(--brand-tint-strong); color:var(--brand-on-tint); }
   .place .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13.5px; }
+  .photo { width:100%; max-width:320px; aspect-ratio:4/3; border-radius:var(--r-md); object-fit:cover; display:block; border:1px solid var(--line); }
+  .photo-empty { width:100%; max-width:320px; aspect-ratio:4/3; border-radius:var(--r-md); border:1.5px dashed var(--line-strong); display:grid; place-items:center; color:var(--muted); font-size:13px; text-align:center; padding:12px; }
+  .thumb { width:72px; height:54px; object-fit:cover; border-radius:var(--r-xs); border:1px solid var(--line); vertical-align:middle; }
+  .delta { font-family:var(--font-display); font-weight:600; font-size:13px; white-space:nowrap; letter-spacing:-.01em; }
+  .delta.neg { color:var(--status-done); } .delta.pos { color:var(--ink); }
+  .sug { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line-soft); }
+  .sug:last-child { border-bottom:none; }
+  .sug .grow { flex:1; min-width:0; } .sug .t { font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .sug .s { font-size:12px; color:var(--muted); }
+  .sug .add { width:34px; height:34px; border-radius:50%; border:1.5px solid var(--ink); background:var(--surface); color:var(--ink); display:grid; place-items:center; flex:none; }
+  .sug .add:hover { background:var(--ink); color:var(--canvas); }
   .zchip { font-size:11px; font-weight:600; padding:1px 7px; border-radius:var(--r-xs); background:var(--surface-3); color:var(--ink-2); white-space:nowrap; }
   .zchip.z3, .zchip.z4 { background:var(--brand-tint); color:var(--brand-on-tint); }
 
@@ -505,6 +515,7 @@
             </div>
 
             <div class="stops" id="stops"></div>
+            <div id="suggest"></div>
 
             <div class="opts">
               <label><input type="checkbox" id="optReturn" checked> <span data-i18n="optReturn">กลับมาส่งที่จุดรับเมื่อจบทริป</span></label>
@@ -734,6 +745,19 @@ let COMM = {
   ratcha:   {type:'booking', amount:150, split:'company', note:'ค่าแนะนำจากอุทยาน โอนเข้าบัญชีบริษัท'},
   hotspring:{type:'head',    amount:20,  split:'driver',  note:'บัตรเข้าชมแบบกรุ๊ป'},
 };
+/* measured segments: real road km and minutes recorded by driving the route (or from drivers' check-ins).
+   When a segment exists in either direction the planner uses it instead of the straight-line estimate. */
+let MEAS = {
+  'tp>suthep':  {km:16,  min:40,  src:'ขับวัดจริง 12 ต.ค. 69'},
+  'suthep>monjam':{km:34, min:65, src:'ขับวัดจริง 12 ต.ค. 69'},
+  'monjam>maesa':{km:14, min:25,  src:'ขับวัดจริง 12 ต.ค. 69'},
+  'tp>maesa':   {km:24,  min:45,  src:'จากเช็กอินคนขับ 6 ทริป'},
+  'tp>mkp':     {km:50,  min:85,  src:'จากเช็กอินคนขับ 4 ทริป'},
+  'tp>airport': {km:4,   min:15,  src:'จากเช็กอินคนขับ 22 ทริป'},
+  'tp>pai':     {km:135, min:200, src:'ขับวัดจริง 3 ต.ค. 69'},
+  'tp>inthanon':{km:95,  min:150, src:'ขับวัดจริง 3 ต.ค. 69'},
+};
+const meas = (a, b) => MEAS[`${a.id}>${b.id}`] ?? MEAS[`${b.id}>${a.id}`] ?? null;
 const COMM_TYPES = {none:{th:'ไม่มีค่าน้ำ', en:'No commission'}, head:{th:'ต่อหัว (บาท/คน)', en:'Per passenger'}, booking:{th:'ต่อทริป (บาท)', en:'Per trip'}, sale:{th:'% ของยอดซื้อ', en:'% of purchases'}};
 function commEst(spec, actualSale) {
   const total = spec.type === 'head' ? spec.amount * S.pax : spec.type === 'booking' ? spec.amount : Math.round((actualSale ?? RULES.commission.assumedSpend * S.pax) * spec.amount / 100);
@@ -786,6 +810,11 @@ const T = {
     pushTitle:'แอ่วกัน · ราคาทริปของคุณมาแล้ว', pushBody:'{date} · {title} · {price} · โอนมัดจำ {dep} ภายใน {time}', pushOpen:'แตะเพื่อดูและชำระมัดจำ',
     qs1:'ขอราคา', qs2:'ได้รับราคา', qs3:'มัดจำ', qs4:'ยืนยันคนขับ', qs5:'ออกเดินทาง',
     jlQuoted:'เสนอราคาแล้ว รอมัดจำ', jlQuoteReq:'รอทีมงานเสนอราคา', jlExpired:'หมดเวลามัดจำ', lQuote:'ราคาเสนอโดยทีมงาน · {reason}', jlDue:'ต้องโอนมัดจำภายใน {t}',
+    dvStart:'เริ่มงาน · รับลูกค้า', dvPhotoPickup:'ถ่ายรูปลูกค้าตอนรับ', dvPhotoDrop:'ถ่ายรูปตอนส่งลูกค้า', dvPhotoWhy:'ถ่ายให้เห็นลูกค้ากับรถ ใช้ยืนยันการรับ-ส่งและคุ้มครองทั้งสองฝ่าย ระบบบันทึกเวลาและตำแหน่งให้อัตโนมัติ',
+    dvConfirmStart:'ยืนยันรับลูกค้าแล้ว เริ่มงาน', dvFinish:'จบงาน · ส่งลูกค้า', dvCollected:'เงินที่รับหน้างาน (บาท)', dvClose:'ปิดงานและส่งรายงาน', dvNeedPhoto:'แนบรูปก่อนจึงกดได้', dvRetake:'ถ่ายใหม่', dvSample:'ใช้รูปตัวอย่าง (เดโม่)',
+    dvDoneTitle:'ปิดงานแล้ว', dvDoneSub:'รายงานพร้อมรูปรับ-ส่งและยอดเงินถูกส่งเข้าระบบ แอดมินเห็นในงาน {id} แล้ว', pickedAt:'รับผู้โดยสารแล้ว {t}', droppedAt:'ส่งผู้โดยสารแล้ว {t}', photoProof:'มีรูปยืนยัน', stTravel:'กำลังเดินทาง', stDoneJob:'เสร็จสิ้น', taken:'ถ่ายเมื่อ {t}',
+    measured:'วัดจริง', estimated:'ประมาณ', checkinLog:'บันทึกเวลาถึง {t} · ช่วง {a} → {b} ใช้จริง {m} น. (แผน {p} น.) ระบบจะใช้ปรับความแม่นครั้งถัดไป',
+    sugTitle:'แวะรายทาง', sugSub:'จุดใกล้เส้นทางของคุณ ราคาที่เปลี่ยนคำนวณให้แล้ว', sugDetour:'อ้อม {k} กม. · ใช้เวลาเพิ่ม {m}', sugNone:'ยังไม่มีจุดใกล้เส้นทาง เลือกปลายทางก่อน หรือดูรายการใต้แผนที่', sugAdd:'เพิ่มในทริป', removeDelta:'ตัดออก {d}', hrShort:'ชม.',
     commLbl:'ค่าน้ำ', commNone:'ไม่มีค่าน้ำ', commHead:'฿{a}/คน', commBooking:'฿{a}/ทริป', commSale:'{a}% ของยอดซื้อ', commTitle:'ค่าน้ำในทริปนี้',
     commEst:'ประมาณ', commDriver:'ส่วนของคนขับ', commCompany:'ส่วนของบริษัท', commReport:'ยอดซื้อจริง (บาท)', commPolicy:'นโยบายค่าน้ำ', commNoneTrip:'ทริปนี้ไม่มีจุดที่มีค่าน้ำ รับค่าตอบแทนจากค่าจ้างทริปเท่านั้น',
     commTotalDriver:'รวมส่วนของคนขับ', commTotalCompany:'รวมส่วนบริษัท (แจ้งยอดหลังทริป)',
@@ -828,6 +857,11 @@ const T = {
     pushTitle:'Aewkan · Your trip price is ready', pushBody:'{date} · {title} · {price} · deposit {dep} due by {time}', pushOpen:'Tap to view and pay the deposit',
     qs1:'Requested', qs2:'Quoted', qs3:'Deposit', qs4:'Driver confirmed', qs5:'On the way',
     jlQuoted:'Quoted, deposit pending', jlQuoteReq:'Waiting for our quote', jlExpired:'Deposit deadline passed', lQuote:'Price quoted by our team · {reason}', jlDue:'Deposit due by {t}',
+    dvStart:'Start job · pick up', dvPhotoPickup:'Photo of the guests at pickup', dvPhotoDrop:'Photo at drop-off', dvPhotoWhy:'Show the guests with the car. It confirms pickup and drop-off and protects both sides. Time and location are recorded automatically.',
+    dvConfirmStart:'Guests on board, start job', dvFinish:'Finish job · drop-off', dvCollected:'Cash collected (฿)', dvClose:'Close job and send report', dvNeedPhoto:'Attach a photo first', dvRetake:'Retake', dvSample:'Use a sample photo (demo)',
+    dvDoneTitle:'Job closed', dvDoneSub:'The report with pickup and drop-off photos and the amount collected is in the system. Admin sees it on job {id}.', pickedAt:'Guests picked up {t}', droppedAt:'Guests dropped off {t}', photoProof:'photo attached', stTravel:'On the way', stDoneJob:'Completed', taken:'taken {t}',
+    measured:'measured', estimated:'estimate', checkinLog:'Arrival logged {t} · {a} → {b} took {m} min (planned {p}). Used to refine the next estimate.',
+    sugTitle:'Stops along the way', sugSub:'Places near your route, with the price change worked out', sugDetour:'{k} km detour · +{m}', sugNone:'No places near this route yet. Pick a destination first, or browse the list under the map.', sugAdd:'Add to trip', removeDelta:'remove {d}', hrShort:'h',
     commLbl:'Commission', commNone:'No commission', commHead:'฿{a}/pax', commBooking:'฿{a}/trip', commSale:'{a}% of purchases', commTitle:'Commissions on this trip',
     commEst:'approx.', commDriver:'Driver share', commCompany:'Company share', commReport:'Actual purchases (฿)', commPolicy:'Commission policy', commNoneTrip:'No commission stops on this trip. Pay comes from the trip fee only.',
     commTotalDriver:'Total driver share', commTotalCompany:'Total company share (report after the trip)',
@@ -842,7 +876,7 @@ const S = {
   lang:'th', pickup:'tp', stops:[{id:'suthep',dwell:60},{id:'monjam',dwell:90},{id:'maesa',dwell:60}],
   date:'2026-10-24', time:'08:00', pax:2, vehicle:'sedan', mode:null, ret:true, langDriver:false, season:false,
   cat:'all', step:0, booking:'none', driver:null, channel:'LINE', custName:'', custContact:'', role:'cust', jobFilter:'all', checked:{},
-  quote:null, pushOn:true, pushDismissed:false, commReport:{},
+  quote:null, pushOn:true, pushDismissed:false, commReport:{}, photos:{}, collected:null,
   bookingNo:'J-2569-118', link:'aewkan.app/j/8K2F7Q',
 };
 
@@ -872,13 +906,13 @@ const r10 = n => Math.round(n/10)*10;
 function plan() {
   const pk = place(S.pickup); let cur = pk, tm = toMin(S.time), legs = [], km = 0, drive = 0, dwell = 0, maxZone = 1, mtn = 0;
   S.stops.forEach(s => {
-    const p = place(s.id), d = roadKm(cur, p), z = zoneOf(p), spd = p.mtn ? SPEED.mtn : SPEED[z];
-    const mins = d / spd * 60, arrive = tm + mins, depart = arrive + s.dwell;
-    legs.push({p, d, mins, arrive, depart, z, dwell:s.dwell});
+    const p = place(s.id), m = meas(cur, p), d = m ? m.km : roadKm(cur, p), z = zoneOf(p), spd = p.mtn ? SPEED.mtn : SPEED[z];
+    const mins = m ? m.min : d / spd * 60, arrive = tm + mins, depart = arrive + s.dwell;
+    legs.push({p, d, mins, arrive, depart, z, dwell:s.dwell, measured:!!m});
     km += d; drive += mins; dwell += s.dwell; maxZone = Math.max(maxZone, z); if (p.mtn) mtn++; tm = depart; cur = p;
   });
   let ret = null;
-  if (S.ret && S.stops.length) { const d = roadKm(cur, pk), z = zoneOf(cur), mins = d / SPEED[z] * 60; ret = {d, mins, arrive: tm + mins}; km += d; drive += mins; tm += mins; }
+  if (S.ret && S.stops.length) { const m = meas(cur, pk), d = m ? m.km : roadKm(cur, pk), z = zoneOf(cur), mins = m ? m.min : d / SPEED[z] * 60; ret = {d, mins, arrive: tm + mins, measured:!!m}; km += d; drive += mins; tm += mins; }
   const start = toMin(S.time), total = tm - start;
   const lastZone = S.stops.length ? zoneOf(place(S.stops.at(-1).id)) : 1;
   const emptyReturnKm = S.stops.length ? roadKm(place(S.stops.at(-1).id), pk) : 0;
@@ -925,6 +959,38 @@ const deposit = total => Math.max(100, Math.round(total * RULES.depositPct/100 /
 const MODE_KEYS = {hourly:'mHourly', daily:'mDaily', trip:'mTrip', oneway:'mOneway'};
 function current() { const P = plan(), PR = price(P); const mode = (S.mode && PR[S.mode]?.ok) ? S.mode : PR.best; return {P, PR, mode, sel: mode ? PR[mode] : null}; }
 
+/* ═══════════════ what-if pricing: add / remove a stop ═══════════════ */
+function withStops(stops, fn) { const saved = S.stops; S.stops = stops; try { return fn(); } finally { S.stops = saved; } }
+function totalFor(mode) { const P = plan(), PR = price(P); const m = (mode && PR[mode]?.ok) ? PR[mode] : (PR.best ? PR[PR.best] : null); return {total: m ? m.total : 0, mins: P.total}; }
+function bestInsertion(p) {
+  const pk = place(S.pickup); let best = {idx:0, added:Infinity};
+  for (let k = 0; k <= S.stops.length; k++) {
+    const prev = k === 0 ? pk : place(S.stops[k-1].id), next = k < S.stops.length ? place(S.stops[k].id) : (S.ret ? pk : null);
+    const added = roadKm(prev, p) + (next ? roadKm(p, next) - roadKm(prev, next) : 0);
+    if (added < best.added) best = {idx:k, added};
+  }
+  return best;
+}
+function whatIfAdd(p) {
+  const cur = current(), base = totalFor(cur.mode), ins = bestInsertion(p);
+  const stops = [...S.stops]; stops.splice(ins.idx, 0, {id:p.id, dwell:p.dwell ?? 60});
+  const sim = withStops(stops, () => totalFor(cur.mode));
+  return {idx:ins.idx, detour:ins.added, delta:sim.total - base.total, addMin:sim.mins - base.mins};
+}
+function whatIfRemove(i) { const cur = current(), base = totalFor(cur.mode); const sim = withStops(S.stops.filter((_, k) => k !== i), () => totalFor(cur.mode)); return sim.total - base.total; }
+const fmtDelta = d => d > 0 ? `+${baht(d)}` : d < 0 ? `−${baht(-d)}` : '±฿0';
+const fmtMins = m => m >= 60 ? `${(m/60).toFixed(1).replace(/\.0$/, '')} ${t('hrShort')}` : `${Math.round(m)} ${t('min')}`;
+function addStopAt(id, idx) { S.stops.splice(idx, 0, {id, dwell: place(id).dwell ?? 60}); resetBooking(); renderAll(); }
+function renderSuggest() {
+  const cands = PLACES.filter(p => p.cat !== 'pickup' && p.id !== S.pickup && !S.stops.some(s => s.id === p.id)).map(p => ({p, ...whatIfAdd(p)})).sort((a, b) => a.detour - b.detour);
+  const near = cands.filter(c => c.detour <= 30).slice(0, 5);
+  const rows = near.length ? near : cands.slice(0, 3);
+  document.getElementById('suggest').innerHTML = `<h2 class="sec" style="margin:14px 0 2px;font-size:15px">${t('sugTitle')}<span class="count">${t('sugSub')}</span></h2>` + (rows.length ? rows.map(c => `
+    <div class="sug"><div class="grow"><div class="t">${esc(nm(c.p))}${c.p.mtn ? ' ▲' : ''}</div><div class="s">${t('sugDetour', {k:Math.round(c.detour), m:fmtMins(c.addMin)})} · ${t('zone')} ${zoneOf(c.p)}</div></div>
+      <span class="delta ${c.delta>0?'pos':'neg'} tnum">${fmtDelta(c.delta)}</span>
+      <button class="add" aria-label="${t('sugAdd')}" title="${t('sugAdd')}" onclick="addStopAt('${c.p.id}',${c.idx})"><svg class="icon sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>`).join('') : `<p class="sub">${t('sugNone')}</p>`);
+}
+
 /* ═══════════════ render: customer ═══════════════ */
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const TH_DAYS = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'], TH_MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -944,7 +1010,7 @@ function renderTemplates() {
     return `<button class="tpl" onclick="loadTemplate(${i})"><b>${esc(a)}</b><span>${esc(b)}</span></button>`; }).join('');
 }
 function loadTemplate(i) { const tp = TEMPLATES[i]; S.stops = tp.stops.map(s => ({...s})); S.ret = tp.ret; S.vehicle = tp.veh; if (tp.date) S.date = tp.date; S.mode = tp.ret ? null : 'oneway'; resetBooking(); renderAll(); }
-function resetBooking() { S.step = 0; S.booking = 'none'; S.driver = null; S.quote = null; S.pushDismissed = false; }
+function resetBooking() { S.step = 0; S.booking = 'none'; S.driver = null; S.quote = null; S.pushDismissed = false; S.photos = {}; S.collected = null; S.checked = {}; }
 
 function renderMap() {
   const svg = document.getElementById('map'); let h = '';
@@ -971,10 +1037,11 @@ function renderMap() {
   document.getElementById('legZones').textContent = RULES.zones.slice(0, 3).map(z => `${t('zone')} ${z.id} ≤ ${z.km} ${t('km')}`).join(' · ');
   document.getElementById('cats').innerHTML = CATS.map(c => `<button class="pill ${S.cat===c.id?'on':''}" onclick="S.cat='${c.id}';renderMap()">${esc(S.lang==='en'?c.en:c.th)}</button>`).join('');
   document.getElementById('places').innerHTML = PLACES.filter(p => p.cat !== 'pickup' && (S.cat === 'all' || p.cat === S.cat)).map(p => {
-    const z = zoneOf(p), sel = S.stops.some(s => s.id === p.id);
+    const z = zoneOf(p), idx = S.stops.findIndex(s => s.id === p.id), sel = idx >= 0;
+    const delta = sel ? whatIfRemove(idx) : whatIfAdd(p).delta;
     return `<button class="place ${sel?'sel':''}" onclick="toggleStop('${p.id}')" aria-pressed="${sel}">
       <svg class="icon sm" viewBox="0 0 24 24">${sel ? '<path d="M5 12l5 5 9-11"/>' : '<path d="M12 5v14M5 12h14"/>'}</svg>
-      <span class="nm">${esc(nm(p))}</span><span class="zchip z${z}">${t('zone')} ${z}${p.mtn ? ' ▲' : ''}</span></button>`; }).join('');
+      <span class="nm">${esc(nm(p))}</span><span class="zchip z${z}">${t('zone')} ${z}${p.mtn ? ' ▲' : ''}</span><span class="delta ${delta>0?'pos':'neg'} tnum">${fmtDelta(delta)}</span></button>`; }).join('');
 }
 function toggleStop(id) {
   const i = S.stops.findIndex(s => s.id === id);
@@ -999,14 +1066,14 @@ function renderTrip() {
   P.legs.forEach((L, i) => {
     h += `<div class="stop"><span class="num">${i+1}</span>
       <div class="grow"><div class="t">${esc(nm(L.p))}</div>
-        <div class="s tnum">${fmtT(L.arrive)}–${fmtT(L.depart)} · ${t('drive')} ${Math.round(L.mins)} ${t('min')} · ${L.d.toFixed(0)} ${t('km')} · ${t('zone')} ${L.z}${L.p.mtn ? ' ▲' : ''}</div></div>
+        <div class="s tnum">${fmtT(L.arrive)}–${fmtT(L.depart)} · ${t('drive')} ${Math.round(L.mins)} ${t('min')} · ${L.d.toFixed(0)} ${t('km')} <span class="zchip" style="${L.measured?'background:var(--status-done-bg);color:var(--status-done)':''}">${L.measured ? t('measured') : t('estimated')}</span> · ${t('zone')} ${L.z}${L.p.mtn ? ' ▲' : ''} · ${t('removeDelta', {d:fmtDelta(whatIfRemove(i))})}</div></div>
       <select aria-label="${t('stay')}" onchange="setDwell(${i},this.value)">${dwellOpts(L.dwell)}</select>
       <button class="ib" aria-label="${t('up')}" ${i===0?'disabled':''} onclick="moveStop(${i},-1)"><svg class="icon sm" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
       <button class="ib" aria-label="${t('down')}" ${i===S.stops.length-1?'disabled':''} onclick="moveStop(${i},1)"><svg class="icon sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
       <button class="ib" aria-label="${t('remove')}" onclick="toggleStop('${L.p.id}')"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>`;
   });
   if (P.ret) h += `<div class="stop"><span class="num start"><svg class="icon sm" viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></span>
-    <div class="grow"><div class="t">${t('back')}</div><div class="s tnum">${fmtT(P.ret.arrive)} · ${Math.round(P.ret.mins)} ${t('min')} · ${P.ret.d.toFixed(0)} ${t('km')}</div></div></div>`;
+    <div class="grow"><div class="t">${t('back')}</div><div class="s tnum">${fmtT(P.ret.arrive)} · ${Math.round(P.ret.mins)} ${t('min')} · ${P.ret.d.toFixed(0)} ${t('km')} <span class="zchip" style="${P.ret.measured?'background:var(--status-done-bg);color:var(--status-done)':''}">${P.ret.measured ? t('measured') : t('estimated')}</span></div></div></div>`;
   document.getElementById('stops').innerHTML = h;
   const hh = m => (m/60).toFixed(1).replace(/\.0$/, '');
   document.getElementById('totals').innerHTML = S.stops.length ? `
@@ -1028,7 +1095,7 @@ function renderPrice() {
   document.getElementById('priceTitle').textContent = qa ? t('refTitle') : t('priceTitle');
   document.getElementById('quoteBanner').innerHTML = qa ? `<div class="banner"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><div><b>${t('quoteOn')}</b> · ${esc(quoteReason())}<br>${t('quoteBanner')}</div></div>` : '';
   document.getElementById('modes').innerHTML = ['hourly','daily','trip','oneway'].map(k => { const m = PR[k];
-    return `<button class="mode ${k===mode?'on':''} ${m.ok?'':'na'}" ${m.ok?`onclick="S.mode='${k}';renderPrice()"`:'disabled'} aria-pressed="${k===mode}">
+    return `<button class="mode ${k===mode?'on':''} ${m.ok?'':'na'}" ${m.ok?`onclick="S.mode='${k}';renderAll()"`:'disabled'} aria-pressed="${k===mode}">
       ${PR.best===k ? `<span class="best">${t('best')}</span>` : ''}
       <div class="nm">${t(MODE_KEYS[k])}</div><div class="pr tnum">${m.ok ? baht(m.total) : t('na')}</div><div class="why">${esc(m.why)}</div></button>`; }).join('');
   if (!sel || !S.stops.length) { document.getElementById('lines').innerHTML = ''; document.getElementById('bookArea').innerHTML = ''; return; }
@@ -1119,10 +1186,10 @@ setInterval(() => {
 function renderJob() {
   const {P, sel, mode} = current(), drv = DRIVERS.find(d => d.id === S.driver), qf = inQuoteFlow(), q = qf ? S.quote : null;
   const total = q ? q.price : (sel ? sel.total : 0), dep = q ? q.deposit : (sel ? deposit(sel.total) : 0);
-  const assigned = S.booking === 'assigned' && drv, paid = ['requested','assigned'].includes(S.booking);
+  const assigned = ['assigned','traveling','done'].includes(S.booking) && drv, paid = ['requested','assigned','traveling','done'].includes(S.booking), traveling = S.booking === 'traveling', done = S.booking === 'done';
   const keys = qf ? ['qs1','qs2','qs3','qs4','qs5'] : ['sp1','sp2','sp3','sp4'];
-  const stage = qf ? ({quote_requested:1, quoted:2, expired:2, requested:3, assigned:4})[S.booking] : (assigned ? 2 : 1);
-  const badge = {quote_requested:['b-urgent', t('jlQuoteReq')], quoted:['b-info', t('jlQuoted')], expired:['b-pending', t('jlExpired')], requested:['b-progress', S.lang==='en'?'Assigning driver':'รอจัดคนขับ'], assigned:['b-info', t('sp2')]}[S.booking] ?? ['b-pending', '—'];
+  const stage = qf ? ({quote_requested:1, quoted:2, expired:2, requested:3, assigned:4, traveling:4, done:5})[S.booking] : ({requested:1, assigned:2, traveling:3, done:4})[S.booking] ?? 1;
+  const badge = {quote_requested:['b-urgent', t('jlQuoteReq')], quoted:['b-info', t('jlQuoted')], expired:['b-pending', t('jlExpired')], requested:['b-progress', S.lang==='en'?'Assigning driver':'รอจัดคนขับ'], assigned:['b-info', t('sp2')], traveling:['b-progress', t('stTravel')], done:['b-done', t('stDoneJob')]}[S.booking] ?? ['b-pending', '—'];
   const name = S.custName || (S.lang === 'en' ? 'Lukas Weber' : 'กานต์ธิดา ศรีสุข');
   let h = `<div class="urlbar"><svg class="icon sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><code>${S.link}${S.role==='drv'?'?d=1':''}</code>
       <button class="btn ghost sm" onclick="copyText('https://${S.link}')">${t('jlCopy')}</button><span style="margin-left:auto" class="sub">${t('jlRule', {v:RULES.version})}</span></div>
@@ -1133,6 +1200,10 @@ function renderJob() {
       <div class="stepper">${keys.map((k, i) => `<div class="sp ${i<stage?'done':''} ${i===stage?'now':''}">${t(k)}</div>`).join('')}</div>
     </div></div>`;
   if (qf && !paid) h += `<div class="panel"><div class="panel-body">${quoteBox()}</div></div>`;
+  if (S.role === 'drv' && assigned) h += driverWorkPanel(total, dep);
+  if (S.role === 'cust' && (traveling || done)) h += `<div class="panel"><div class="panel-body" style="display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px">
+      ${S.photos.pickup ? `<span><b style="color:var(--status-done)">✓</b> ${t('pickedAt', {t:fmtClock(S.photos.pickup.at)})} · <span class="sub">${t('photoProof')}</span></span>` : ''}
+      ${S.photos.dropoff ? `<span><b style="color:var(--status-done)">✓</b> ${t('droppedAt', {t:fmtClock(S.photos.dropoff.at)})} · <span class="sub">${t('photoProof')}</span></span>` : ''}</div></div>`;
   if (S.role === 'drv') h += `<div class="panel"><div class="panel-head">${t('dvCust')}</div><div class="panel-body driver">
       <span class="avatar">${esc(name.slice(0,2))}</span><div class="grow"><div class="nm">${esc(name)}</div><div class="sub">${esc(S.custContact || 'LINE @kantida')} · ${S.pax} ${S.lang==='en'?'pax':'คน'} · ${S.langDriver ? (S.lang==='en'?'needs English/Chinese':'ต้องการภาษาอังกฤษ/จีน') : (S.lang==='en'?'Thai is fine':'ภาษาไทยได้')}</div>
       <div class="sub">${t('dvPickupNote')}</div></div></div></div>`;
@@ -1150,7 +1221,7 @@ function renderJob() {
     <div class="tl"><div class="tm tnum">${S.time}</div><div class="dot"><i class="s"></i></div><div class="bd"><div class="t">${esc(nm(place(S.pickup)))}</div><div class="s">${t('start')}</div></div></div>`;
   P.legs.forEach((L, i) => h += `<div class="tl"><div class="tm tnum">${fmtT(L.arrive)}</div><div class="dot"><i></i></div><div class="bd"><div class="t">${i+1}. ${esc(nm(L.p))}</div><div class="s">${L.dwell ? `${t('stay')} ${L.dwell} ${t('min')} · ` : ''}${t('drive')} ${Math.round(L.mins)} ${t('min')} · ${L.d.toFixed(0)} ${t('km')}</div>
     ${S.role==='drv' ? commChip(L.p) : ''}
-    ${S.role==='drv' && assigned ? `<div class="checkrow" style="border:none;padding:6px 0 0"><button class="btn sec sm" onclick="S.checked[${i}]=!S.checked[${i}];renderJob()">${S.checked[i] ? '✓ ' : ''}${t('dvCheck')}</button><button class="btn ghost sm">${t('dvNavigate')}</button></div>` : ''}</div></div>`);
+    ${S.role==='drv' && traveling ? `<div class="checkrow" style="border:none;padding:6px 0 0"><button class="btn sec sm" onclick="checkin(${i})">${S.checked[i] ? '✓ ' : ''}${t('dvCheck')}</button><button class="btn ghost sm">${t('dvNavigate')}</button></div>` : ''}</div></div>`);
   if (P.ret) h += `<div class="tl"><div class="tm tnum">${fmtT(P.ret.arrive)}</div><div class="dot"><i class="s"></i></div><div class="bd"><div class="t">${t('back')}</div></div></div>`;
   h += `</div>${paid ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px"><button class="btn sec sm" onclick="toast(t('jlAddStopNote'),6000)">${t('jlAddStop')}</button><span class="sub" style="flex:1;min-width:200px">${t('jlAddStopNote')}</span></div>` : ''}</div></div>`;
   if (S.role === 'drv') {
@@ -1178,6 +1249,46 @@ function renderJob() {
   }
   document.getElementById('joblink').innerHTML = h;
 }
+function photoSlot(kind) {
+  const ph = S.photos[kind], label = kind === 'pickup' ? t('dvPhotoPickup') : t('dvPhotoDrop');
+  return `<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+    <div style="flex:1;min-width:200px">${ph ? `<img class="photo" src="${ph.url}" alt="${label}"><div class="sub" style="margin-top:4px">${t('taken', {t:fmtClock(ph.at)})}</div>` : `<div class="photo-empty"><div><svg class="icon" style="width:28px;height:28px;margin:0 auto 6px;stroke-width:1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>${label}</div></div>`}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;min-width:180px">
+      <input type="file" accept="image/*" capture="environment" id="ph-${kind}" hidden onchange="takePhoto('${kind}', this)">
+      <button class="btn sec sm" onclick="document.getElementById('ph-${kind}').click()"><svg class="icon sm" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>${ph ? t('dvRetake') : label}</button>
+      <button class="btn ghost sm" data-demo-only onclick="samplePhoto('${kind}')">${t('dvSample')}</button>
+      <p class="sub" style="font-size:12px">${t('dvPhotoWhy')}</p></div></div>`;
+}
+function driverWorkPanel(total, dep) {
+  if (S.booking === 'assigned') return `<div class="panel"><div class="panel-head">${t('dvStart')}</div><div class="panel-body">${photoSlot('pickup')}
+    <button class="btn w" style="margin-top:14px" ${S.photos.pickup ? '' : 'disabled'} onclick="S.booking='traveling';renderAll();toast(t('pickedAt',{t:fmtClock(S.photos.pickup.at)}))">${S.photos.pickup ? t('dvConfirmStart') : t('dvNeedPhoto')}</button></div></div>`;
+  if (S.booking === 'traveling') return `<div class="panel"><div class="panel-head">${t('dvFinish')}<span class="right"><span class="sub">${t('pickedAt', {t:fmtClock(S.photos.pickup?.at ?? Date.now())})}</span></span></div><div class="panel-body">${photoSlot('dropoff')}
+    <label class="f" style="margin-top:12px;max-width:260px"><span>${t('dvCollected')}</span><input class="in tnum" type="number" step="100" id="collected" value="${S.collected ?? (total - dep)}"></label>
+    <button class="btn w" style="margin-top:14px" ${S.photos.dropoff ? '' : 'disabled'} onclick="S.collected=Number(document.getElementById('collected').value);S.booking='done';renderAll();toast(t('dvDoneTitle'))">${S.photos.dropoff ? t('dvClose') : t('dvNeedPhoto')}</button></div></div>`;
+  return `<div class="panel"><div class="panel-body"><div class="okbox" style="padding:10px 0 16px"><div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></div>
+    <h2 class="sec" style="justify-content:center;font-size:17px">${t('dvDoneTitle')}</h2><p class="sub" style="max-width:44ch;margin:0 auto">${t('dvDoneSub', {id:S.bookingNo})}</p></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">${['pickup','dropoff'].map(k => S.photos[k] ? `<div style="flex:1;min-width:160px"><img class="photo" src="${S.photos[k].url}" alt=""><div class="sub" style="margin-top:4px">${t(k === 'pickup' ? 'pickedAt' : 'droppedAt', {t:fmtClock(S.photos[k].at)})}</div></div>` : '').join('')}</div>
+    <div class="line" style="margin-top:10px;font-weight:600"><span class="l">${t('dvCollected')}</span><span class="a tnum">${baht(S.collected ?? 0)}</span></div></div></div>`;
+}
+function takePhoto(kind, input) {
+  const f = input.files && input.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => { S.photos[kind] = {url:r.result, at:Date.now()}; renderAll(); }; r.readAsDataURL(f);
+}
+function samplePhoto(kind) {
+  try {
+    const c = document.createElement('canvas'); c.width = 320; c.height = 240; const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, 320, 240); grad.addColorStop(0, '#9fb8a8'); grad.addColorStop(1, '#4f6a5f'); g.fillStyle = grad; g.fillRect(0, 0, 320, 240);
+    g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.ellipse(110, 110, 26, 30, 0, 0, Math.PI*2); g.fill(); g.beginPath(); g.ellipse(170, 118, 22, 26, 0, 0, Math.PI*2); g.fill();
+    g.fillRect(70, 145, 130, 70); g.fillStyle = '#1f2a26'; g.fillRect(205, 150, 95, 45); g.fillStyle = '#fff'; g.font = '600 13px sans-serif'; g.fillText(kind === 'pickup' ? 'รูปตัวอย่าง · รับลูกค้า' : 'รูปตัวอย่าง · ส่งลูกค้า', 14, 226);
+    S.photos[kind] = {url:c.toDataURL('image/jpeg', .8), at:Date.now()}; renderAll();
+  } catch { S.photos[kind] = {url:'', at:Date.now()}; renderAll(); }
+}
+function checkin(i) {
+  S.checked[i] = !S.checked[i]; renderJob();
+  if (!S.checked[i]) return;
+  const {P} = current(), L = P.legs[i], prev = i === 0 ? place(S.pickup) : P.legs[i-1].p, actual = Math.round(L.mins * (0.95 + Math.random() * 0.15));
+  toast(t('checkinLog', {t:fmtT(L.arrive + (actual - L.mins)), a:nm(prev), b:nm(L.p), m:actual, p:Math.round(L.mins)}), 6000);
+}
 function setRole(r) { S.role = r; document.getElementById('role-cust').classList.toggle('on', r==='cust'); document.getElementById('role-drv').classList.toggle('on', r==='drv'); renderJob(); }
 
 /* ═══════════════ render: admin ═══════════════ */
@@ -1187,7 +1298,7 @@ function liveJob() {
   return {id:S.bookingNo, title: S.ret ? title : `${title} (ขาเดียว)`, cust:`${S.custName || 'กานต์ธิดา ศรีสุข'} · ${S.pax} คน${S.langDriver?' · ต้องการภาษาต่างประเทศ':''}`,
     when:`${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MON[d.getMonth()]} ${String(d.getFullYear()+543).slice(2)} · ${S.time}`,
     veh:RULES.vehicles[S.vehicle].th.split(' (')[0], mode: inQuoteFlow() ? 'เสนอราคา' : (T.th[MODE_KEYS[mode]] ?? ''), total: q ? q.price : (inQuoteFlow() ? 0 : (sel?.total ?? 0)), km: Math.round(P.km), hours:(P.total/60).toFixed(1),
-    status: ({none:'draft', quote_requested:'quote_req', quoted:'quoted', expired:'expired', requested:'pending', assigned:'assigned'})[S.booking],
+    status: ({none:'draft', quote_requested:'quote_req', quoted:'quoted', expired:'expired', requested:'pending', assigned:'assigned', traveling:'traveling', done:'done'})[S.booking],
     driver: S.booking === 'quoted' && q ? `มัดจำภายใน ${fmtClock(q.deadline)}` : DRIVERS.find(x => x.id === S.driver)?.nick};
 }
 function allJobs() { return JOBS.map(j => j.live ? liveJob() : j).filter(j => j.status !== 'draft'); }
@@ -1257,7 +1368,7 @@ function renderAssign() {
   const left = `<div class="panel"><div class="panel-head">งานที่ต้องจัด<span class="right"><span class="badge ${STATUS[j.status].cls}">${STATUS[j.status].th}</span></span></div><div class="panel-body">
       <div style="font-weight:600;font-size:15px;margin-bottom:6px">${esc(j.title)}</div>
       <dl class="kv"><dt>ลูกค้า</dt><dd>${esc(j.cust)}</dd><dt>ติดต่อ</dt><dd>${esc(S.custContact || 'LINE @kantida')}</dd><dt>รับ</dt><dd>${j.when} · ${esc(place(S.pickup).th)}</dd>
-      <dt>เส้นทาง</dt><dd>${j.km} กม. · ${j.hours} ชม. · จบ ${fmtT(P.end)}</dd><dt>ราคา</dt><dd class="tnum">${baht(j.total)} (${j.mode}) · มัดจำรับแล้ว ${baht(deposit(j.total))}</dd><dt>ค่าน้ำ</dt><dd>${commSummaryTh()}</dd><dt>กฎราคา</dt><dd>${RULES.version}</dd></dl></div></div>
+      <dt>เส้นทาง</dt><dd>${j.km} กม. · ${j.hours} ชม. · จบ ${fmtT(P.end)}</dd><dt>ราคา</dt><dd class="tnum">${baht(j.total)} (${j.mode}) · มัดจำรับแล้ว ${baht(deposit(j.total))}</dd><dt>ค่าน้ำ</dt><dd>${commSummaryTh()}</dd><dt>กฎราคา</dt><dd>${RULES.version}</dd>${S.photos.pickup || S.photos.dropoff ? `<dt>รูปยืนยัน</dt><dd style="display:flex;gap:8px;flex-wrap:wrap">${['pickup','dropoff'].map(k => S.photos[k] ? `<span><img class="thumb" src="${S.photos[k].url}" alt=""> <span class="sub">${k==='pickup'?'รับ':'ส่ง'} ${fmtClock(S.photos[k].at)}</span></span>` : '').join('')}${S.collected != null ? `<span class="sub">· รับเงินหน้างาน ${baht(S.collected)}</span>` : ''}</dd>` : ''}</dl></div></div>
     <div class="panel" style="margin-top:14px"><div class="panel-head">ข้อความที่จะส่งเมื่อยืนยัน<span class="right"><div class="seg">${['LINE','WhatsApp','อีเมล'].map(c => `<button class="${S.channel===c?'on':''}" onclick="S.channel='${c}';renderAssign()">${c}</button>`).join('')}</div></span></div>
       <div class="panel-body"><div class="msgprev">${esc(messageText())}</div></div></div>`;
   const drivers = DRIVERS.map(d => { const match = d.vehicle === S.vehicle, dis = d.avail === 'off' || !match;
@@ -1268,8 +1379,8 @@ function renderAssign() {
         <div class="s">${match ? '' : 'คนละประเภทรถกับที่ลูกค้าจอง · '}${esc(d.note)}</div></div>${av}</button>`; }).join('');
   const right = `<div class="panel"><div class="panel-head">คนขับที่เลือกได้ · ${fmtDateTh(S.date)}<span class="right">ตรงประเภทรถ: ${RULES.vehicles[S.vehicle].th.split(' (')[0]}</span></div>${drivers}
       <div class="panel-body" style="border-top:1px solid var(--line)">
-        <button class="btn w" ${S.driver && j.status==='pending' ? '' : 'disabled'} onclick="confirmAssign()">${j.status==='assigned' ? 'ส่งลิงก์แล้ว' : `ยืนยันคนขับและส่งลิงก์ทาง ${S.channel}`}</button>
-        ${j.status==='assigned' ? `<button class="btn sec w" style="margin-top:8px" onclick="view('job')">ดูลิงก์ที่ลูกค้าเห็น</button>` : ''}
+        <button class="btn w" ${S.driver && j.status==='pending' ? '' : 'disabled'} onclick="confirmAssign()">${j.status==='pending' ? `ยืนยันคนขับและส่งลิงก์ทาง ${S.channel}` : 'ส่งลิงก์แล้ว'}</button>
+        ${['assigned','traveling','done'].includes(j.status) ? `<button class="btn sec w" style="margin-top:8px" onclick="view('job')">ดูลิงก์ที่ลูกค้าเห็น</button>` : ''}
       </div></div>`;
   document.getElementById('assignBody').innerHTML = left + right;
 }
@@ -1317,6 +1428,17 @@ function renderPricing() {
         </div>
         <p class="sub" style="margin-top:12px">ทริปตัวอย่างวันที่ ${fmtDateTh(S.date)}: <b style="color:var(--ink)">${quoteActive() ? 'เข้าโหมดเสนอราคา' : 'จองทันทีตามกฎราคา'}</b></p>
       </div></div>
+    <div class="panel"><div class="panel-head">ระยะทางและเวลาจริงรายช่วง<span class="right">ใช้แทนค่าประมาณทั้งสองทิศทาง</span></div>
+      <div class="panel-body" style="padding-bottom:0"><p class="sub">ช่วงที่ขับวัดจริงแล้ว หรือที่ระบบสรุปจากเวลาเช็กอินของคนขับ จะถูกใช้คิดเวลาและราคาแทนค่าประมาณจากระยะเส้นตรง ช่วงที่ยังไม่มีข้อมูลใช้ตัวคูณถนน ${RULES.roadFactor} และความเร็วเฉลี่ยตามโซน</p></div>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>จาก</th><th>ถึง</th><th>กม.</th><th>นาที</th><th>ที่มา</th><th></th></tr></thead><tbody>
+        ${Object.entries(MEAS).map(([k, m]) => { const [a, b] = k.split('>'); return `<tr><td style="white-space:nowrap">${esc(place(a).th)}</td><td style="white-space:nowrap">${esc(place(b).th)}</td>
+          <td><input type="number" value="${m.km}" onchange="MEAS['${k}'].km=Number(this.value);renderAll()"></td><td><input type="number" value="${m.min}" onchange="MEAS['${k}'].min=Number(this.value);renderAll()"></td>
+          <td><span class="zchip" style="${m.src.startsWith('ขับ')?'background:var(--status-done-bg);color:var(--status-done)':'background:var(--status-info-bg);color:var(--status-info)'}">${esc(m.src)}</span></td>
+          <td><button class="ib" aria-label="ลบ" onclick="delete MEAS['${k}'];renderAll()"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></td></tr>`; }).join('')}
+        <tr><td colspan="6"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select class="in" id="mFrom" style="min-height:36px;width:auto">${PLACES.map(p => `<option value="${p.id}">${esc(p.th)}</option>`).join('')}</select><span class="sub">→</span>
+          <select class="in" id="mTo" style="min-height:36px;width:auto">${PLACES.map((p, i) => `<option value="${p.id}" ${i===4?'selected':''}>${esc(p.th)}</option>`).join('')}</select>
+          <button class="btn sec sm" onclick="addMeas()">+ เพิ่มช่วงที่วัดแล้ว</button></div></td></tr>
+      </tbody></table></div></div>
     <div class="panel"><div class="panel-head">นโยบายค่าน้ำ<span class="right">จุดที่ไม่อยู่ในตาราง = ไม่มีค่าน้ำ</span></div>
       <div class="tblwrap"><table class="tbl"><thead><tr><th>จุด</th><th>ประเภท</th><th>จำนวน</th><th>การแบ่ง</th><th>หมายเหตุถึงคนขับ</th><th></th></tr></thead><tbody>
         ${Object.entries(COMM).map(([id, c]) => `<tr><td style="white-space:nowrap">${esc(place(id).th)}</td>
@@ -1336,6 +1458,10 @@ function renderPricing() {
         <p class="sub" style="margin-top:10px">ทริปตัวอย่าง: ${commSummaryTh()} · ลูกค้าไม่เห็นข้อมูลค่าน้ำ คนขับเห็นทุกจุดในมุมมองคนขับของลิงก์งาน</p>
       </div></div>`;
   renderRulePreview();
+}
+function addMeas() {
+  const a = document.getElementById('mFrom').value, b = document.getElementById('mTo').value; if (a === b) return toast('เลือกจุดต้นทางและปลายทางให้ต่างกัน');
+  const A = place(a), B = place(b); MEAS[`${a}>${b}`] = {km: Math.round(roadKm(A, B)), min: Math.round(roadKm(A, B) / SPEED[zoneOf(B)] * 60), src:'ขับวัดจริง ' + fmtDateTh('2026-10-21').slice(3)}; renderAll(); toast('เพิ่มช่วงแล้ว แก้ตัวเลขกม.และนาทีตามที่วัดได้');
 }
 function setComm(id, k, v) { COMM[id][k] = v; renderAll(); }
 function setQuote(el) { const k = el.dataset.q; const q = RULES.quote; q[k] = el.type === 'checkbox' ? el.checked : k === 'useRange' ? el.value === '1' : (k === 'hours' || k === 'pct') ? Number(el.value) : el.value; renderAll(); }
@@ -1377,7 +1503,7 @@ function copyText(s) { const done = () => toast(t('jlCopied') + ': ' + s); try {
 function setLang(l) { S.lang = l; renderAll(); }
 function setVariant(v) { document.documentElement.dataset.variant = v; document.querySelectorAll('.demobar [data-var]').forEach(b => b.classList.toggle('on', b.dataset.var === v)); }
 function renderAll() {
-  applyLang(); renderTemplates(); renderMap(); renderTrip(); renderPrice();
+  applyLang(); renderTemplates(); renderPrice(); renderMap(); renderTrip(); renderSuggest();
   if (document.getElementById('v-job').classList.contains('on')) renderJob();
   if (document.getElementById('s-admin').classList.contains('on')) renderAdmin();
   if (document.getElementById('s-assign').classList.contains('on')) renderAssign();
