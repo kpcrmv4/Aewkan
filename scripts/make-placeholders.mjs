@@ -8,6 +8,7 @@ const pages = [
   ['quotes', 'quotes.manage', 'เสนอราคา', 'P2'],
   ['assign', 'jobs.manage', 'จัดคนขับ', 'P2'],
   ['drivers', 'drivers.manage', 'คนขับและรถ', 'P2'],
+  ['payments', 'finance.read', 'การเงิน', 'P4'],
   ['pricing', 'pricing.manage', 'กฎราคา', 'P2'],
   ['places', 'places.manage', 'จุดหมาย', 'P2'],
   ['integrations', 'integrations.manage', 'การเชื่อมต่อ', 'P4'],

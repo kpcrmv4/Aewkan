@@ -1,6 +1,6 @@
 import type { Permission } from '@/lib/auth/staff';
 
-export type NavIcon = 'jobs' | 'quotes' | 'assign' | 'pricing' | 'places' | 'drivers' | 'integrations' | 'team';
+export type NavIcon = 'jobs' | 'quotes' | 'assign' | 'payments' | 'pricing' | 'places' | 'drivers' | 'integrations' | 'team';
 
 export interface NavItem {
   href: string;
@@ -16,6 +16,7 @@ export const NAV: NavItem[] = [
   { href: '/admin/jobs', label: 'งานเข้า', sub: 'รอจัดคนขับและงานทั้งหมด', icon: 'jobs', perm: 'jobs.read', group: 'งาน' },
   { href: '/admin/quotes', label: 'เสนอราคา', sub: 'คำขอราคาช่วงเทศกาล', icon: 'quotes', perm: 'quotes.manage', group: 'งาน' },
   { href: '/admin/assign', label: 'จัดคนขับ', sub: 'เลือกคนขับและส่งลิงก์งาน', icon: 'assign', perm: 'jobs.manage', group: 'งาน' },
+  { href: '/admin/payments', label: 'การเงิน', sub: 'ตรวจสลิป มัดจำ และยอดรับ', icon: 'payments', perm: 'finance.read', group: 'งาน' },
   { href: '/admin/drivers', label: 'คนขับและรถ', sub: 'ทะเบียน ภาษา ประเภทรถ', icon: 'drivers', perm: 'drivers.manage', group: 'งาน' },
   { href: '/admin/pricing', label: 'กฎราคา', sub: 'โซน รถ ค่าเพิ่ม ค่าน้ำ ระยะจริง', icon: 'pricing', perm: 'pricing.manage', group: 'ตั้งค่า' },
   { href: '/admin/places', label: 'จุดหมาย', sub: 'เพิ่มและแก้สถานที่บนแผนที่', icon: 'places', perm: 'places.manage', group: 'ตั้งค่า' },

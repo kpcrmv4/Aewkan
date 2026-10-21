@@ -14,6 +14,7 @@ import {
   Sun,
   UserCheck,
   Users,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -29,6 +30,7 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   jobs: CalendarCheck,
   quotes: MessageSquareQuote,
   assign: UserCheck,
+  payments: Wallet,
   drivers: Car,
   pricing: CircleDollarSign,
   places: MapPin,
