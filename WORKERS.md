@@ -40,6 +40,15 @@ Seams the orchestrator wires after merge (workers export, never edit the host fi
 | E | `feat/p5-team` | P5-* in docs/test-plan/P5.md | `src/app/admin/(shell)/team/**`, `src/app/admin/invite/**`, `src/features/team/**`, `src/app/api/admin/team/**`, `src/app/api/invite/**`, `src/lib/copy/team.ts`, `supabase/migrations/202610211100*`, `src/lib/database.types.ts`, `tests/e2e/p5-*`, `tests/unit/p5-*`, `docs/test-plan/P5.md` | `npm run typecheck && node scripts/kit/verify-write-set.mjs --worker E --workers WORKERS.md --base ccr-5e60b244-69x519` | no | `claude-opus-5-5` / high — auth + RBAC, ungated judgement | subagent+worktree · CLAUDE.md, migrations 0900*, `nextjs-supabase-ssr-auth`, `supabase-rls-schema` |
 | F | `feat/p4-money` | P4-* in docs/test-plan/P4.md | `src/app/admin/(shell)/integrations/**`, `src/app/admin/(shell)/payments/**`, `src/features/payments/**`, `src/features/integrations/**`, `src/lib/integrations/**`, `src/lib/notify/**`, `src/app/api/payments/**`, `src/app/api/webhooks/**`, `src/app/api/push/**`, `src/app/api/cron/**`, `src/app/api/admin/integrations/**`, `src/app/api/admin/payments/**`, `src/app/api/jobs/[token]/pay/**`, `public/sw.js`, `src/lib/contracts/payment.ts`, `src/lib/copy/pay.ts`, `supabase/migrations/202610211000*`, `src/lib/database.types.ts`, `tests/e2e/p4-*`, `tests/unit/p4-*`, `docs/test-plan/P4.md` | `npm run typecheck && node scripts/kit/verify-write-set.mjs --worker F --workers WORKERS.md --base ccr-5e60b244-69x519` | no | `claude-opus-5-5` / high — money, webhooks, Vault | subagent+worktree · CLAUDE.md, DESIGN.md §4, RULINGS R-001/R-002/R-010, migrations 0902*, contracts/job.ts |
 
+## Workers — wave 3 (SEO, after the wave-2 merge)
+
+`src/proxy.ts` (orchestrator) already sets the `x-aewkan-url-lang` request header: `en` for `/en`, `/en/*` · `th` for `/`, `/places/*` · absent elsewhere.
+The orchestrator builds customer e-mail (Resend) at the same time in `src/lib/notify/**`, `src/lib/integrations/**`, `src/features/integrations/**`, `src/app/api/admin/integrations/**`, `supabase/migrations/*` — G never touches those.
+
+| ID | Branch | Closes rows | Write set | Gate | Push | Model / effort | Shape · read |
+|----|--------|-------------|-----------|------|------|----------------|--------------|
+| G | `feat/seo` | SEO-* in docs/test-plan/SEO.md | `src/app/layout.tsx`, `src/app/(public)/layout.tsx`, `src/app/(public)/page.tsx`, `src/app/(public)/en/**`, `src/app/(public)/places/**`, `src/app/robots.ts`, `src/app/sitemap.ts`, `src/app/opengraph-image.tsx`, `src/app/icon.tsx`, `src/app/apple-icon.tsx`, `src/components/public/**`, `src/features/trip-builder/**`, `src/features/seo/**`, `src/lib/copy/seo.ts`, `src/lib/copy/trip.ts`, `public/manifest.webmanifest`, `tests/e2e/seo-*`, `tests/unit/seo-*`, `docs/test-plan/SEO.md` | `npm run typecheck && node scripts/kit/verify-write-set.mjs --worker G --workers WORKERS.md --base ccr-5e60b244-69x519` | no | `claude-sonnet-5-5` / medium — pages + metadata, build/spec gate it | subagent+worktree · CLAUDE.md, DESIGN.md, src/lib/pricing, src/lib/catalog/server.ts |
+
 ## Rows the workers may NOT tick
 
 | Row | Why it is cross-worker |
