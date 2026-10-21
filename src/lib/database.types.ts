@@ -612,6 +612,32 @@ export type Database = {
           },
         ]
       }
+      line_links: {
+        Row: {
+          booking_id: string
+          created_at: string
+          line_user_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          line_user_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          line_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "line_links_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_log: {
         Row: {
           booking_id: string | null
@@ -813,6 +839,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pricing_rule_sets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: boolean
+          is_enabled: boolean
+          public_key: string
+          secret_id: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: boolean
+          is_enabled?: boolean
+          public_key: string
+          secret_id: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: boolean
+          is_enabled?: boolean
+          public_key?: string
+          secret_id?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_keys_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "staff"
@@ -1159,6 +1226,24 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_events: {
+        Row: {
+          event_id: string
+          provider: string
+          received_at: string
+        }
+        Insert: {
+          event_id: string
+          provider: string
+          received_at?: string
+        }
+        Update: {
+          event_id?: string
+          provider?: string
+          received_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1169,6 +1254,11 @@ export type Database = {
         Returns: string
       }
       admin_job_kpis: { Args: never; Returns: Json }
+      admin_payment_kpis: { Args: never; Returns: Json }
+      admin_review_payment: {
+        Args: { p_approve: boolean; p_note?: string; p_payment: string }
+        Returns: Json
+      }
       admin_set_status: {
         Args: {
           p_booking: string
@@ -1184,12 +1274,21 @@ export type Database = {
         Returns: Json
       }
       current_owner_id: { Args: never; Returns: string }
+      deposit_due: { Args: { p_booking: string }; Returns: number }
+      deposit_open: {
+        Args: { p_deadline: string; p_status: string }
+        Returns: boolean
+      }
+      expire_online_payments: { Args: never; Returns: number }
       expire_quotes: { Args: never; Returns: number }
       get_integration_secret: { Args: { p_key: string }; Returns: string }
       get_job_view: { Args: { p_token: string }; Returns: Json }
       get_public_catalog: { Args: never; Returns: Json }
+      get_push_config: { Args: never; Returns: Json }
+      get_push_private_key: { Args: never; Returns: Json }
       get_staff_invite: { Args: { p_token: string }; Returns: Json }
       has_perm: { Args: { p_key: string }; Returns: boolean }
+      integration_secret_fields: { Args: never; Returns: Json }
       is_owner: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       issue_job_link: {
@@ -1238,6 +1337,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      job_pay_info: { Args: { p_token: string }; Returns: Json }
+      job_pay_slip: { Args: { p_path: string; p_token: string }; Returns: Json }
       job_photo_path_ok: { Args: { p_name: string }; Returns: boolean }
       job_push_subscribe: {
         Args: {
@@ -1254,9 +1355,34 @@ export type Database = {
       }
       job_return_dismiss: { Args: { p_token: string }; Returns: undefined }
       job_start: { Args: { p_token: string }; Returns: undefined }
+      line_bind: { Args: { p_token: string; p_user: string }; Returns: Json }
+      log_notification: {
+        Args: {
+          p_booking: string
+          p_channel: string
+          p_error: string
+          p_kind: string
+          p_status: string
+        }
+        Returns: undefined
+      }
+      merge_integration_secret: {
+        Args: { p_key: string; p_patch: Json }
+        Returns: string[]
+      }
       my_permissions: { Args: never; Returns: string[] }
       next_booking_no: { Args: never; Returns: string }
       owner_exists: { Args: never; Returns: boolean }
+      payment_settle: {
+        Args: {
+          p_actor: string
+          p_payment: string
+          p_provider_ref: string
+          p_result: Json
+        }
+        Returns: Json
+      }
+      payment_slip_path_ok: { Args: { p_name: string }; Returns: boolean }
       perms_within_mine: { Args: { p_perms: string[] }; Returns: boolean }
       publish_rule_set: {
         Args: { p_note?: string; p_rules: Json }
@@ -1266,6 +1392,19 @@ export type Database = {
       role_perms: { Args: { p_role: string }; Returns: string[] }
       set_integration_secret: {
         Args: { p_key: string; p_secret: string }
+        Returns: undefined
+      }
+      set_push_keys: {
+        Args: {
+          p_private: string
+          p_public: string
+          p_replace?: boolean
+          p_subject: string
+        }
+        Returns: undefined
+      }
+      set_push_settings: {
+        Args: { p_enabled: boolean; p_subject: string }
         Returns: undefined
       }
       token_hash: { Args: { p_token: string }; Returns: string }

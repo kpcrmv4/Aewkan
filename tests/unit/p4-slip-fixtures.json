@@ -1,0 +1,110 @@
+{
+  "slipok": {
+    "success": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "success": true,
+          "message": "✅",
+          "rqUID": "740_20261021_00001",
+          "language": "TH",
+          "transRef": "015294101345ATF07385",
+          "sendingBank": "004",
+          "receivingBank": "014",
+          "transDate": "20261021",
+          "transTime": "14:05:12",
+          "transTimestamp": "2026-10-21T07:05:12.000Z",
+          "sender": {
+            "displayName": "นาย ทดสอบ ผู้โอน",
+            "name": "MR. TEST SENDER",
+            "proxy": { "type": null, "value": null },
+            "account": { "type": "BANKAC", "value": "123-4-xxxx5-6" }
+          },
+          "receiver": {
+            "displayName": "บจก. แอ่วกัน",
+            "name": "AEWKAN CO., LTD.",
+            "proxy": { "type": "MSISDN", "value": "xxx-xxx-5678" },
+            "account": { "type": "BANKAC", "value": "xxx-x-x9012-x" }
+          },
+          "amount": 1500,
+          "paidLocalAmount": 1500,
+          "paidLocalCurrency": "764",
+          "countryCode": "TH",
+          "transFeeAmount": 0,
+          "ref1": "",
+          "ref2": "",
+          "ref3": "",
+          "toMerchantId": ""
+        }
+      }
+    },
+    "duplicate": {
+      "status": 400,
+      "body": {
+        "code": 1012,
+        "message": "สลิปซ้ำ สลิปนี้เคยส่งเข้ามาในระบบเมื่อ 2026-10-21 14:06:00",
+        "data": {
+          "success": true,
+          "transRef": "015294101345ATF07385",
+          "amount": 1500,
+          "receiver": { "displayName": "บจก. แอ่วกัน", "proxy": { "type": "MSISDN", "value": "xxx-xxx-5678" }, "account": { "type": "BANKAC", "value": "xxx-x-x9012-x" } }
+        }
+      }
+    },
+    "bankDelay": { "status": 400, "body": { "code": 1010, "message": "เนื่องจากเป็นสลิปจากธนาคารกรุงเทพ กรุณารอการตรวจสอบสลิปหลังการโอนประมาณ 2 นาที" } },
+    "noQr": { "status": 400, "body": { "code": 1007, "message": "รูปภาพไม่มี QR Code" } }
+  },
+  "easyslip": {
+    "success": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "isDuplicate": false,
+          "matchedAccount": null,
+          "amountInSlip": 900,
+          "rawSlip": {
+            "payload": "0046000600000101030040220015294101345ATF073855102TH91049C1E",
+            "transRef": "68370160657749I376388B35",
+            "date": "2026-10-21T14:30:00+07:00",
+            "countryCode": "TH",
+            "amount": { "amount": 900, "local": { "amount": 900, "currency": "THB" } },
+            "fee": 0,
+            "ref1": "",
+            "ref2": "",
+            "ref3": "",
+            "sender": {
+              "bank": { "id": "004", "name": "กสิกรไทย", "short": "KBANK" },
+              "account": { "name": { "th": "นาย ผู้โอน ทดสอบ", "en": "MR. SENDER TEST" }, "bank": { "type": "BANKAC", "account": "123-4-xxxxx-5" } }
+            },
+            "receiver": {
+              "bank": { "id": "014", "name": "ไทยพาณิชย์", "short": "SCB" },
+              "account": {
+                "name": { "th": "บริษัท แอ่วกัน จำกัด" },
+                "bank": { "type": "BANKAC", "account": "xxx-x-x9012-x" },
+                "proxy": { "type": "MSISDN", "account": "08xxxxxx78" }
+              },
+              "merchantId": null
+            }
+          }
+        },
+        "message": "Bank slip verified successfully"
+      }
+    },
+    "duplicate": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "isDuplicate": true,
+          "amountInSlip": 900,
+          "rawSlip": { "transRef": "68370160657749I376388B35", "date": "2026-10-21T14:30:00+07:00", "amount": { "amount": 900 }, "receiver": { "account": { "name": { "th": "บริษัท แอ่วกัน จำกัด" } } } }
+        }
+      }
+    },
+    "notFound": { "status": 404, "body": { "success": false, "error": { "code": "SLIP_NOT_FOUND", "message": "No QR code found in the image" } } },
+    "pending": { "status": 404, "body": { "success": false, "error": { "code": "SLIP_PENDING", "message": "Bangkok Bank slip is pending. Please wait a few minutes and try again." } } },
+    "quota": { "status": 403, "body": { "success": false, "error": { "code": "QUOTA_EXCEEDED", "message": "Your API quota has been exceeded" } } }
+  }
+}
