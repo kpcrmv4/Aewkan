@@ -17,12 +17,13 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { BRAND } from '@/lib/copy/common';
+import { BRAND, LOGO } from '@/lib/copy/common';
 import { getSupabaseBrowser } from '@/lib/supabase/client';
 import { BOTTOM_LEFT, BOTTOM_RIGHT, CENTER_ACTION, type NavIcon, type NavItem } from './nav';
 
@@ -83,12 +84,9 @@ export function AdminShell({ items, staff, children }: { items: NavItem[]; staff
   return (
     <div className="flex min-h-dvh">
       <nav aria-label="เมนูหลัก" className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-sidebar-line bg-sidebar px-3 py-4 text-sidebar-fg lg:flex">
-        <Link href="/admin/jobs" className="mb-2 flex items-center gap-2.5 px-3 py-1.5">
-          <span className="grid size-8 place-items-center rounded-sm bg-brand-solid font-heading text-sm font-semibold text-on-brand">{BRAND.mark}</span>
-          <span className="min-w-0">
-            <span className="block font-heading text-lg font-semibold leading-tight text-sidebar-title">{BRAND.th}</span>
-            <span className="block text-xs text-sidebar-fg-dim">หลังบ้านทีมงาน</span>
-          </span>
+        <Link href="/admin/jobs" className="mb-2 block px-3 py-1.5" aria-label={`${BRAND.th} หลังบ้านทีมงาน`}>
+          <Image src={LOGO.src} alt="" width={144} height={Math.round(144 / LOGO.ratio)} priority className="h-auto w-36" />
+          <span className="mt-1 block text-xs text-sidebar-fg-dim">หลังบ้านทีมงาน</span>
         </Link>
         {groups.map((g) => {
           const list = items.filter((i) => i.group === g);

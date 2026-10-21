@@ -16,7 +16,7 @@ interface LineEvent {
 
 const WELCOME =
   'ขอบคุณที่เพิ่มเพื่อนกับแอ่วกัน · ส่งลิงก์งานของคุณ (ลิงก์ /j/…) มาในแชทนี้ เพื่อรับแจ้งเตือนราคา การยืนยัน และคนขับ\n' +
-  'Thanks for adding Aewkan. Send your trip link (/j/…) in this chat to get price, confirmation and driver updates here.';
+  'Thanks for adding AewKan. Send your trip link (/j/…) in this chat to get price, confirmation and driver updates here.';
 
 /**
  * LINE OA → POST /api/webhooks/line. x-line-signature over the raw body with the channel

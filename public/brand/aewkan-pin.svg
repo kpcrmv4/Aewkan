@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="แอ่วกัน Aewkan">
+  <defs>
+    <linearGradient id="pinFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF2A2E"/>
+      <stop offset="1" stop-color="#D90008"/>
+    </linearGradient>
+  </defs>
+  <!-- the red map pin of the Aewkan wordmark (logo red #F20008), white sticker outline -->
+  <path d="M32 3.5C19.6 3.5 9.5 13.3 9.5 25.5c0 15.6 19.8 35.4 20.7 36.3a2.5 2.5 0 0 0 3.6 0C34.7 60.9 54.5 41.1 54.5 25.5 54.5 13.3 44.4 3.5 32 3.5z" fill="url(#pinFill)" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="32" cy="25" r="9.5" fill="#FFFFFF"/>
+  <path d="M20 16.5c2.5-4.2 6.6-6.6 11-7.1" fill="none" stroke="#FFFFFF" stroke-opacity=".45" stroke-width="3" stroke-linecap="round"/>
+</svg>

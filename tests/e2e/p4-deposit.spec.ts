@@ -180,7 +180,7 @@ test('P4-40 LINE OA: "add our LINE" deep link carries the booking number and thi
   const href = (await add.getAttribute('href')) ?? '';
   expect(href.startsWith('https://line.me/R/oaMessage/%40e2eaewkan/?')).toBe(true);
   const text = decodeURIComponent(href.split('/?')[1]);
-  expect(text).toContain(`Aewkan booking ${E.bookingNo}`);
+  expect(text).toContain(`AewKan booking ${E.bookingNo}`);
   expect(text).toContain(`/j/${E.customerToken}`);
   await setIntegration(staff, 'line', false, {}, '');
   await page.reload();

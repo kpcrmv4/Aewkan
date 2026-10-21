@@ -14,6 +14,8 @@ export interface EmailMessage {
   bookingNo: string;
   /** the raw job link when the caller holds it (booking created / link re-issued) */
   url?: string | null;
+  /** absolute URL of the wordmark (public/brand) — omitted = text brand */
+  logoUrl?: string | null;
 }
 
 export interface EmailSender {
@@ -45,7 +47,7 @@ export function emailHtml(m: EmailMessage): string {
 <body style="margin:0;background:${C.canvas};font-family:-apple-system,'Segoe UI',Tahoma,'Noto Sans Thai',sans-serif;color:${C.ink}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.canvas};padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:${C.surface};border:1px solid ${C.line};border-radius:16px">
-<tr><td style="padding:24px 24px 8px;font-size:15px;font-weight:700;color:${C.brand}">${th ? 'แอ่วกัน' : 'Aewkan'}</td></tr>
+<tr><td style="padding:20px 24px 8px">${m.logoUrl ? `<img src="${esc(m.logoUrl)}" width="150" height="52" alt="${th ? 'แอ่วกัน AewKan' : 'AewKan แอ่วกัน'}" style="display:block;border:0;height:52px;width:150px">` : `<span style="font-size:15px;font-weight:700;color:${C.brand}">${th ? 'แอ่วกัน' : 'AewKan'}</span>`}</td></tr>
 <tr><td style="padding:0 24px 24px">
 <h1 style="margin:0 0 12px;font-size:20px;line-height:1.35">${esc(m.title)}</h1>
 <p style="margin:0;font-size:15px;line-height:1.6">${esc(m.body)}</p>

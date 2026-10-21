@@ -5,7 +5,8 @@ import { resendRequest, resendSend } from '@/lib/integrations/email';
 import { lineBotInfo } from '@/lib/integrations/line';
 import { formatPromptPayId, promptPayPayload, PROMPTPAY_ID_RE } from '@/lib/integrations/promptpay';
 import { checkVapid } from '@/lib/integrations/push';
-import { loadIntegration, ready, type Admin } from '@/lib/integrations/server';
+import { LOGO } from '@/lib/copy/common';
+import { loadIntegration, ready, siteOrigin, type Admin } from '@/lib/integrations/server';
 import { stripeBalanceCheck } from '@/lib/integrations/stripe';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { getSupabaseServer } from '@/lib/supabase/server';
@@ -55,7 +56,7 @@ export const POST = staffRoute('integrations.manage', TestIntegrationRequest, as
         const req = resendRequest(
           { fromEmail: i.config.fromEmail, fromName: i.config.fromName ?? '', replyTo: i.config.replyTo },
           staff.email,
-          { lang: 'th', title: 'แอ่วกัน · ทดสอบอีเมล', body: 'ถ้าได้รับอีเมลนี้ แปลว่าการส่งอีเมลถึงลูกค้าผ่าน Resend พร้อมใช้งานแล้ว', bookingNo: 'TEST', url: null },
+          { lang: 'th', title: 'แอ่วกัน · ทดสอบอีเมล', body: 'ถ้าได้รับอีเมลนี้ แปลว่าการส่งอีเมลถึงลูกค้าผ่าน Resend พร้อมใช้งานแล้ว', bookingNo: 'TEST', url: null, logoUrl: `${siteOrigin()}${LOGO.png}` },
         );
         const id = await resendSend(i.secret.apiKey, req);
         return ok(`ส่งอีเมลทดสอบไปที่ ${staff.email} แล้ว${id ? ` · id ${id}` : ''} (ดูในกล่องจดหมายหรือสแปม)`);

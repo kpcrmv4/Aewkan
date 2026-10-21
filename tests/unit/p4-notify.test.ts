@@ -26,7 +26,7 @@ describe('P4-41 customer messages (th + en)', () => {
     expect(m.body).toContain('฿5,200');
     expect(m.body).toContain('โอนมัดจำ ฿1,500 ภายใน 21 ต.ค. 18:30 (เวลาไทย)');
     const en = customerMessage('quote_ready', { ...input, lang: 'en' })!;
-    expect(en.title).toBe('Aewkan · Your trip price is ready');
+    expect(en.title).toBe('AewKan · Your trip price is ready');
     expect(en.body).toContain('deposit ฿1,500 due by 21 Oct 18:30 (Thailand time, GMT+7)');
   });
   it('driver assigned names the driver, car and plate; the link is appended only when given', () => {

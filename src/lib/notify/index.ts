@@ -6,6 +6,7 @@ import { lineText, linePush } from '@/lib/integrations/line';
 import { sendPush, type PushKeys } from '@/lib/integrations/push';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { getSupabaseServer } from '@/lib/supabase/server';
+import { LOGO } from '@/lib/copy/common';
 import { customerMessage, STAFF_KINDS, staffMessage, type MessageInput, type NotifyKind } from './messages';
 
 export { NOTIFY_KINDS, type NotifyKind } from './messages';
@@ -228,7 +229,7 @@ async function emailToCustomer(admin: Admin, bookingId: string, kind: NotifyKind
     const req = resendRequest(
       { fromEmail: mail.config.fromEmail, fromName: mail.config.fromName ?? '', replyTo: mail.config.replyTo },
       input.email,
-      { lang: input.lang, title: msg.title, body: msg.body, bookingNo: input.bookingNo, url: input.customerUrl },
+      { lang: input.lang, title: msg.title, body: msg.body, bookingNo: input.bookingNo, url: input.customerUrl, logoUrl: `${siteOrigin()}${LOGO.png}` },
     );
     // same booking + kind + wording = one e-mail even if notify runs twice; a new quote is new wording
     const key = `${bookingId}:${kind}:${createHash('sha256').update(msg.body).digest('hex').slice(0, 16)}`;

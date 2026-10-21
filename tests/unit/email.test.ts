@@ -13,6 +13,10 @@ describe('customer e-mail (Resend)', () => {
     expect(html).not.toContain('<b>Sat</b>');
     expect(html).toContain('href="https://aewkan.example/j/abc"');
     expect(html).toContain('lang="en"');
+    expect(html).toContain('>AewKan</span>');
+    const withLogo = emailHtml({ ...msg, logoUrl: 'https://aewkan.example/brand/aewkan-logo-480.png' });
+    expect(withLogo).toContain('<img src="https://aewkan.example/brand/aewkan-logo-480.png"');
+    expect(withLogo).toContain('alt="AewKan แอ่วกัน"');
   });
 
   it('EMAIL-U2 without a link points to the first e-mail (th and en)', () => {
@@ -66,7 +70,7 @@ describe('customer e-mail (Resend)', () => {
     };
     expect(customerMessage('booking_received', base)?.body).toContain('โอนมัดจำ ฿1,000');
     expect(customerMessage('booking_received', { ...base, status: 'quote_requested' })?.title).toContain('ได้รับคำขอราคาแล้ว');
-    expect(customerMessage('booking_received', { ...base, lang: 'en' })?.title).toBe('Aewkan · Booking received');
+    expect(customerMessage('booking_received', { ...base, lang: 'en' })?.title).toBe('AewKan · Booking received');
   });
 
   it('EMAIL-U7 a booking with the e-mail channel must give a valid address', () => {

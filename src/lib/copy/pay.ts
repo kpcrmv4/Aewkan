@@ -56,7 +56,7 @@ export const PAY_COPY = {
     en: 'Add our LINE account and send the prepared message (it contains this trip link) to get updates.',
   },
   lineBound: { th: 'เชื่อม LINE กับการจองนี้แล้ว', en: 'LINE is linked to this booking' },
-  lineMessage: { th: 'แอ่วกัน การจอง {no}\n{url}', en: 'Aewkan booking {no}\n{url}' },
+  lineMessage: { th: 'แอ่วกัน การจอง {no}\n{url}', en: 'AewKan booking {no}\n{url}' },
 } satisfies Record<string, Pair>;
 
 export type PayCopyKey = keyof typeof PAY_COPY;
