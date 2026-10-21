@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แอ่วกัน</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── Layout: public trip builder = map left / price panel right (stacks on a phone);
+        admin = kit shell (neutral sidebar ↔ bottom nav with raised center action).
+     Tokens: thai-saas-ui-kit / thai-admin-page-kit names. Mood "ครามล้านนา":
+        brand = Lanna indigo, accent = marigold for the route and pins on the map. ── */
+  :root {
+    color-scheme: light;
+    --brand:#2B4C7E; --brand-tint:#E6EDF7; --brand-tint-strong:#C3D3EA; --brand-on-tint:#1E3A63;
+    --brand-solid:#2B4C7E; --brand-solid-hover:#23406B; --brand-solid-active:#1C345A; --on-brand:#FFFFFF;
+    --accent:#D9822B; --accent-soft:#FBEBDD; --accent-ink:#8A4B10;
+    --canvas:#F3F4F7; --surface:#FFFFFF; --card:#FFFFFF; --surface-2:#F8F9FB; --surface-3:#EEF0F4;
+    --ink:#171A21; --ink-2:#464C58; --muted:#6B7280;
+    --line:#E2E5EB; --line-soft:#EEF0F4; --line-strong:#CBD0D9;
+    --sidebar:#FFFFFF; --sidebar-title:#171A21; --sidebar-fg:#464C58; --sidebar-fg-dim:#6B7280;
+    --sidebar-hover:#F2F3F6; --sidebar-active-bg:#E6EDF7; --sidebar-active-fg:#1E3A63; --sidebar-line:#E2E5EB;
+    --fab:#1C345A; --fab-fg:#F6C98B;
+    --status-pending:#545B66; --status-pending-bg:#F1F2F4; --status-pending-ring:#D9DCE1;
+    --status-progress:#96540A; --status-progress-bg:#FDF3E3; --status-progress-ring:#F0DCBB;
+    --status-done:#0C6B3C; --status-done-bg:#E7F5EE; --status-done-ring:#BFE3D0;
+    --status-info:#1B4FC4; --status-info-bg:#EAF0FF; --status-info-ring:#C6D6FB;
+    --urgent:#B3271D; --urgent-bg:#FDECEA; --urgent-ring:#F6CDC8;
+    --map-bg:#EAF0EE; --map-ring:#C9D6D1; --map-ring-label:#5F7570; --map-water:#CFE3EC; --map-road:#D7DEDC;
+    --r-xs:4px; --r-sm:6px; --r-md:8px; --r-lg:10px; --r-xl:14px;
+    --sh-1:0 1px 2px rgb(16 18 22/.05),0 1px 1px rgb(16 18 22/.04);
+    --sh-2:0 2px 4px rgb(16 18 22/.05),0 6px 16px rgb(16 18 22/.07);
+    --sh-3:0 8px 16px rgb(16 18 22/.08),0 24px 48px rgb(16 18 22/.14);
+    --ring:rgb(43 76 126/.42);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]):not(.light) {
+      color-scheme: dark;
+      --brand:#8FB3E8; --brand-tint:#182A45; --brand-tint-strong:#24406A; --brand-on-tint:#A9C6F0;
+      --brand-solid:#2B4C7E; --brand-solid-hover:#355A92; --brand-solid-active:#23406B; --on-brand:#FFFFFF;
+      --accent:#F0A24E; --accent-soft:#3A2A16; --accent-ink:#F6C98B;
+      --canvas:#0E0F12; --surface:#17181C; --card:#17181C; --surface-2:#1D1F24; --surface-3:#25282E;
+      --ink:#E8EAEE; --ink-2:#C2C7D0; --muted:#939AA6;
+      --line:#2A2D33; --line-soft:#212429; --line-strong:#3A3E46;
+      --sidebar:#121317; --sidebar-title:#F0F2F5; --sidebar-fg:#A8AEB9; --sidebar-fg-dim:#828A97;
+      --sidebar-hover:#1E2127; --sidebar-active-bg:rgb(143 179 232/.16); --sidebar-active-fg:#A9C6F0; --sidebar-line:#24272D;
+      --fab:#F0A24E; --fab-fg:#1C1408;
+      --status-pending:#AEB6C0; --status-pending-bg:#23272D; --status-pending-ring:#343941;
+      --status-progress:#E8A95E; --status-progress-bg:#2E2317; --status-progress-ring:#4A3720;
+      --status-done:#5BD08E; --status-done-bg:#14291F; --status-done-ring:#21432F;
+      --status-info:#8FB2FF; --status-info-bg:#182240; --status-info-ring:#27365C;
+      --urgent:#F4938A; --urgent-bg:#33201E; --urgent-ring:#4D2E2B;
+      --map-bg:#141A19; --map-ring:#2E3B38; --map-ring-label:#8FA39E; --map-water:#1B2A33; --map-road:#242C2A;
+      --sh-1:0 1px 2px rgb(0 0 0/.4); --sh-2:0 2px 4px rgb(0 0 0/.4),0 6px 16px rgb(0 0 0/.5);
+      --sh-3:0 8px 16px rgb(0 0 0/.5),0 24px 48px rgb(0 0 0/.6); --ring:rgb(143 179 232/.5);
+    }
+  }
+  :root[data-theme="dark"], :root.dark {
+    color-scheme: dark;
+    --brand:#8FB3E8; --brand-tint:#182A45; --brand-tint-strong:#24406A; --brand-on-tint:#A9C6F0;
+    --brand-solid:#2B4C7E; --brand-solid-hover:#355A92; --brand-solid-active:#23406B; --on-brand:#FFFFFF;
+    --accent:#F0A24E; --accent-soft:#3A2A16; --accent-ink:#F6C98B;
+    --canvas:#0E0F12; --surface:#17181C; --card:#17181C; --surface-2:#1D1F24; --surface-3:#25282E;
+    --ink:#E8EAEE; --ink-2:#C2C7D0; --muted:#939AA6;
+    --line:#2A2D33; --line-soft:#212429; --line-strong:#3A3E46;
+    --sidebar:#121317; --sidebar-title:#F0F2F5; --sidebar-fg:#A8AEB9; --sidebar-fg-dim:#828A97;
+    --sidebar-hover:#1E2127; --sidebar-active-bg:rgb(143 179 232/.16); --sidebar-active-fg:#A9C6F0; --sidebar-line:#24272D;
+    --fab:#F0A24E; --fab-fg:#1C1408;
+    --status-pending:#AEB6C0; --status-pending-bg:#23272D; --status-pending-ring:#343941;
+    --status-progress:#E8A95E; --status-progress-bg:#2E2317; --status-progress-ring:#4A3720;
+    --status-done:#5BD08E; --status-done-bg:#14291F; --status-done-ring:#21432F;
+    --status-info:#8FB2FF; --status-info-bg:#182240; --status-info-ring:#27365C;
+    --urgent:#F4938A; --urgent-bg:#33201E; --urgent-ring:#4D2E2B;
+    --map-bg:#141A19; --map-ring:#2E3B38; --map-ring-label:#8FA39E; --map-water:#1B2A33; --map-road:#242C2A;
+    --sh-1:0 1px 2px rgb(0 0 0/.4); --sh-2:0 2px 4px rgb(0 0 0/.4),0 6px 16px rgb(0 0 0/.5);
+    --sh-3:0 8px 16px rgb(0 0 0/.5),0 24px 48px rgb(0 0 0/.6); --ring:rgb(143 179 232/.5);
+  }
+
+  * { box-sizing:border-box; margin:0; }
+  html, body { overflow-x:clip; }
+  body { font-family:'IBM Plex Sans Thai',system-ui,sans-serif; font-size:14.5px; line-height:1.5;
+         background:var(--canvas); color:var(--ink); min-height:100%; }
+  button, input, select { font:inherit; color:inherit; }
+  button { cursor:pointer; }
+  :focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+  .icon { width:20px; height:20px; stroke:currentColor; stroke-width:2; fill:none;
+          stroke-linecap:round; stroke-linejoin:round; flex:none; }
+  .icon.sm { width:16px; height:16px; }
+  .tnum { font-variant-numeric:tabular-nums; }
+  h1 { font-size:20px; font-weight:700; line-height:1.3; text-wrap:balance; }
+  h2.sec { font-size:15px; font-weight:600; margin:0 0 10px; display:flex; align-items:baseline; gap:8px; }
+  h2.sec .count { margin-left:auto; font-size:12.5px; font-weight:400; color:var(--muted); }
+  .sub { color:var(--muted); font-size:13px; }
+  .hidden { display:none !important; }
+
+  /* ── demo bar (prototype only) ── */
+  .demobar { position:sticky; top:env(safe-area-inset-top,0px); z-index:40; background:var(--fab); color:#F6F1E6;
+             display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12.5px;
+             padding-block:8px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); }
+  body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:41; background:var(--fab); }
+  .demobar .lbl { font-weight:600; letter-spacing:.04em; font-size:11px; text-transform:uppercase; opacity:.75; margin-right:4px; }
+  .demobar .chip { border:1px solid rgba(255,255,255,.25); background:transparent; color:inherit; border-radius:999px;
+                   padding:5px 11px; font-size:12.5px; white-space:nowrap; }
+  .demobar .chip.on { background:#F6F1E6; color:#1C345A; border-color:#F6F1E6; font-weight:600; }
+  .demobar .spacer { flex:1; }
+  .demobar .sep { width:1px; height:18px; background:rgba(255,255,255,.25); margin:0 2px; }
+
+  /* ── public layout ── */
+  .pub { display:none; } .pub.on { display:block; }
+  .pubhead { background:var(--surface); border-bottom:1px solid var(--line); }
+  .pubhead .in, .pubwrap { max-width:1180px; margin:0 auto;
+     padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); }
+  .pubhead .in { display:flex; align-items:center; gap:14px; height:58px; }
+  .logo { display:flex; align-items:center; gap:9px; font-weight:700; font-size:17px; color:var(--ink); }
+  .logo .mark { width:30px; height:30px; border-radius:8px; background:var(--brand-solid); color:var(--on-brand);
+                display:grid; place-items:center; font-size:15px; }
+  .logo .en { font-weight:500; color:var(--muted); font-size:13px; }
+  .pubhead .right { margin-left:auto; display:flex; gap:8px; align-items:center; }
+  .pubwrap { padding-block:20px 48px; }
+  .pill { border:1px solid var(--line-strong); background:var(--surface); border-radius:999px; padding:6px 12px;
+          font-size:13px; display:inline-flex; align-items:center; gap:6px; }
+  .pill.on { background:var(--brand-tint); color:var(--brand-on-tint); border-color:var(--brand-tint-strong); font-weight:600; }
+
+  .hero { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+  .hero p { color:var(--ink-2); max-width:62ch; }
+  .tplrow { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .tpl { border:1px solid var(--line-strong); background:var(--surface); border-radius:var(--r-md); padding:8px 12px;
+         display:flex; flex-direction:column; align-items:flex-start; text-align:left; min-width:0; }
+  .tpl b { font-size:13.5px; } .tpl span { font-size:12px; color:var(--muted); }
+  .tpl:hover { border-color:var(--brand); }
+
+  .builder { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(320px,.9fr); gap:18px; align-items:start; }
+  @media (max-width:900px) { .builder { grid-template-columns:1fr; } }
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); overflow:hidden; }
+  .panel-head { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line);
+                background:var(--surface-2); font-size:13px; font-weight:600; color:var(--ink-2); }
+  .panel-head .right { margin-left:auto; display:flex; gap:6px; align-items:center; font-weight:400; color:var(--muted); }
+  .panel-body { padding:14px; }
+
+  /* map */
+  .map { background:var(--map-bg); display:block; width:100%; height:auto; aspect-ratio:680/620; max-width:100%; }
+  .map .ring { fill:none; stroke:var(--map-ring); stroke-width:1; stroke-dasharray:3 4; }
+  .map .ringlbl { font-size:10.5px; fill:var(--map-ring-label); font-weight:600; letter-spacing:.03em; }
+  .map .road { stroke:var(--map-road); stroke-width:2.5; fill:none; }
+  .map .water { fill:var(--map-water); }
+  .map .pin { cursor:pointer; }
+  .map .pin circle { fill:var(--surface); stroke:var(--brand); stroke-width:1.8; }
+  .map .pin.mtn circle { stroke:var(--accent-ink); }
+  .map .pin text { font-size:11px; fill:var(--ink-2); paint-order:stroke; stroke:var(--map-bg); stroke-width:3px; stroke-linejoin:round; }
+  .map .pin:hover circle { stroke-width:3; }
+  .map .pin.sel circle { fill:var(--accent); stroke:var(--accent); }
+  .map .pin.sel text { fill:var(--ink); font-weight:600; }
+  .map .route { fill:none; stroke:var(--accent); stroke-width:2.5; stroke-dasharray:6 5; stroke-linecap:round; }
+  .map .seq circle { fill:var(--brand-solid); stroke:var(--surface); stroke-width:2; }
+  .map .seq text { fill:var(--on-brand); font-size:10px; font-weight:700; text-anchor:middle; dominant-baseline:central; }
+  .map .start circle { fill:var(--brand-solid); stroke:var(--surface); stroke-width:2.5; }
+  .map .start text { fill:var(--ink); font-size:11px; font-weight:700; paint-order:stroke; stroke:var(--map-bg); stroke-width:3px; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); padding:10px 14px; border-top:1px solid var(--line); }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:50%; vertical-align:-1px; margin-right:5px; }
+  .catrow { display:flex; gap:6px; flex-wrap:wrap; padding:10px 14px 0; }
+  .catrow .pill { padding:4px 10px; font-size:12.5px; }
+  .placelist { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:6px; padding:12px 14px 14px; }
+  .place { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:var(--r-md);
+           background:var(--surface); text-align:left; min-width:0; }
+  .place:hover { border-color:var(--brand); }
+  .place.sel { background:var(--accent-soft); border-color:var(--accent); }
+  .place .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13.5px; }
+  .zchip { font-size:11px; font-weight:600; padding:1px 7px; border-radius:var(--r-xs); background:var(--surface-3); color:var(--ink-2); white-space:nowrap; }
+  .zchip.z3, .zchip.z4 { background:var(--accent-soft); color:var(--accent-ink); }
+
+  /* trip panel */
+  .frow { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; }
+  label.f { display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:var(--ink-2); font-weight:500; }
+  .in { width:100%; border:1px solid var(--line-strong); background:var(--surface); border-radius:var(--r-md); padding:8px 10px; font-size:14px; min-height:40px; }
+  .in:focus { border-color:var(--brand); outline:none; box-shadow:0 0 0 3px var(--ring); }
+  .stops { display:flex; flex-direction:column; margin-top:12px; }
+  .stop { display:flex; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid var(--line-soft); }
+  .stop:last-child { border-bottom:none; }
+  .stop .num { width:24px; height:24px; border-radius:50%; background:var(--brand-solid); color:var(--on-brand); font-size:12px; font-weight:700;
+               display:grid; place-items:center; flex:none; }
+  .stop .num.start { background:var(--surface-3); color:var(--ink-2); }
+  .stop .grow { flex:1; min-width:0; }
+  .stop .t { font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .stop .s { font-size:12px; color:var(--muted); }
+  .stop select { border:1px solid var(--line-strong); background:var(--surface); border-radius:var(--r-sm); padding:4px 6px; font-size:12.5px; min-height:32px; }
+  .ib { width:32px; height:32px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--surface); display:grid; place-items:center; color:var(--ink-2); }
+  .ib:hover { border-color:var(--brand); color:var(--brand); }
+  .ib:disabled { opacity:.35; cursor:default; }
+  .totals { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+  .tot { background:var(--surface-2); border-radius:var(--r-md); padding:8px 10px; }
+  .tot .n { font-weight:700; font-size:16px; } .tot .l { font-size:11.5px; color:var(--muted); }
+  .warn { display:flex; gap:8px; align-items:flex-start; margin-top:12px; padding:10px 12px; border-radius:var(--r-md); font-size:13px;
+          background:var(--status-progress-bg); color:var(--status-progress); border:1px solid var(--status-progress-ring); }
+  .warn.bad { background:var(--urgent-bg); color:var(--urgent); border-color:var(--urgent-ring); }
+  .opts { display:flex; flex-direction:column; gap:8px; margin-top:12px; font-size:13.5px; }
+  .opts label { display:flex; align-items:center; gap:8px; }
+  .opts input { width:17px; height:17px; accent-color:var(--brand-solid); }
+
+  .modes { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .mode { position:relative; text-align:left; border:1.5px solid var(--line); background:var(--surface); border-radius:var(--r-md); padding:10px 12px; min-width:0; }
+  .mode:hover { border-color:var(--brand); }
+  .mode.on { border-color:var(--brand); background:var(--brand-tint); }
+  .mode .nm { font-size:12.5px; color:var(--ink-2); font-weight:500; }
+  .mode .pr { font-size:18px; font-weight:700; margin-top:2px; }
+  .mode .why { font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .mode.na { opacity:.6; } .mode.na .pr { font-size:13px; font-weight:500; color:var(--muted); }
+  .mode .best { position:absolute; top:-9px; right:10px; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px;
+                background:var(--status-done-bg); color:var(--status-done); box-shadow:0 0 0 1px var(--status-done-ring); }
+  .lines { margin-top:12px; border-top:1px solid var(--line); }
+  .line { display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; }
+  .line .l { color:var(--ink-2); min-width:0; } .line .a { font-weight:500; white-space:nowrap; }
+  .line.total { font-weight:700; font-size:16px; border-bottom:none; padding-top:10px; }
+  .line.dep { color:var(--brand-on-tint); background:var(--brand-tint); margin:6px -14px -14px; padding:10px 14px; border-radius:0 0 var(--r-lg) var(--r-lg); font-weight:600; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; background:var(--brand-solid); color:var(--on-brand); border:none;
+         border-radius:var(--r-md); padding:10px 16px; font-weight:600; font-size:14.5px; min-height:42px; }
+  .btn:hover { background:var(--brand-solid-hover); } .btn:active { background:var(--brand-solid-active); }
+  .btn.w { width:100%; }
+  .btn.sec { background:var(--surface); color:var(--ink); border:1px solid var(--line-strong); }
+  .btn.sec:hover { border-color:var(--brand); color:var(--brand); background:var(--surface); }
+  .btn.ghost { background:transparent; color:var(--ink-2); padding:6px 10px; min-height:34px; font-size:13.5px; }
+  .btn.ghost:hover { background:var(--surface-2); color:var(--ink); }
+  .btn.sm { padding:6px 12px; min-height:34px; font-size:13px; }
+  .btn:disabled { opacity:.5; pointer-events:none; }
+
+  /* booking step */
+  .steps { display:flex; gap:0; margin:0 0 16px; counter-reset:s; }
+  .steps .st { flex:1; display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); min-width:0; }
+  .steps .st::before { counter-increment:s; content:counter(s); width:22px; height:22px; border-radius:50%; display:grid; place-items:center;
+                       background:var(--surface-3); font-weight:700; font-size:11px; flex:none; }
+  .steps .st.on { color:var(--ink); font-weight:600; } .steps .st.on::before { background:var(--brand-solid); color:var(--on-brand); }
+  .steps .st.done::before { background:var(--status-done-bg); color:var(--status-done); content:"✓"; }
+  .steps .st span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .qr { width:168px; height:168px; border-radius:var(--r-md); background:var(--surface-2); border:1px dashed var(--line-strong); display:grid; place-items:center;
+        color:var(--muted); font-size:12px; text-align:center; padding:12px; margin:0 auto; }
+  .okbox { text-align:center; padding:28px 16px; }
+  .okbox .ic { width:56px; height:56px; border-radius:50%; background:var(--status-done-bg); color:var(--status-done); display:grid; place-items:center; margin:0 auto 12px; }
+  .okbox .ic .icon { width:28px; height:28px; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; font-size:13.5px; }
+  .kv dt { color:var(--muted); } .kv dd { font-weight:500; min-width:0; overflow-wrap:anywhere; }
+
+  /* ── job link page ── */
+  .joblink { max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .urlbar { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); flex-wrap:wrap; }
+  .urlbar code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; background:var(--surface); border:1px solid var(--line); padding:4px 8px; border-radius:var(--r-sm); color:var(--ink-2); }
+  .stepper { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .stepper .sp { text-align:center; font-size:12px; color:var(--muted); position:relative; padding-top:18px; }
+  .stepper .sp::before { content:""; position:absolute; top:5px; left:0; right:0; height:4px; border-radius:2px; background:var(--surface-3); }
+  .stepper .sp.done::before { background:var(--status-done); } .stepper .sp.now::before { background:var(--brand); }
+  .stepper .sp.now { color:var(--ink); font-weight:600; }
+  .driver { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .avatar { width:56px; height:56px; border-radius:50%; background:var(--brand-tint); color:var(--brand-on-tint); display:grid; place-items:center; font-weight:700; font-size:18px; flex:none; }
+  .driver .grow { flex:1; min-width:0; }
+  .driver .nm { font-weight:700; font-size:16px; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  .chip { display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:var(--r-xs);
+          box-shadow:inset 0 0 0 1px var(--line-strong); background:var(--surface-2); color:var(--ink-2); max-width:100%; }
+  .chip > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .plate { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-weight:700; letter-spacing:.06em; padding:4px 10px; border:1.5px solid var(--ink); border-radius:var(--r-sm); background:var(--surface); white-space:nowrap; }
+  .timeline { display:flex; flex-direction:column; }
+  .tl { display:grid; grid-template-columns:52px 20px 1fr; gap:0 10px; align-items:start; }
+  .tl .tm { font-weight:600; font-size:13px; padding-top:1px; }
+  .tl .dot { position:relative; height:100%; min-height:44px; }
+  .tl .dot::before { content:""; position:absolute; left:8px; top:6px; width:0; bottom:-6px; border-left:2px dashed var(--line-strong); }
+  .tl:last-child .dot::before { display:none; }
+  .tl .dot i { position:absolute; left:3px; top:3px; width:12px; height:12px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px var(--surface); }
+  .tl .dot i.s { background:var(--brand-solid); }
+  .tl .bd { padding-bottom:14px; min-width:0; }
+  .tl .bd .t { font-weight:500; } .tl .bd .s { font-size:12.5px; color:var(--muted); }
+  .contact { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .contact .num { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:15px; font-weight:600; user-select:all; }
+  .checkrow { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line-soft); }
+  .checkrow:last-child { border-bottom:none; }
+
+  /* ── admin shell ── */
+  .shell { display:none; min-height:calc(100vh - 44px); } .shell.on { display:flex; }
+  .sidebar { width:236px; background:var(--sidebar); border-right:1px solid var(--sidebar-line); color:var(--sidebar-fg);
+             padding:18px 12px; display:flex; flex-direction:column; gap:3px; flex:none; }
+  .sidebar .slogo { padding:6px 12px 14px; }
+  .sidebar .cat { font-size:11px; font-weight:600; letter-spacing:.03em; color:var(--sidebar-fg-dim); padding:14px 12px 6px; }
+  .sidebar a { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--r-md); color:inherit; text-decoration:none; font-size:14px; }
+  .sidebar a:hover { background:var(--sidebar-hover); }
+  .sidebar a.active { background:var(--sidebar-active-bg); color:var(--sidebar-active-fg); font-weight:600; }
+  .sidebar a .txt { display:flex; flex-direction:column; min-width:0; }
+  .sidebar a .sub { font-size:11px; font-weight:400; color:var(--sidebar-fg-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sidebar .me { margin-top:auto; display:flex; gap:10px; align-items:center; padding:10px 12px; border-top:1px solid var(--sidebar-line); font-size:13px; }
+  .sidebar .me .avatar { width:32px; height:32px; font-size:13px; }
+  main { flex:1; min-width:0; padding-block:22px 48px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); max-width:1120px; }
+  @media (min-width:860px) { main { padding-left:28px; padding-right:28px; } }
+  .topbar { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+  .topbar .act { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .screen { display:none; } .screen.on { display:block; }
+
+  .bottomnav { display:none; position:fixed; inset:auto 0 0 0; height:64px; padding-bottom:env(safe-area-inset-bottom);
+               background:var(--surface); border-top:1px solid var(--line); grid-template-columns:repeat(5,1fr); z-index:20; }
+  .bottomnav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:10.5px; color:var(--muted); text-decoration:none; }
+  .bottomnav a.active { color:var(--brand); font-weight:600; }
+  .bottomnav .center { position:relative; }
+  .bottomnav .center .fab { position:absolute; top:-20px; left:50%; transform:translateX(-50%); width:58px; height:58px; border-radius:50%;
+                            background:var(--fab); color:var(--fab-fg); display:flex; align-items:center; justify-content:center; box-shadow:var(--sh-3); }
+  @media (max-width:859px) {
+    .sidebar { display:none; } .shell.on .bottomnav { display:grid; }
+    main { padding-bottom:100px; }
+  }
+  .sheet-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:30; }
+  .sheet { display:none; position:fixed; left:0; right:0; bottom:0; z-index:31; background:var(--surface); color:var(--ink); border-radius:var(--r-xl) var(--r-xl) 0 0;
+           padding:8px 16px calc(16px + env(safe-area-inset-bottom)); box-shadow:var(--sh-3); }
+  .sheet.on, .sheet-bg.on { display:block; }
+  .sheet .grab { width:40px; height:4px; border-radius:2px; background:var(--line-strong); margin:4px auto 12px; }
+  .sheet a { display:flex; align-items:center; gap:12px; padding:13px 4px; color:inherit; text-decoration:none; font-size:15px; border-bottom:1px solid var(--line-soft); }
+  .sheet a:last-of-type { border-bottom:none; }
+  .sheet .sec { font-size:11px; color:var(--muted); padding:10px 4px 4px; }
+
+  .kpis { display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); margin-bottom:18px; }
+  .kpi { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:12px 14px; }
+  .kpi .n { font-size:24px; font-weight:700; line-height:1.15; } .kpi .l { color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .filters { display:flex; gap:6px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin-bottom:10px; padding-bottom:2px; }
+  .filters::-webkit-scrollbar { display:none; }
+  .filters .pill { flex:none; }
+  .row { display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid var(--line-soft); }
+  .row:last-child { border-bottom:none; }
+  .row:hover { background:var(--surface-2); }
+  .row .grow { flex:1; min-width:0; }
+  .row .t { font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row .s { color:var(--muted); font-size:12.5px; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row .amt { font-weight:600; white-space:nowrap; }
+  .row .acts { display:flex; gap:6px; flex:none; }
+  .badge { font-size:12px; font-weight:600; padding:3px 9px; border-radius:999px; white-space:nowrap; box-shadow:inset 0 0 0 1px transparent; }
+  .b-pending  { color:var(--status-pending);  background:var(--status-pending-bg);  box-shadow:inset 0 0 0 1px var(--status-pending-ring); }
+  .b-progress { color:var(--status-progress); background:var(--status-progress-bg); box-shadow:inset 0 0 0 1px var(--status-progress-ring); }
+  .b-done     { color:var(--status-done);     background:var(--status-done-bg);     box-shadow:inset 0 0 0 1px var(--status-done-ring); }
+  .b-info     { color:var(--status-info);     background:var(--status-info-bg);     box-shadow:inset 0 0 0 1px var(--status-info-ring); }
+  .b-urgent   { color:var(--urgent);          background:var(--urgent-bg);          box-shadow:inset 0 0 0 1px var(--urgent-ring); }
+  @media (max-width:600px) { .row { flex-wrap:wrap; } .row .grow { flex-basis:100%; } .row .acts { margin-left:auto; } }
+  .empty { text-align:center; padding:40px 16px; color:var(--muted); }
+  .empty .icon { width:36px; height:36px; margin:0 auto 10px; stroke-width:1.5; }
+
+  /* assign */
+  .two { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; align-items:start; }
+  @media (max-width:900px) { .two { grid-template-columns:1fr; } }
+  .drv { display:flex; gap:12px; align-items:center; padding:12px 14px; border-bottom:1px solid var(--line-soft); text-align:left; width:100%; background:transparent; border-left:none; border-right:none; border-top:none; }
+  .drv:last-child { border-bottom:none; }
+  .drv:hover { background:var(--surface-2); } .drv.on { background:var(--brand-tint); }
+  .drv .grow { flex:1; min-width:0; } .drv .nm { font-weight:600; }
+  .drv .s { font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .drv .rad { width:20px; height:20px; border-radius:50%; border:2px solid var(--line-strong); flex:none; display:grid; place-items:center; }
+  .drv.on .rad { border-color:var(--brand); } .drv.on .rad::after { content:""; width:10px; height:10px; border-radius:50%; background:var(--brand); }
+  .drv:disabled { opacity:.5; cursor:not-allowed; }
+  .msgprev { background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:12px 14px; font-size:13.5px; white-space:pre-wrap; line-height:1.6; }
+  .seg { display:inline-flex; border:1px solid var(--line-strong); border-radius:var(--r-md); overflow:hidden; }
+  .seg button { background:var(--surface); border:none; padding:7px 12px; font-size:13px; color:var(--ink-2); min-height:36px; }
+  .seg button + button { border-left:1px solid var(--line-strong); }
+  .seg button.on { background:var(--brand-tint); color:var(--brand-on-tint); font-weight:600; }
+
+  /* pricing admin */
+  .tbl { width:100%; border-collapse:collapse; font-size:13.5px; }
+  .tbl th { text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:600;
+            padding:8px 10px; border-bottom:1px solid var(--line); background:var(--surface-2); white-space:nowrap; }
+  .tbl td { padding:7px 10px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+  .tbl tr:last-child td { border-bottom:none; }
+  .tbl input { width:92px; border:1px solid var(--line-strong); border-radius:var(--r-sm); padding:5px 8px; background:var(--surface); font-size:13.5px; text-align:right; min-height:34px; }
+  .tbl input:focus { border-color:var(--brand); outline:none; box-shadow:0 0 0 3px var(--ring); }
+  .tblwrap { overflow-x:auto; }
+  .rulegrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; }
+  .preview { position:sticky; top:60px; }
+  .ver { display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:13px; color:var(--muted); }
+
+  .toast { position:fixed; left:50%; bottom:calc(84px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px); opacity:0; z-index:50;
+           background:var(--ink); color:var(--canvas); padding:10px 16px; border-radius:var(--r-md); font-size:13.5px; box-shadow:var(--sh-3); transition:.25s; pointer-events:none; max-width:calc(100vw - 32px); }
+  .toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+  @media (prefers-reduced-motion:reduce) { .toast { transition:none; } }
+</style>
+</head>
+<body>
+
+<!-- prototype-only: screen switcher. Nothing with data-demo-only reaches the app. -->
+<div class="demobar" data-demo-only>
+  <span class="lbl">เดโม่</span>
+  <button class="chip on" data-view="cust" onclick="view('cust')">ลูกค้า: วางทริป</button>
+  <button class="chip" data-view="job" onclick="view('job')">ลิงก์รายละเอียดงาน</button>
+  <span class="sep"></span>
+  <button class="chip" data-view="admin" onclick="view('admin')">แอดมิน: งานเข้า</button>
+  <button class="chip" data-view="assign" onclick="view('assign')">จัดคนขับ</button>
+  <button class="chip" data-view="pricing" onclick="view('pricing')">ตั้งค่าราคา</button>
+  <span class="spacer"></span>
+  <button class="chip" onclick="toggleTheme()">
+    <svg class="icon sm" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg> สลับโหมดมืด
+  </button>
+</div>
+
+<!-- ════════════════════ PUBLIC: trip builder ════════════════════ -->
+<div class="pub on" id="v-cust">
+  <header class="pubhead"><div class="in">
+    <div class="logo"><span class="mark">แอ่ว</span><span>แอ่วกัน <span class="en">Aewkan</span></span></div>
+    <div class="right">
+      <div class="seg" aria-label="ภาษา">
+        <button id="lang-th" class="on" onclick="setLang('th')">ไทย</button>
+        <button id="lang-en" onclick="setLang('en')">EN</button>
+      </div>
+      <a class="pill" href="#" onclick="view('job');return false" data-i18n="myBooking">การจองของฉัน</a>
+    </div>
+  </div></header>
+
+  <div class="pubwrap">
+    <div class="hero">
+      <div>
+        <h1 data-i18n="heroTitle">วางทริปของคุณบนแผนที่ แล้วเห็นราคาทันที</h1>
+        <p data-i18n="heroSub">รถพร้อมคนขับในเชียงใหม่ เลือกจุดที่อยากไป ระบบคิดราคาให้ทั้ง 4 แบบ และบอกว่าแบบไหนคุ้มที่สุด ไม่ต้องรอใบเสนอราคา</p>
+      </div>
+    </div>
+
+    <div class="tplrow" id="tpls"></div>
+
+    <div class="builder">
+      <!-- map column -->
+      <div class="panel">
+        <div class="panel-head">
+          <svg class="icon sm" viewBox="0 0 24 24"><path d="M9 20l-6 2V6l6-2 6 2 6-2v16l-6 2-6-2z"/><path d="M9 4v16M15 6v16"/></svg>
+          <span data-i18n="mapTitle">แผนที่โซนราคา · แตะจุดเพื่อเพิ่มในทริป</span>
+          <span class="right" data-demo-only><span data-i18n="mapNote">แอปจริงใช้แผนที่ถนน OpenStreetMap</span></span>
+        </div>
+        <svg class="map" id="map" viewBox="0 0 680 620" role="img" aria-label="แผนที่โซนราคารอบเชียงใหม่"></svg>
+        <div class="legend">
+          <span><i style="background:var(--brand-solid)"></i><span data-i18n="legStart">จุดรับ</span></span>
+          <span><i style="background:var(--accent)"></i><span data-i18n="legStop">จุดที่เลือก</span></span>
+          <span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--accent-ink)"></i><span data-i18n="legMtn">ทางภูเขา (+ค่าทางดอย)</span></span>
+          <span id="legZones"></span>
+        </div>
+        <div class="catrow" id="cats"></div>
+        <div class="placelist" id="places"></div>
+      </div>
+
+      <!-- trip column -->
+      <div>
+        <div class="panel" id="tripPanel">
+          <div class="panel-head">
+            <svg class="icon sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+            <span data-i18n="tripTitle">ทริปของคุณ</span>
+            <span class="right"><span id="tripDate"></span></span>
+          </div>
+          <div class="panel-body">
+            <div class="frow">
+              <label class="f"><span data-i18n="fDate">วันเดินทาง</span><input class="in" type="date" id="fDate" value="2026-10-24"></label>
+              <label class="f"><span data-i18n="fTime">เวลารับ</span><input class="in" type="time" id="fTime" value="08:00" step="900"></label>
+              <label class="f"><span data-i18n="fPax">ผู้โดยสาร</span><select class="in" id="fPax"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></label>
+              <label class="f"><span data-i18n="fVehicle">ประเภทรถ</span><select class="in" id="fVehicle"></select></label>
+            </div>
+            <div class="frow" style="margin-top:10px">
+              <label class="f" style="grid-column:1/-1"><span data-i18n="fPickup">จุดรับ</span><select class="in" id="fPickup"></select></label>
+            </div>
+
+            <div class="stops" id="stops"></div>
+
+            <div class="opts">
+              <label><input type="checkbox" id="optReturn" checked> <span data-i18n="optReturn">กลับมาส่งที่จุดรับเมื่อจบทริป</span></label>
+              <label><input type="checkbox" id="optLang"> <span data-i18n="optLang">ต้องการคนขับที่สื่อสารภาษาอังกฤษหรือจีนได้ (+฿200)</span></label>
+              <label><input type="checkbox" id="optSeason"> <span data-i18n="optSeason">เดินทางช่วงเทศกาล / วันหยุดยาว (+10%)</span></label>
+            </div>
+
+            <div class="totals" id="totals"></div>
+            <div id="warn"></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:14px" id="pricePanel">
+          <div class="panel-head">
+            <svg class="icon sm" viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3.5-5-3.5S7 4.6 7 6.5 9.2 10 12 10s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5"/></svg>
+            <span data-i18n="priceTitle">ราคา 4 แบบจากทริปเดียวกัน</span>
+            <span class="right" id="ruleVer"></span>
+          </div>
+          <div class="panel-body">
+            <div class="modes" id="modes"></div>
+            <div class="lines" id="lines"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px" id="bookArea"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ PUBLIC: job detail link ════════════════════ -->
+<div class="pub" id="v-job">
+  <header class="pubhead"><div class="in">
+    <div class="logo"><span class="mark">แอ่ว</span><span>แอ่วกัน <span class="en">Aewkan</span></span></div>
+    <div class="right">
+      <div class="seg" aria-label="มุมมอง" data-demo-only>
+        <button id="role-cust" class="on" onclick="setRole('cust')">มุมมองลูกค้า</button>
+        <button id="role-drv" onclick="setRole('drv')">มุมมองคนขับ</button>
+      </div>
+    </div>
+  </div></header>
+  <div class="pubwrap"><div class="joblink" id="joblink"></div></div>
+</div>
+
+<!-- ════════════════════ ADMIN shell ════════════════════ -->
+<div class="shell" id="v-admin">
+  <nav class="sidebar">
+    <div class="slogo"><div class="logo"><span class="mark">แอ่ว</span><span>แอ่วกัน</span></div><div class="sub" style="font-size:12px;margin-top:2px">หลังบ้านทีมงาน</div></div>
+    <div class="cat">งาน</div>
+    <a href="#" class="active" data-nav="admin" onclick="return nav('admin',this)"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 10l3 3 5-6"/></svg><span class="txt">งานเข้า<span class="sub">รอจัดคนขับและงานทั้งหมด</span></span></a>
+    <a href="#" data-nav="assign" onclick="return nav('assign',this)"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M16 11l2 2 4-4"/></svg><span class="txt">จัดคนขับ<span class="sub">เลือกคนขับและส่งลิงก์งาน</span></span></a>
+    <a href="#" onclick="toast('หน้าปฏิทินคนขับอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg><span class="txt">ปฏิทินคนขับ<span class="sub">ตารางงานและวันหยุด</span></span></a>
+    <div class="cat">ตั้งค่า</div>
+    <a href="#" data-nav="pricing" onclick="return nav('pricing',this)"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3.5-5-3.5S7 4.6 7 6.5 9.2 10 12 10s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5"/></svg><span class="txt">กฎราคา<span class="sub">โซน ประเภทรถ และค่าเพิ่ม</span></span></a>
+    <a href="#" onclick="toast('หน้าคนขับและรถอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><path d="M5 17h14l1-6-2-5H6L4 11z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg><span class="txt">คนขับและรถ<span class="sub">ทะเบียน ภาษา ประเภทรถ</span></span></a>
+    <div class="me"><span class="avatar">กร</span><span class="txt" style="min-width:0"><div style="font-weight:600">คุณกรกนก</div><div class="sub" style="font-size:11.5px">แอดมิน</div></span></div>
+  </nav>
+
+  <main>
+    <!-- ── งานเข้า ── -->
+    <section id="s-admin" class="screen on">
+      <div class="topbar">
+        <div><h1>งานเข้า</h1><div class="sub">วันพุธที่ 21 ต.ค. 2569 · กฎราคา <span id="ruleVer2"></span></div></div>
+        <div class="act"><button class="btn sec sm" onclick="view('cust')"><svg class="icon sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> สร้างงานแทนลูกค้า</button></div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="filters" id="jobFilters"></div>
+      <div class="panel" id="jobList"></div>
+    </section>
+
+    <!-- ── จัดคนขับ ── -->
+    <section id="s-assign" class="screen">
+      <div class="topbar">
+        <div><h1>จัดคนขับ</h1><div class="sub" id="assignSub"></div></div>
+      </div>
+      <div class="two" id="assignBody"></div>
+    </section>
+
+    <!-- ── กฎราคา ── -->
+    <section id="s-pricing" class="screen">
+      <div class="topbar">
+        <div><h1>กฎราคา</h1><div class="sub">แก้ตัวเลขแล้วดูผลที่ทริปตัวอย่างทางขวาได้ทันที ทุกการจองบันทึกเวอร์ชันกฎที่ใช้คิด</div></div>
+        <div class="act"><span class="ver">เวอร์ชันปัจจุบัน <b id="ruleVer3" style="color:var(--ink)"></b> · ใช้ตั้งแต่ 1 ต.ค. 2569</span>
+          <button class="btn sm" onclick="saveRules()">บันทึกเป็นเวอร์ชันใหม่</button></div>
+      </div>
+      <div class="two">
+        <div style="display:flex;flex-direction:column;gap:14px" id="ruleTables"></div>
+        <div class="panel preview">
+          <div class="panel-head"><svg class="icon sm" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>ตัวอย่าง: ทริปที่ลูกค้ากำลังวางอยู่</div>
+          <div class="panel-body" id="rulePreview"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottomnav">
+    <a href="#" class="active" data-nav="admin" onclick="return nav('admin',this)"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 10l3 3 5-6"/></svg><span>งาน</span></a>
+    <a href="#" data-nav="assign" onclick="return nav('assign',this)"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M16 11l2 2 4-4"/></svg><span>คนขับ</span></a>
+    <a href="#" class="center" aria-label="สร้างงานแทนลูกค้า" onclick="view('cust');return false"><span class="fab"><svg class="icon" style="width:26px;height:26px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></a>
+    <a href="#" data-nav="pricing" onclick="return nav('pricing',this)"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3.5-5-3.5S7 4.6 7 6.5 9.2 10 12 10s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5"/></svg><span>ราคา</span></a>
+    <a href="#" onclick="sheet(true);return false"><svg class="icon" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>เพิ่มเติม</span></a>
+  </nav>
+</div>
+
+<div class="sheet-bg" onclick="sheet(false)"></div>
+<div class="sheet" role="dialog" aria-label="เพิ่มเติม">
+  <div class="grab"></div>
+  <div class="sec">เมนูอื่น</div>
+  <a href="#" onclick="sheet(false);toast('หน้าปฏิทินคนขับอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>ปฏิทินคนขับ</a>
+  <a href="#" onclick="sheet(false);toast('หน้าคนขับและรถอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><path d="M5 17h14l1-6-2-5H6L4 11z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>คนขับและรถ</a>
+  <div class="sec">บัญชี</div>
+  <a href="#" onclick="toggleTheme();return false"><svg class="icon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg>สลับโหมดมืด</a>
+  <a href="#" onclick="sheet(false);return false"><svg class="icon" viewBox="0 0 24 24"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 3v18"/></svg>ออกจากระบบ</a>
+  <p class="sec" data-demo-only>เดโม่นี้ใช้ข้อมูลสมมติ</p>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ═══════════════ data ═══════════════ */
+const CM = {lat:18.7883, lng:98.9853};
+const PLACES = [
+  {id:'tp',      th:'ประตูท่าแพ (โรงแรมในเมือง)',   en:'Tha Phae Gate (city hotels)',       lat:18.7877, lng:99.0003, cat:'pickup', lp:'r'},
+  {id:'airport', th:'สนามบินเชียงใหม่',             en:'Chiang Mai Airport',                lat:18.7668, lng:98.9627, cat:'pickup', lp:'l'},
+  {id:'nimman',  th:'นิมมานเหมินท์',               en:'Nimman',                            lat:18.8000, lng:98.9680, cat:'city',   lp:'t'},
+  {id:'wualai',  th:'ถนนคนเดินวัวลาย',             en:'Wualai Walking Street',             lat:18.7800, lng:98.9840, cat:'city',   lp:'b', dwell:90},
+  {id:'suthep',  th:'วัดพระธาตุดอยสุเทพ',           en:'Doi Suthep Temple',                 lat:18.8048, lng:98.9217, cat:'temple', lp:'b', mtn:true},
+  {id:'doipui',  th:'หมู่บ้านม้งดอยปุย',            en:'Doi Pui Hmong Village',             lat:18.8130, lng:98.8870, cat:'nature', lp:'l', mtn:true},
+  {id:'htt',     th:'ห้วยตึงเฒ่า',                  en:'Huay Tueng Tao',                    lat:18.8530, lng:98.9410, cat:'nature', lp:'r'},
+  {id:'ratcha',  th:'อุทยานหลวงราชพฤกษ์',            en:'Royal Park Rajapruek',              lat:18.7467, lng:98.9263, cat:'nature', lp:'b', dwell:90},
+  {id:'maesa',   th:'น้ำตกแม่สา',                   en:'Mae Sa Waterfall',                  lat:18.9067, lng:98.8993, cat:'nature', lp:'r'},
+  {id:'monjam',  th:'ม่อนแจ่ม',                     en:'Mon Jam',                           lat:18.9387, lng:98.8283, cat:'nature', lp:'l', mtn:true, dwell:90},
+  {id:'bosang',  th:'บ่อสร้าง หมู่บ้านทำร่ม',        en:'Bo Sang Umbrella Village',          lat:18.7613, lng:99.0917, cat:'craft',  lp:'r'},
+  {id:'hotspring',th:'น้ำพุร้อนสันกำแพง',            en:'San Kamphaeng Hot Springs',         lat:18.8131, lng:99.2304, cat:'nature', lp:'r'},
+  {id:'mkp',     th:'แม่กำปอง',                     en:'Mae Kampong',                       lat:18.8653, lng:99.3503, cat:'nature', lp:'r', mtn:true, dwell:120},
+  {id:'baantawai',th:'บ้านถวาย หางดง',               en:'Baan Tawai, Hang Dong',             lat:18.6680, lng:98.9440, cat:'craft',  lp:'b'},
+  {id:'lamphun', th:'วัดพระธาตุหริภุญชัย ลำพูน',       en:'Hariphunchai Temple, Lamphun',      lat:18.5771, lng:99.0088, cat:'temple', lp:'b'},
+  {id:'inthanon',th:'ดอยอินทนนท์',                   en:'Doi Inthanon',                      lat:18.5880, lng:98.4868, cat:'nature', lp:'l', mtn:true, dwell:120},
+  {id:'chiangdao',th:'ถ้ำเชียงดาว',                  en:'Chiang Dao Cave',                   lat:19.3950, lng:98.9280, cat:'nature', lp:'r'},
+  {id:'pai',     th:'ปาย',                          en:'Pai',                               lat:19.3590, lng:98.4400, cat:'province', lp:'l', mtn:true, dwell:0},
+  {id:'angkhang',th:'ดอยอ่างขาง',                    en:'Doi Ang Khang',                     lat:19.9290, lng:99.0470, cat:'province', lp:'r', mtn:true, dwell:90},
+  {id:'chiangrai',th:'วัดร่องขุ่น เชียงราย',          en:'White Temple, Chiang Rai',          lat:19.8243, lng:99.7633, cat:'province', lp:'l', dwell:0},
+];
+const CATS = [
+  {id:'all', th:'ทั้งหมด', en:'All'}, {id:'temple', th:'วัด', en:'Temples'}, {id:'nature', th:'ธรรมชาติและดอย', en:'Nature & mountains'},
+  {id:'craft', th:'หัตถกรรม', en:'Crafts'}, {id:'city', th:'ในเมือง', en:'In town'}, {id:'province', th:'ต่างจังหวัด', en:'Other provinces'},
+];
+const TEMPLATES = [
+  {th:['ดอยสุเทพ + ม่อนแจ่ม', 'ครึ่งวันเช้า · ยอดนิยม'], en:['Doi Suthep + Mon Jam', 'Half day · most booked'],
+   stops:[{id:'suthep',dwell:60},{id:'monjam',dwell:90}], ret:true, veh:'sedan'},
+  {th:['แม่กำปอง + น้ำพุร้อน + บ่อสร้าง', 'เต็มวัน · สายธรรมชาติ'], en:['Mae Kampong + Hot Springs + Bo Sang', 'Full day · nature'],
+   stops:[{id:'mkp',dwell:120},{id:'hotspring',dwell:60},{id:'bosang',dwell:45}], ret:true, veh:'sedan'},
+  {th:['ส่งปาย แวะถ้ำเชียงดาว', 'ขาเดียว · แวะได้บนทาง'], en:['Drop-off in Pai via Chiang Dao Cave', 'One-way · stop on the road'],
+   stops:[{id:'chiangdao',dwell:60},{id:'pai',dwell:0}], ret:false, veh:'sedan'},
+  {th:['ดอยอินทนนท์ เต็มวัน', 'ยอดสูงสุดในไทย · นางพญาเสือโคร่ง ม.ค.'], en:['Doi Inthanon full day', 'Highest peak · cherry blossoms in Jan'],
+   stops:[{id:'inthanon',dwell:150},{id:'ratcha',dwell:60}], ret:true, veh:'suv'},
+];
+const DRIVERS = [
+  {id:'sombat', name:'สมบัติ ใจดี', nick:'ลุงสมบัติ', en:'Sombat', langs:['ไทย','อังกฤษพื้นฐาน'], langsEn:['Thai','Basic English'], vehicle:'sedan', car:'Toyota Altis สีขาว', carEn:'Toyota Altis, white', plate:'กษ 2471', rating:4.9, jobs:14, years:12, avail:'free', note:'ถนัดทางดอย ขับนิ่ง', phone:'081-234-5678', line:'@sombat.cm'},
+  {id:'ek',     name:'เอกชัย ศรีวงศ์', nick:'พี่เอก', en:'Ek', langs:['ไทย','อังกฤษ'], langsEn:['Thai','English'], vehicle:'van', car:'Toyota Commuter VIP 9 ที่นั่ง', carEn:'Toyota Commuter VIP, 9 seats', plate:'นข 8834', rating:4.8, jobs:11, years:8, avail:'morning', note:'มีงานช่วงเช้าถึง 12:00', phone:'089-555-0134', line:'@ek.van'},
+  {id:'maew',   name:'ศิริพร แซ่ลี', nick:'น้องแม้ว', en:'Siriporn', langs:['ไทย','จีนกลาง'], langsEn:['Thai','Mandarin'], vehicle:'suv', car:'Honda CR-V สีเทา', carEn:'Honda CR-V, grey', plate:'ขก 1190', rating:5.0, jobs:9, years:4, avail:'free', note:'ลูกค้าจีนชมมาก', phone:'062-890-7711', line:'@maew.cnx'},
+  {id:'num',    name:'อนุชา คำปัน', nick:'พี่หนุ่ม', en:'Num', langs:['ไทย'], langsEn:['Thai'], vehicle:'sedan', car:'Toyota Vios สีดำ', carEn:'Toyota Vios, black', plate:'ขข 5520', rating:4.7, jobs:7, years:6, avail:'off', note:'ลาหยุด 24–25 ต.ค.', phone:'095-410-2288', line:'@num.cm'},
+];
+const JOBS = [
+  {id:'J-2569-118', live:true},
+  {id:'J-2569-117', title:'แม่กำปอง · น้ำพุร้อนสันกำแพง · บ่อสร้าง', cust:'Chen Yu (CN) · 4 คน', when:'พฤ. 22 ต.ค. 69 · 08:30', veh:'รถตู้ VIP', mode:'เหมาวัน', total:5600, status:'assigned', driver:'พี่เอก'},
+  {id:'J-2569-116', title:'ส่งปาย แวะถ้ำเชียงดาว', cust:'Lukas Weber (DE) · 2 คน', when:'ศ. 23 ต.ค. 69 · 09:00', veh:'รถเก๋ง', mode:'ขาเดียว', total:3900, status:'assigned', driver:'ลุงสมบัติ'},
+  {id:'J-2569-115', title:'สนามบิน → โรงแรมแม่ริม (รับ-ส่ง)', cust:'คุณพิมพ์ชนก · 3 คน', when:'พ. 21 ต.ค. 69 · 14:40', veh:'SUV', mode:'เหมาชั่วโมง', total:1400, status:'traveling', driver:'น้องแม้ว'},
+  {id:'J-2569-114', title:'ม่อนแจ่ม ครึ่งวันเช้า', cust:'Emma Clarke (UK) · 2 คน', when:'ส. 25 ต.ค. 69 · 07:30', veh:'รถเก๋ง', mode:'เหมาชั่วโมง', total:1800, status:'pending'},
+  {id:'J-2569-113', title:'ดอยอินทนนท์ เต็มวัน', cust:'Sato family (JP) · 5 คน', when:'จ. 20 ต.ค. 69 · 07:00', veh:'รถตู้ VIP', mode:'เหมาทริป', total:6200, status:'done', driver:'พี่เอก'},
+  {id:'J-2569-112', title:'วัดพระธาตุหริภุญชัย ลำพูน · บ้านถวาย · อุทยานหลวงราชพฤกษ์ · ถนนคนเดินวัวลาย (ครึ่งวันบ่าย)', cust:'คุณธนวัฒน์ · 2 คน', when:'อา. 19 ต.ค. 69 · 13:00', veh:'รถเก๋ง', mode:'เหมาชั่วโมง', total:2100, status:'done', driver:'ลุงสมบัติ'},
+];
+const STATUS = {
+  pending:  {th:'รอจัดคนขับ', cls:'b-progress'},
+  assigned: {th:'จัดคนขับแล้ว', cls:'b-info'},
+  traveling:{th:'กำลังเดินทาง', cls:'b-progress'},
+  done:     {th:'เสร็จสิ้น', cls:'b-done'},
+  cancelled:{th:'ยกเลิก', cls:'b-pending'},
+};
+
+/* ═══════════════ pricing rules (admin-editable; versioned per booking) ═══════════════ */
+let RULES = {
+  version:'v7',
+  zones:[
+    {id:1, th:'ในเมือง',          en:'In town',             km:10,  surcharge:0},
+    {id:2, th:'รอบเมือง',         en:'Around town',         km:25,  surcharge:200},
+    {id:3, th:'ดอยและอำเภอไกล',   en:'Mountains & far districts', km:60, surcharge:500},
+    {id:4, th:'ต่างจังหวัด',       en:'Other provinces',     km:400, surcharge:900},
+  ],
+  vehicles:{
+    sedan:{th:'รถเก๋ง (ไม่เกิน 3 คน)', en:'Sedan (up to 3)', seats:3, hourly:350, daily:2800, perKm:12},
+    suv:  {th:'SUV (ไม่เกิน 5 คน)',     en:'SUV (up to 5)',   seats:5, hourly:450, daily:3400, perKm:14},
+    van:  {th:'รถตู้ VIP (ไม่เกิน 9 คน)', en:'VIP van (up to 9)', seats:9, hourly:500, daily:3800, perKm:16},
+  },
+  minHours:4, dailyIncHours:10, dailyIncKm:150, otPerHour:300, extraKmRate:10, maxDayHours:14,
+  tripPct:15, mountain:300, nightPct:15, seasonPct:10, langDriver:200, depositPct:30, emptyReturnPct:40, stopFee:150, roadFactor:1.3,
+};
+const SPEED = {1:25, 2:45, 3:40, 4:60, mtn:35};
+
+/* ═══════════════ i18n (customer-facing screens only) ═══════════════ */
+const T = {
+  th:{ myBooking:'การจองของฉัน', heroTitle:'วางทริปของคุณบนแผนที่ แล้วเห็นราคาทันที',
+    heroSub:'รถพร้อมคนขับในเชียงใหม่ เลือกจุดที่อยากไป ระบบคิดราคาให้ทั้ง 4 แบบ และบอกว่าแบบไหนคุ้มที่สุด ไม่ต้องรอใบเสนอราคา',
+    mapTitle:'แผนที่โซนราคา · แตะจุดเพื่อเพิ่มในทริป', mapNote:'แอปจริงใช้แผนที่ถนน OpenStreetMap', legStart:'จุดรับ', legStop:'จุดที่เลือก', legMtn:'ทางภูเขา (+ค่าทางดอย)',
+    tripTitle:'ทริปของคุณ', fDate:'วันเดินทาง', fTime:'เวลารับ', fPax:'ผู้โดยสาร', fVehicle:'ประเภทรถ', fPickup:'จุดรับ',
+    optReturn:'กลับมาส่งที่จุดรับเมื่อจบทริป', optLang:'ต้องการคนขับที่สื่อสารภาษาอังกฤษหรือจีนได้ (+฿200)', optSeason:'เดินทางช่วงเทศกาล / วันหยุดยาว (+10%)',
+    priceTitle:'ราคา 4 แบบจากทริปเดียวกัน', zone:'โซน', km:'กม.', hr:'ชม.', min:'น.', dwell:'แวะ', drive:'ขับ',
+    tKm:'ระยะทางรวม', tDrive:'เวลาขับรถ', tTotal:'เวลารวม', endAt:'จบทริปประมาณ', noStops:'ยังไม่มีจุดหมาย แตะจุดบนแผนที่หรือเลือกทริปแนะนำด้านบน',
+    start:'รับ', back:'กลับถึงจุดรับ', stay:'อยู่', remove:'ลบ', up:'เลื่อนขึ้น', down:'เลื่อนลง',
+    mHourly:'เหมาชั่วโมง', mDaily:'เหมาวัน', mTrip:'เหมาทริป', mOneway:'ขาเดียว', best:'คุ้มสุด', na:'ไม่เหมาะกับทริปนี้',
+    whyHourly:'ขั้นต่ำ {m} ชม. · {h} ชม.', whyDaily:'รวม {h} ชม. {k} กม./วัน · {d} วัน', whyTrip:'ราคาเดียวจบ ไม่บวกเพิ่มหน้างาน', whyOneway:'คิดตามกิโลเมตรจริง ไม่มีค่าโซน ไม่กลับจุดรับ',
+    naReturn:'ปิดตัวเลือก "กลับมาส่งที่จุดรับ" ก่อน', naZone:'ปลายทางต้องอยู่โซน 3 ขึ้นไป', inclReturn:'รวมเวลาขับกลับของคนขับ',
+    lBase:'ค่ารถพร้อมคนขับ', lHours:'{h} ชม. × ฿{r}', lDays:'{d} วัน × ฿{r}', lOt:'ล่วงเวลา {h} ชม. × ฿{r}', lExtraKm:'กม.ส่วนเกิน {k} กม. × ฿{r}',
+    lTripPct:'เหมารวมทุกอย่าง +{p}% (ไม่มี OT และกม.ส่วนเกิน)', lPerKm:'{k} กม. × ฿{r}/กม.', lEmpty:'ค่าขากลับรถเปล่า {k} กม. × {p}%', lStopFee:'ค่าแวะระหว่างทาง {n} จุด',
+    lZone:'ค่าโซน {z} · {name}', lMtn:'ค่าทางภูเขา {n} จุด', lLang:'คนขับสื่อสารภาษาต่างประเทศ', lNight:'ช่วงกลางคืน 22:00–06:00 +{p}%', lSeason:'ช่วงเทศกาล +{p}%',
+    lTotal:'ราคารวม (รวมน้ำมัน ทางด่วน และค่าจอด)', lDeposit:'มัดจำ {p}% วันนี้ · ส่วนที่เหลือจ่ายคนขับหน้างาน',
+    warnLong:'ทริปนี้ใช้เวลารวม {h} ชม. เกินวันทำงานคนขับ {m} ชม. แนะนำแยกเป็น 2 วัน หรือลดจุดแวะ', warnTight:'ทริป {h} ชม. ค่อนข้างแน่น แนะนำลดเวลาแวะบางจุด',
+    warnPax:'ผู้โดยสาร {n} คน เกินที่นั่งของ{v} ({s} คน) โปรดเลือกรถประเภทใหญ่กว่า', autoVeh:'ผู้โดยสาร {n} คน ระบบเปลี่ยนเป็น{v}ให้แล้ว',
+    book:'จองและมัดจำ ฿{d}', bookSub:'ยืนยันคนขับภายใน 30 นาที ยกเลิกฟรีก่อน 48 ชม.',
+    sName:'ชื่อผู้จอง', sContact:'LINE / WhatsApp / โทรศัพท์', sHotel:'ชื่อโรงแรมหรือจุดนัดรับ', sNote:'หมายเหตุถึงคนขับ (ไม่บังคับ)',
+    stTrip:'วางทริป', stInfo:'ข้อมูลติดต่อ', stPay:'มัดจำ', stDone:'รอยืนยัน', payTitle:'สแกนจ่ายมัดจำ', payQr:'QR PromptPay ฿{d}', payCard:'หรือจ่ายด้วยบัตร',
+    paid:'ชำระแล้ว (จำลอง)', okTitle:'รับคำขอจองแล้ว', okSub:'ทีมงานกำลังจัดคนขับให้ คุณจะได้รับลิงก์รายละเอียดงานทาง {c} ภายใน 30 นาที', openLink:'ดูลิงก์รายละเอียดงาน', bookingNo:'เลขที่จอง', next:'ถัดไป', backStep:'ย้อนกลับ',
+    jlTitle:'รายละเอียดงาน', jlWaiting:'ทีมงานกำลังจัดคนขับให้ จะอัปเดตที่หน้านี้และแจ้งทาง LINE ภายใน 30 นาที', jlDriver:'คนขับของคุณ', jlItin:'กำหนดการ', jlPrice:'ค่าใช้จ่าย',
+    jlPaid:'มัดจำชำระแล้ว', jlRest:'คงเหลือจ่ายคนขับหน้างาน (เงินสดหรือโอน)', jlContact:'ติดต่อคนขับ', jlCopy:'คัดลอก', jlCopied:'คัดลอกแล้ว', jlAddStop:'ขอเพิ่มจุดแวะ',
+    jlAddStopNote:'เพิ่มจุดแวะหน้างานได้ คนขับกดเพิ่มในแอปแล้วราคาจะคำนวณใหม่ตามกฎเดิม คุณเห็นราคาใหม่ก่อนตกลง', jlRule:'คิดราคาด้วยกฎ {v}',
+    sp1:'จองแล้ว', sp2:'ยืนยันคนขับ', sp3:'ออกเดินทาง', sp4:'เสร็จสิ้น', years:'{n} ปี', jobsMonth:'{n} งานเดือนนี้',
+    dvCust:'ลูกค้า', dvChecklist:'เช็กอินแต่ละจุด', dvCheck:'ถึงแล้ว', dvNavigate:'นำทาง', dvPickupNote:'รับที่ล็อบบี้ ลูกค้ารอหน้าโรงแรม',
+    vehicleUp:'ปรับเป็น', addToTrip:'เพิ่มในทริป', inTrip:'อยู่ในทริปแล้ว', pickupHere:'จุดรับ',
+  },
+  en:{ myBooking:'My booking', heroTitle:'Draw your trip on the map and see the price instantly',
+    heroSub:'Private car with driver in Chiang Mai. Pick the places you want, and we price the same trip four ways and tell you which is cheapest. No waiting for a quote.',
+    mapTitle:'Price-zone map · tap a place to add it', mapNote:'The real app uses OpenStreetMap road tiles', legStart:'Pickup', legStop:'Selected', legMtn:'Mountain road (surcharge)',
+    tripTitle:'Your trip', fDate:'Date', fTime:'Pickup time', fPax:'Passengers', fVehicle:'Vehicle', fPickup:'Pickup point',
+    optReturn:'Return to the pickup point at the end', optLang:'Driver who speaks English or Chinese (+฿200)', optSeason:'Travelling on a holiday or festival (+10%)',
+    priceTitle:'Four prices for the same trip', zone:'Zone', km:'km', hr:'h', min:'min', dwell:'stay', drive:'drive',
+    tKm:'Total distance', tDrive:'Driving time', tTotal:'Total time', endAt:'Trip ends about', noStops:'No stops yet. Tap the map or pick a suggested trip above.',
+    start:'Pickup', back:'Back at pickup', stay:'stay', remove:'Remove', up:'Move up', down:'Move down',
+    mHourly:'Hourly', mDaily:'Full day', mTrip:'Fixed trip', mOneway:'One-way', best:'Best value', na:'Not suitable for this trip',
+    whyHourly:'Min {m} h · {h} h', whyDaily:'Includes {h} h and {k} km per day · {d} day(s)', whyTrip:'One price, nothing added on the day', whyOneway:'Per real km, no zone fee, no return to pickup',
+    naReturn:'Turn off "return to pickup" first', naZone:'Destination must be in zone 3 or further', inclReturn:'incl. the driver\'s return drive',
+    lBase:'Car with driver', lHours:'{h} h × ฿{r}', lDays:'{d} day(s) × ฿{r}', lOt:'Overtime {h} h × ฿{r}', lExtraKm:'Extra {k} km × ฿{r}',
+    lTripPct:'All-inclusive +{p}% (no overtime, no extra km)', lPerKm:'{k} km × ฿{r}/km', lEmpty:'Empty return {k} km × {p}%', lStopFee:'{n} stop(s) on the way',
+    lZone:'Zone {z} surcharge · {name}', lMtn:'Mountain road, {n} place(s)', lLang:'Foreign-language driver', lNight:'Night hours 22:00–06:00 +{p}%', lSeason:'Holiday period +{p}%',
+    lTotal:'Total (fuel, tolls and parking included)', lDeposit:'{p}% deposit today · the rest paid to the driver',
+    warnLong:'This trip takes {h} h, more than a driver\'s {m}-hour day. Split it into 2 days or drop a stop.', warnTight:'{h} h is a tight day. Consider shorter stays.',
+    warnPax:'{n} passengers exceed the {v} ({s} seats). Choose a larger vehicle.', autoVeh:'{n} passengers: switched to {v}.',
+    book:'Book with ฿{d} deposit', bookSub:'Driver confirmed within 30 minutes. Free cancellation up to 48 h before.',
+    sName:'Your name', sContact:'LINE / WhatsApp / phone', sHotel:'Hotel or meeting point', sNote:'Note to the driver (optional)',
+    stTrip:'Trip', stInfo:'Contact', stPay:'Deposit', stDone:'Confirmation', payTitle:'Pay the deposit', payQr:'PromptPay QR ฿{d}', payCard:'or pay by card',
+    paid:'Paid (simulated)', okTitle:'Booking request received', okSub:'We are assigning your driver. You will get the job-detail link by {c} within 30 minutes.', openLink:'Open job-detail link', bookingNo:'Booking no.', next:'Next', backStep:'Back',
+    jlTitle:'Job details', jlWaiting:'We are assigning your driver. This page updates itself and we message you within 30 minutes.', jlDriver:'Your driver', jlItin:'Itinerary', jlPrice:'Price',
+    jlPaid:'Deposit paid', jlRest:'Balance paid to the driver (cash or transfer)', jlContact:'Contact the driver', jlCopy:'Copy', jlCopied:'Copied', jlAddStop:'Add a stop',
+    jlAddStopNote:'Stops can be added on the day. The driver adds it in the app and the price is recalculated with the same rules. You see the new price before agreeing.', jlRule:'Priced with rule set {v}',
+    sp1:'Booked', sp2:'Driver confirmed', sp3:'On the way', sp4:'Completed', years:'{n} yrs', jobsMonth:'{n} jobs this month',
+    dvCust:'Customer', dvChecklist:'Check in at each stop', dvCheck:'Arrived', dvNavigate:'Navigate', dvPickupNote:'Pick up at the lobby, guest waits in front of the hotel',
+    vehicleUp:'Switched to', addToTrip:'Add to trip', inTrip:'In trip', pickupHere:'Pickup',
+  }
+};
+const t = (k, v={}) => (T[S.lang][k] ?? T.th[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => v[n] ?? '');
+const nm = p => S.lang === 'en' ? p.en : p.th;
+
+/* ═══════════════ state ═══════════════ */
+const S = {
+  lang:'th', pickup:'tp', stops:[{id:'suthep',dwell:60},{id:'monjam',dwell:90},{id:'maesa',dwell:60}],
+  date:'2026-10-24', time:'08:00', pax:2, vehicle:'sedan', mode:null, ret:true, langDriver:false, season:false,
+  cat:'all', step:0, booking:'none', driver:null, channel:'LINE', custName:'', custContact:'', role:'cust', jobFilter:'all', checked:{},
+  bookingNo:'J-2569-118', link:'aewkan.app/j/8K2F7Q',
+};
+
+/* ═══════════════ geometry ═══════════════ */
+const place = id => PLACES.find(p => p.id === id);
+function straightKm(a, b) {
+  const R = 6371, dLat = (b.lat - a.lat) * Math.PI/180, dLng = (b.lng - a.lng) * Math.PI/180;
+  const x = Math.sin(dLat/2)**2 + Math.cos(a.lat*Math.PI/180) * Math.cos(b.lat*Math.PI/180) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+const roadKm = (a, b) => straightKm(a, b) * RULES.roadFactor;
+function zoneOf(p) { const d = straightKm(CM, p); return RULES.zones.find(z => d <= z.km)?.id ?? 4; }
+/* radial square-root projection: angle true, distance compressed so town and provinces share one frame */
+const K = 24, CX = 340, CY = 310;
+function proj(p) {
+  const dx = (p.lng - CM.lng) * Math.cos(CM.lat*Math.PI/180) * 111.32, dy = (p.lat - CM.lat) * 110.57;
+  const d = Math.hypot(dx, dy); if (d < 0.01) return {x:CX, y:CY};
+  const r = K * Math.sqrt(d); return {x: CX + r * dx/d, y: CY - r * dy/d};
+}
+
+/* ═══════════════ planning + pricing ═══════════════ */
+const toMin = s => { const [h, m] = s.split(':').map(Number); return h*60 + m; };
+const fmtT = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); };
+const baht = n => '฿' + Math.round(n).toLocaleString('en-US');
+const r10 = n => Math.round(n/10)*10;
+
+function plan() {
+  const pk = place(S.pickup); let cur = pk, tm = toMin(S.time), legs = [], km = 0, drive = 0, dwell = 0, maxZone = 1, mtn = 0;
+  S.stops.forEach(s => {
+    const p = place(s.id), d = roadKm(cur, p), z = zoneOf(p), spd = p.mtn ? SPEED.mtn : SPEED[z];
+    const mins = d / spd * 60, arrive = tm + mins, depart = arrive + s.dwell;
+    legs.push({p, d, mins, arrive, depart, z, dwell:s.dwell});
+    km += d; drive += mins; dwell += s.dwell; maxZone = Math.max(maxZone, z); if (p.mtn) mtn++; tm = depart; cur = p;
+  });
+  let ret = null;
+  if (S.ret && S.stops.length) { const d = roadKm(cur, pk), z = zoneOf(cur), mins = d / SPEED[z] * 60; ret = {d, mins, arrive: tm + mins}; km += d; drive += mins; tm += mins; }
+  const start = toMin(S.time), total = tm - start;
+  const lastZone = S.stops.length ? zoneOf(place(S.stops.at(-1).id)) : 1;
+  const emptyReturnKm = S.stops.length ? roadKm(place(S.stops.at(-1).id), pk) : 0;
+  const emptyReturnMins = S.ret ? 0 : emptyReturnKm / SPEED[lastZone] * 60;
+  return {legs, ret, km, drive, dwell, total, billMin: total + emptyReturnMins, end: tm, start, maxZone, mtn, lastZone, emptyReturnKm, emptyReturnMins, night: start < 360 || tm > 1320};
+}
+
+function price(P) {
+  const V = RULES.vehicles[S.vehicle], zone = RULES.zones.find(z => z.id === P.maxZone), hours = P.billMin/60, inclRet = S.ret ? '' : ' · ' + t('inclReturn');
+  const common = (lines, perKm=false) => {
+    if (zone.surcharge && !perKm) lines.push({k:'lZone', v:{z:zone.id, name: S.lang==='en'?zone.en:zone.th}, a:zone.surcharge});
+    if (P.mtn) lines.push({k:'lMtn', v:{n:P.mtn}, a:RULES.mountain * P.mtn});
+    if (S.langDriver) lines.push({k:'lLang', v:{}, a:RULES.langDriver});
+    let sub = lines.reduce((s, l) => s + l.a, 0);
+    if (P.night) { const a = r10(sub * RULES.nightPct/100); lines.push({k:'lNight', v:{p:RULES.nightPct}, a}); sub += a; }
+    if (S.season) { const a = r10(sub * RULES.seasonPct/100); lines.push({k:'lSeason', v:{p:RULES.seasonPct}, a}); sub += a; }
+    return {lines, total: r10(sub)};
+  };
+  const out = {};
+  // hourly
+  { const h = Math.max(RULES.minHours, Math.ceil(hours)); const l = [{k:'lHours', v:{h, r:V.hourly}, a:h*V.hourly}];
+    out.hourly = {...common(l), ok:true, why:t('whyHourly', {m:RULES.minHours, h}) + inclRet}; }
+  // daily
+  { const d = Math.max(1, Math.ceil(hours / RULES.maxDayHours)); const l = [{k:'lDays', v:{d, r:V.daily}, a:d*V.daily}];
+    const ot = Math.max(0, Math.ceil(hours - RULES.dailyIncHours*d)); if (ot) l.push({k:'lOt', v:{h:ot, r:RULES.otPerHour}, a:ot*RULES.otPerHour});
+    const xk = Math.max(0, Math.round(P.km - RULES.dailyIncKm*d)); if (xk) l.push({k:'lExtraKm', v:{k:xk, r:RULES.extraKmRate}, a:xk*RULES.extraKmRate});
+    out.daily = {...common(l), ok:true, why:t('whyDaily', {h:RULES.dailyIncHours, k:RULES.dailyIncKm, d}) + inclRet}; }
+  // trip (fixed, all-inclusive)
+  { const d = Math.max(1, Math.ceil(hours / RULES.maxDayHours)); const base = d*V.daily;
+    const l = [{k:'lDays', v:{d, r:V.daily}, a:base}, {k:'lTripPct', v:{p:RULES.tripPct}, a:r10(base*RULES.tripPct/100)}];
+    out.trip = {...common(l), ok:true, why:t('whyTrip') + inclRet}; }
+  // one-way
+  { let ok = true, reason = '';
+    if (S.ret) { ok = false; reason = t('naReturn'); } else if (P.lastZone < 3) { ok = false; reason = t('naZone'); }
+    const kmR = Math.round(P.km), l = [{k:'lPerKm', v:{k:kmR, r:V.perKm}, a:kmR*V.perKm}];
+    const er = Math.round(P.emptyReturnKm); if (er) l.push({k:'lEmpty', v:{k:er, p:RULES.emptyReturnPct}, a:r10(er*V.perKm*RULES.emptyReturnPct/100)});
+    const mid = S.stops.slice(0, -1).filter(s => s.dwell > 0).length; if (mid) l.push({k:'lStopFee', v:{n:mid}, a:mid*RULES.stopFee});
+    out.oneway = {...common(l, true), ok, why: ok ? t('whyOneway') : reason}; }
+  const okModes = Object.entries(out).filter(([, m]) => m.ok);
+  out.best = okModes.length ? okModes.sort((a, b) => a[1].total - b[1].total)[0][0] : null;
+  return out;
+}
+const deposit = total => Math.max(100, Math.round(total * RULES.depositPct/100 / 100) * 100);
+const MODE_KEYS = {hourly:'mHourly', daily:'mDaily', trip:'mTrip', oneway:'mOneway'};
+function current() { const P = plan(), PR = price(P); const mode = (S.mode && PR[S.mode]?.ok) ? S.mode : PR.best; return {P, PR, mode, sel: mode ? PR[mode] : null}; }
+
+/* ═══════════════ render: customer ═══════════════ */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TH_DAYS = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'], TH_MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function fmtDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  if (S.lang === 'en') return d.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+  return `${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MON[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  document.getElementById('lang-th').classList.toggle('on', S.lang === 'th');
+  document.getElementById('lang-en').classList.toggle('on', S.lang === 'en');
+  document.getElementById('v-cust').lang = document.getElementById('v-job').lang = S.lang;
+}
+function renderTemplates() {
+  document.getElementById('tpls').innerHTML = TEMPLATES.map((tp, i) => { const [a, b] = S.lang === 'en' ? tp.en : tp.th;
+    return `<button class="tpl" onclick="loadTemplate(${i})"><b>${esc(a)}</b><span>${esc(b)}</span></button>`; }).join('');
+}
+function loadTemplate(i) { const tp = TEMPLATES[i]; S.stops = tp.stops.map(s => ({...s})); S.ret = tp.ret; S.vehicle = tp.veh; S.mode = tp.ret ? null : 'oneway'; S.step = 0; S.booking = 'none'; S.driver = null; renderAll(); }
+
+function renderMap() {
+  const svg = document.getElementById('map'); let h = '';
+  // decorative ground: Ping river + ring road as faint context
+  h += `<path class="water" d="M330 0 C 336 90, 348 160, 346 230 C 344 300, 352 380, 348 460 C 345 540, 352 590, 350 620 L 362 620 C 364 560, 357 500, 360 440 C 363 370, 356 300, 358 230 C 360 160, 348 90, 342 0 Z"/>`;
+  h += `<path class="road" d="M340 310 m-62 0 a62 62 0 1 0 124 0 a62 62 0 1 0 -124 0"/>`;
+  RULES.zones.forEach((z, i) => { if (i === RULES.zones.length - 1) return; const r = K * Math.sqrt(z.km);
+    h += `<circle class="ring" cx="${CX}" cy="${CY}" r="${r.toFixed(1)}"/>`;
+    h += `<text class="ringlbl" x="${CX + r*0.707 + 4}" y="${(CY - r*0.707 - 4).toFixed(1)}">${t('zone')} ${z.id} · ${z.km} ${t('km')}</text>`; });
+  const far = RULES.zones.at(-1); h += `<text class="ringlbl" x="${CX + 220}" y="${CY + 290}">${t('zone')} ${far.id} · ${S.lang==='en'?far.en:far.th}</text>`;
+  const pk = place(S.pickup), pts = [proj(pk), ...S.stops.map(s => proj(place(s.id)))];
+  if (S.ret && S.stops.length) pts.push(proj(pk));
+  if (pts.length > 1) h += `<polyline class="route" points="${pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}"/>`;
+  PLACES.forEach(p => {
+    if (S.cat !== 'all' && p.cat !== S.cat && !S.stops.some(s => s.id === p.id) && p.id !== S.pickup) return;
+    const {x, y} = proj(p), idx = S.stops.findIndex(s => s.id === p.id), isStart = p.id === S.pickup;
+    const off = {r:[9, 4, 'start'], l:[-9, 4, 'end'], t:[0, -10, 'middle'], b:[0, 15, 'middle']}[p.lp];
+    const label = `<text x="${(x + off[0]).toFixed(1)}" y="${(y + off[1]).toFixed(1)}" text-anchor="${off[2]}">${esc(nm(p))}</text>`;
+    if (isStart) { h += `<g class="start" role="img"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7"/>${label}</g>`; return; }
+    if (idx >= 0) { h += `<g class="pin sel seq ${p.mtn?'mtn':''}" tabindex="0" role="button" aria-label="${esc(nm(p))}" onclick="toggleStop('${p.id}')" onkeydown="if(event.key==='Enter')toggleStop('${p.id}')"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9"/><text x="${x.toFixed(1)}" y="${y.toFixed(1)}">${idx+1}</text>${label}</g>`; return; }
+    h += `<g class="pin ${p.mtn?'mtn':''}" tabindex="0" role="button" aria-label="${esc(nm(p))}" onclick="toggleStop('${p.id}')" onkeydown="if(event.key==='Enter')toggleStop('${p.id}')"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5"/>${label}</g>`;
+  });
+  svg.innerHTML = h;
+  document.getElementById('legZones').textContent = RULES.zones.slice(0, 3).map(z => `${t('zone')} ${z.id} ≤ ${z.km} ${t('km')}`).join(' · ');
+  document.getElementById('cats').innerHTML = CATS.map(c => `<button class="pill ${S.cat===c.id?'on':''}" onclick="S.cat='${c.id}';renderMap()">${esc(S.lang==='en'?c.en:c.th)}</button>`).join('');
+  document.getElementById('places').innerHTML = PLACES.filter(p => p.cat !== 'pickup' && (S.cat === 'all' || p.cat === S.cat)).map(p => {
+    const z = zoneOf(p), sel = S.stops.some(s => s.id === p.id);
+    return `<button class="place ${sel?'sel':''}" onclick="toggleStop('${p.id}')" aria-pressed="${sel}">
+      <svg class="icon sm" viewBox="0 0 24 24">${sel ? '<path d="M5 12l5 5 9-11"/>' : '<path d="M12 5v14M5 12h14"/>'}</svg>
+      <span class="nm">${esc(nm(p))}</span><span class="zchip z${z}">${t('zone')} ${z}${p.mtn ? ' ▲' : ''}</span></button>`; }).join('');
+}
+function toggleStop(id) {
+  const i = S.stops.findIndex(s => s.id === id);
+  if (i >= 0) S.stops.splice(i, 1); else S.stops.push({id, dwell: place(id).dwell ?? 60});
+  S.step = 0; S.booking = 'none'; S.driver = null; renderAll();
+}
+function moveStop(i, d) { const j = i + d; if (j < 0 || j >= S.stops.length) return; [S.stops[i], S.stops[j]] = [S.stops[j], S.stops[i]]; renderAll(); }
+function setDwell(i, v) { S.stops[i].dwell = Number(v); renderAll(); }
+
+function renderTrip() {
+  const {P} = current(), pk = place(S.pickup);
+  document.getElementById('tripDate').textContent = fmtDate(S.date);
+  const vsel = document.getElementById('fVehicle'); vsel.innerHTML = Object.entries(RULES.vehicles).map(([k, v]) => `<option value="${k}" ${k===S.vehicle?'selected':''}>${esc(S.lang==='en'?v.en:v.th)}</option>`).join('');
+  const psel = document.getElementById('fPickup'); psel.innerHTML = PLACES.filter(p => p.cat === 'pickup' || p.cat === 'city').map(p => `<option value="${p.id}" ${p.id===S.pickup?'selected':''}>${esc(nm(p))}</option>`).join('');
+  document.getElementById('optReturn').checked = S.ret; document.getElementById('optLang').checked = S.langDriver; document.getElementById('optSeason').checked = S.season;
+  document.getElementById('fPax').value = S.pax;
+  const dwellOpts = v => [0, 30, 45, 60, 90, 120, 150, 180].map(m => `<option value="${m}" ${m===v?'selected':''}>${m ? `${t('stay')} ${m} ${t('min')}` : (S.lang==='en' ? 'drop-off only' : 'ส่งอย่างเดียว')}</option>`).join('');
+  let h = `<div class="stop"><span class="num start"><svg class="icon sm" viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
+    <div class="grow"><div class="t">${esc(nm(pk))}</div><div class="s">${t('start')} ${S.time}</div></div></div>`;
+  if (!S.stops.length) h += `<div class="empty" style="padding:22px 8px"><svg class="icon" viewBox="0 0 24 24"><path d="M9 20l-6 2V6l6-2 6 2 6-2v16l-6 2-6-2z"/><path d="M9 4v16M15 6v16"/></svg><p>${t('noStops')}</p></div>`;
+  P.legs.forEach((L, i) => {
+    h += `<div class="stop"><span class="num">${i+1}</span>
+      <div class="grow"><div class="t">${esc(nm(L.p))}</div>
+        <div class="s tnum">${fmtT(L.arrive)}–${fmtT(L.depart)} · ${t('drive')} ${Math.round(L.mins)} ${t('min')} · ${L.d.toFixed(0)} ${t('km')} · ${t('zone')} ${L.z}${L.p.mtn ? ' ▲' : ''}</div></div>
+      <select aria-label="${t('stay')}" onchange="setDwell(${i},this.value)">${dwellOpts(L.dwell)}</select>
+      <button class="ib" aria-label="${t('up')}" ${i===0?'disabled':''} onclick="moveStop(${i},-1)"><svg class="icon sm" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+      <button class="ib" aria-label="${t('down')}" ${i===S.stops.length-1?'disabled':''} onclick="moveStop(${i},1)"><svg class="icon sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+      <button class="ib" aria-label="${t('remove')}" onclick="toggleStop('${L.p.id}')"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>`;
+  });
+  if (P.ret) h += `<div class="stop"><span class="num start"><svg class="icon sm" viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></span>
+    <div class="grow"><div class="t">${t('back')}</div><div class="s tnum">${fmtT(P.ret.arrive)} · ${Math.round(P.ret.mins)} ${t('min')} · ${P.ret.d.toFixed(0)} ${t('km')}</div></div></div>`;
+  document.getElementById('stops').innerHTML = h;
+  const hh = m => (m/60).toFixed(1).replace(/\.0$/, '');
+  document.getElementById('totals').innerHTML = S.stops.length ? `
+    <div class="tot"><div class="n tnum">${Math.round(P.km)} ${t('km')}</div><div class="l">${t('tKm')}</div></div>
+    <div class="tot"><div class="n tnum">${hh(P.drive)} ${t('hr')}</div><div class="l">${t('tDrive')}</div></div>
+    <div class="tot"><div class="n tnum">${hh(P.total)} ${t('hr')}</div><div class="l">${t('tTotal')} · ${t('endAt')} ${fmtT(P.end)}</div></div>` : '';
+  let w = '';
+  const V = RULES.vehicles[S.vehicle];
+  if (S.pax > V.seats) w += `<div class="warn bad"><svg class="icon sm" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>${t('warnPax', {n:S.pax, s:V.seats, v: S.lang==='en'?V.en:V.th})}</span></div>`;
+  if (P.total > RULES.maxDayHours*60) w += `<div class="warn bad"><svg class="icon sm" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>${t('warnLong', {h:hh(P.total), m:RULES.maxDayHours})}</span></div>`;
+  else if (P.total > 12*60) w += `<div class="warn"><svg class="icon sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>${t('warnTight', {h:hh(P.total)})}</span></div>`;
+  document.getElementById('warn').innerHTML = w;
+}
+
+function renderPrice() {
+  const {PR, mode, sel} = current();
+  document.getElementById('ruleVer').textContent = t('jlRule', {v:RULES.version});
+  document.getElementById('modes').innerHTML = ['hourly','daily','trip','oneway'].map(k => { const m = PR[k];
+    return `<button class="mode ${k===mode?'on':''} ${m.ok?'':'na'}" ${m.ok?`onclick="S.mode='${k}';renderPrice()"`:'disabled'} aria-pressed="${k===mode}">
+      ${PR.best===k ? `<span class="best">${t('best')}</span>` : ''}
+      <div class="nm">${t(MODE_KEYS[k])}</div><div class="pr tnum">${m.ok ? baht(m.total) : t('na')}</div><div class="why">${esc(m.why)}</div></button>`; }).join('');
+  if (!sel || !S.stops.length) { document.getElementById('lines').innerHTML = ''; document.getElementById('bookArea').innerHTML = ''; return; }
+  const dep = deposit(sel.total);
+  document.getElementById('lines').innerHTML = sel.lines.map(l => `<div class="line"><span class="l">${esc(t(l.k, l.v))}</span><span class="a tnum">${baht(l.a)}</span></div>`).join('')
+    + `<div class="line total"><span class="l">${t('lTotal')}</span><span class="a tnum">${baht(sel.total)}</span></div>
+       <div class="line dep"><span class="l">${t('lDeposit', {p:RULES.depositPct})}</span><span class="a tnum">${baht(dep)}</span></div>`;
+  renderBook(sel, dep);
+}
+function renderBook(sel, dep) {
+  const steps = ['stTrip','stInfo','stPay','stDone'].map((k, i) => `<div class="st ${i<S.step?'done':''} ${i===S.step?'on':''}"><span>${t(k)}</span></div>`).join('');
+  let body = '';
+  if (S.step === 0) body = `<button class="btn w" onclick="S.step=1;renderPrice()">${t('book', {d:dep.toLocaleString('en-US')})}</button><p class="sub" style="text-align:center;margin-top:8px">${t('bookSub')}</p>`;
+  else if (S.step === 1) body = `<div class="frow">
+      <label class="f" style="grid-column:1/-1"><span>${t('sName')}</span><input class="in" id="bName" value="${esc(S.custName)}" placeholder="${S.lang==='en'?'Lukas Weber':'กานต์ธิดา ศรีสุข'}"></label>
+      <label class="f"><span>${t('sContact')}</span><input class="in" id="bContact" value="${esc(S.custContact)}" placeholder="${S.lang==='en'?'+49 171 555 0199':'@kantida หรือ 081-xxx-xxxx'}"></label>
+      <label class="f"><span>${t('sHotel')}</span><input class="in" id="bHotel" placeholder="${S.lang==='en'?'Rachamankha Hotel':'โรงแรมราชมรรคา'}"></label>
+      <label class="f" style="grid-column:1/-1"><span>${t('sNote')}</span><input class="in" id="bNote" placeholder="${S.lang==='en'?'We have a child seat request':'มีเด็กเล็ก 1 คน ขอคาร์ซีท'}"></label></div>
+    <div style="display:flex;gap:8px;margin-top:14px"><button class="btn sec" onclick="S.step=0;renderPrice()">${t('backStep')}</button>
+      <button class="btn" style="flex:1" onclick="S.custName=document.getElementById('bName').value||'${S.lang==='en'?'Lukas Weber':'กานต์ธิดา ศรีสุข'}';S.custContact=document.getElementById('bContact').value||'LINE @kantida';S.step=2;renderPrice()">${t('next')}</button></div>`;
+  else if (S.step === 2) body = `<h2 class="sec" style="justify-content:center">${t('payTitle')}</h2>
+    <div class="qr" data-demo-only><svg class="icon" style="width:40px;height:40px;stroke-width:1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2v2"/></svg><div style="margin-top:8px">${t('payQr', {d:dep.toLocaleString('en-US')})}</div></div>
+    <p class="sub" style="text-align:center;margin:10px 0 14px">${t('payCard')}</p>
+    <div style="display:flex;gap:8px"><button class="btn sec" onclick="S.step=1;renderPrice()">${t('backStep')}</button>
+      <button class="btn" style="flex:1" onclick="S.step=3;S.booking='requested';renderAll();toast('${S.lang==='en'?'Deposit received · job J-2569-118 is now in the admin queue':'รับมัดจำแล้ว · งาน J-2569-118 เข้าคิวหลังบ้าน'}')">${t('paid')}</button></div>`;
+  else body = `<div class="okbox"><div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg></div>
+    <h2 class="sec" style="justify-content:center;font-size:18px">${t('okTitle')}</h2>
+    <p class="sub" style="max-width:40ch;margin:0 auto 14px">${t('okSub', {c:S.channel})}</p>
+    <dl class="kv" style="justify-content:center;display:inline-grid;text-align:left;margin-bottom:16px"><dt>${t('bookingNo')}</dt><dd>${S.bookingNo}</dd><dt>${t('fDate')}</dt><dd>${fmtDate(S.date)} · ${S.time}</dd><dt>${t('lDeposit',{p:RULES.depositPct}).split(' ·')[0]}</dt><dd class="tnum">${baht(dep)}</dd></dl>
+    <div><button class="btn" onclick="view('job')">${t('openLink')}</button></div></div>`;
+  document.getElementById('bookArea').innerHTML = `<div class="panel"><div class="panel-body"><div class="steps">${steps}</div>${body}</div></div>`;
+}
+
+/* ═══════════════ render: job detail link ═══════════════ */
+function renderJob() {
+  const {P, sel, mode} = current(), dep = sel ? deposit(sel.total) : 0, drv = DRIVERS.find(d => d.id === S.driver);
+  const assigned = S.booking === 'assigned' && drv, stage = assigned ? 2 : 1;
+  const name = S.custName || (S.lang === 'en' ? 'Lukas Weber' : 'กานต์ธิดา ศรีสุข');
+  let h = `<div class="urlbar"><svg class="icon sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><code>${S.link}${S.role==='drv'?'?d=1':''}</code>
+      <button class="btn ghost sm" onclick="copyText('https://${S.link}')">${t('jlCopy')}</button><span style="margin-left:auto" class="sub">${t('jlRule', {v:RULES.version})}</span></div>
+    <div class="panel"><div class="panel-body">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px">
+        <div><h1>${t('jlTitle')} · ${S.bookingNo}</h1><div class="sub">${fmtDate(S.date)} · ${t('start')} ${S.time} · ${esc(nm(place(S.pickup)))} · ${esc(S.lang==='en'?RULES.vehicles[S.vehicle].en:RULES.vehicles[S.vehicle].th)} · ${S.pax} ${S.lang==='en'?'pax':'คน'}</div></div>
+        <span class="badge ${assigned?'b-info':'b-progress'}">${assigned ? t('sp2') : (S.lang==='en'?'Assigning driver':'รอจัดคนขับ')}</span></div>
+      <div class="stepper">${['sp1','sp2','sp3','sp4'].map((k, i) => `<div class="sp ${i<stage?'done':''} ${i===stage?'now':''}">${t(k)}</div>`).join('')}</div>
+    </div></div>`;
+  if (S.role === 'drv') h += `<div class="panel"><div class="panel-head">${t('dvCust')}</div><div class="panel-body driver">
+      <span class="avatar">${esc(name.slice(0,2))}</span><div class="grow"><div class="nm">${esc(name)}</div><div class="sub">${esc(S.custContact || 'LINE @kantida')} · ${S.pax} ${S.lang==='en'?'pax':'คน'} · ${S.langDriver ? (S.lang==='en'?'needs English/Chinese':'ต้องการภาษาอังกฤษ/จีน') : (S.lang==='en'?'Thai is fine':'ภาษาไทยได้')}</div>
+      <div class="sub">${t('dvPickupNote')}</div></div></div></div>`;
+  h += `<div class="panel"><div class="panel-head">${t('jlDriver')}</div><div class="panel-body">`;
+  if (assigned) h += `<div class="driver"><span class="avatar">${esc(drv.nick.slice(0,2))}</span><div class="grow"><div class="nm">${esc(S.lang==='en'?drv.en:drv.nick)} <span class="sub" style="font-weight:400">· ${esc(drv.name)}</span></div>
+      <div class="sub">${esc(S.lang==='en'?drv.carEn:drv.car)} · ★ ${drv.rating} · ${t('years', {n:drv.years})}</div>
+      <div class="chips">${(S.lang==='en'?drv.langsEn:drv.langs).map(l => `<span class="chip"><span>${esc(l)}</span></span>`).join('')}</div></div>
+      <span class="plate">${drv.plate}</span></div>
+    <div class="contact" style="margin-top:14px"><span class="sub">${t('jlContact')}</span><span class="num">${drv.phone}</span><button class="btn ghost sm" onclick="copyText('${drv.phone}')">${t('jlCopy')}</button><span class="chip"><span>LINE ${drv.line}</span></span></div>`;
+  else h += `<div class="empty" style="padding:18px 8px"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M19 8v6M22 11h-6"/></svg><p>${t('jlWaiting')}</p></div>`;
+  h += `</div></div>`;
+  // itinerary
+  h += `<div class="panel"><div class="panel-head">${t('jlItin')}<span class="right">${Math.round(P.km)} ${t('km')} · ${(P.total/60).toFixed(1).replace(/\.0$/,'')} ${t('hr')}</span></div><div class="panel-body"><div class="timeline">
+    <div class="tl"><div class="tm tnum">${S.time}</div><div class="dot"><i class="s"></i></div><div class="bd"><div class="t">${esc(nm(place(S.pickup)))}</div><div class="s">${t('start')}</div></div></div>`;
+  P.legs.forEach((L, i) => h += `<div class="tl"><div class="tm tnum">${fmtT(L.arrive)}</div><div class="dot"><i></i></div><div class="bd"><div class="t">${i+1}. ${esc(nm(L.p))}</div><div class="s">${L.dwell ? `${t('stay')} ${L.dwell} ${t('min')} · ` : ''}${t('drive')} ${Math.round(L.mins)} ${t('min')} · ${L.d.toFixed(0)} ${t('km')}</div>
+    ${S.role==='drv' ? `<div class="checkrow" style="border:none;padding:6px 0 0"><button class="btn sec sm" onclick="S.checked[${i}]=!S.checked[${i}];renderJob()">${S.checked[i] ? '✓ ' : ''}${t('dvCheck')}</button><button class="btn ghost sm">${t('dvNavigate')}</button></div>` : ''}</div></div>`);
+  if (P.ret) h += `<div class="tl"><div class="tm tnum">${fmtT(P.ret.arrive)}</div><div class="dot"><i class="s"></i></div><div class="bd"><div class="t">${t('back')}</div></div></div>`;
+  h += `</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px"><button class="btn sec sm" onclick="toast(t('jlAddStopNote'),6000)">${t('jlAddStop')}</button><span class="sub" style="flex:1;min-width:200px">${t('jlAddStopNote')}</span></div></div></div>`;
+  // price
+  if (sel) h += `<div class="panel"><div class="panel-head">${t('jlPrice')}<span class="right">${t(MODE_KEYS[mode])}</span></div><div class="panel-body">
+    ${sel.lines.map(l => `<div class="line"><span class="l">${esc(t(l.k, l.v))}</span><span class="a tnum">${baht(l.a)}</span></div>`).join('')}
+    <div class="line total"><span class="l">${t('lTotal')}</span><span class="a tnum">${baht(sel.total)}</span></div>
+    <div class="line"><span class="l" style="color:var(--status-done)">${t('jlPaid')}</span><span class="a tnum" style="color:var(--status-done)">− ${baht(dep)}</span></div>
+    <div class="line" style="font-weight:600"><span class="l">${t('jlRest')}</span><span class="a tnum">${baht(sel.total - dep)}</span></div></div></div>`;
+  document.getElementById('joblink').innerHTML = h;
+}
+function setRole(r) { S.role = r; document.getElementById('role-cust').classList.toggle('on', r==='cust'); document.getElementById('role-drv').classList.toggle('on', r==='drv'); renderJob(); }
+
+/* ═══════════════ render: admin ═══════════════ */
+function liveJob() {
+  const {P, sel, mode} = current(), title = S.stops.map(s => place(s.id).th).join(' · ') || 'ยังไม่มีจุดหมาย';
+  const d = new Date(S.date + 'T00:00:00');
+  return {id:S.bookingNo, title: S.ret ? title : `${title} (ขาเดียว)`, cust:`${S.custName || 'กานต์ธิดา ศรีสุข'} · ${S.pax} คน${S.langDriver?' · ต้องการภาษาต่างประเทศ':''}`,
+    when:`${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MON[d.getMonth()]} ${String(d.getFullYear()+543).slice(2)} · ${S.time}`,
+    veh:RULES.vehicles[S.vehicle].th.split(' (')[0], mode: T.th[MODE_KEYS[mode]] ?? '', total: sel?.total ?? 0, km: Math.round(P.km), hours:(P.total/60).toFixed(1),
+    status: S.booking === 'none' ? 'draft' : S.booking === 'requested' ? 'pending' : 'assigned', driver: DRIVERS.find(x => x.id === S.driver)?.nick};
+}
+function allJobs() { return JOBS.map(j => j.live ? liveJob() : j).filter(j => j.status !== 'draft'); }
+function renderAdmin() {
+  const jobs = allJobs(), pend = jobs.filter(j => j.status === 'pending').length, today = jobs.filter(j => j.when.startsWith('พ. 21')).length;
+  document.getElementById('ruleVer2').textContent = RULES.version;
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="n tnum" style="color:var(--status-progress)">${pend}</div><div class="l">รอจัดคนขับ</div></div>
+    <div class="kpi"><div class="n tnum">${today}</div><div class="l">งานวันนี้</div></div>
+    <div class="kpi"><div class="n tnum">3 / 4</div><div class="l">คนขับว่างพรุ่งนี้</div></div>
+    <div class="kpi"><div class="n tnum">฿186,400</div><div class="l">ยอดจองเดือนนี้ · มัดจำรับแล้ว ฿55,900</div></div>`;
+  const F = [['all','ทั้งหมด'],['pending','รอจัดคนขับ'],['assigned','จัดคนขับแล้ว'],['traveling','กำลังเดินทาง'],['done','เสร็จสิ้น'],['cancelled','ยกเลิก']];
+  document.getElementById('jobFilters').innerHTML = F.map(([k, l]) => `<button class="pill ${S.jobFilter===k?'on':''}" onclick="S.jobFilter='${k}';renderAdmin()">${l}${k==='pending'&&pend?` · ${pend}`:''}</button>`).join('');
+  const list = jobs.filter(j => S.jobFilter === 'all' || j.status === S.jobFilter);
+  document.getElementById('jobList').innerHTML = list.length ? list.map(j => `<div class="row">
+      <div class="grow"><div class="t">${esc(j.title)}</div><div class="s">${j.id} · ${esc(j.cust)} · ${j.when} · ${j.veh} · ${j.mode}${j.driver ? ` · คนขับ: ${j.driver}` : ''}</div></div>
+      <span class="amt tnum">${baht(j.total)}</span><span class="badge ${STATUS[j.status].cls}">${STATUS[j.status].th}</span>
+      <div class="acts">${j.status === 'pending' ? `<button class="btn sm" onclick="nav('assign')">จัดคนขับ</button>` : `<button class="btn ghost sm" onclick="${j.id===S.bookingNo?"view('job')":"toast('ลิงก์งานตัวอย่าง: aewkan.app/j/'+Math.random().toString(36).slice(2,8).toUpperCase())"}">ดูลิงก์</button>`}</div></div>`).join('')
+    : `<div class="empty"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 10l3 3 5-6"/></svg><p>ไม่มีงานในสถานะนี้</p></div>`;
+}
+function renderAssign() {
+  const j = liveJob(), {P} = current();
+  const fmtDateTh = iso => { const d = new Date(iso + 'T00:00:00'); return `${TH_DAYS[d.getDay()]} ${d.getDate()} ${TH_MON[d.getMonth()]} ${d.getFullYear() + 543}`; };
+  document.getElementById('assignSub').textContent = j.status === 'draft' ? 'ยังไม่มีงานรอจัด ลองให้ลูกค้าจองจากหน้าวางทริปก่อน' : `${j.id} · ${j.when} · ${j.veh} · ${j.mode} · ${baht(j.total)}`;
+  if (j.status === 'draft') { document.getElementById('assignBody').innerHTML = `<div class="panel" style="grid-column:1/-1"><div class="empty"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M16 11l2 2 4-4"/></svg><p style="margin-bottom:12px">ยังไม่มีงานรอจัดคนขับ</p><button class="btn" onclick="view('cust')">ไปหน้าวางทริปของลูกค้า</button></div></div>`; return; }
+  const left = `<div class="panel"><div class="panel-head">งานที่ต้องจัด<span class="right"><span class="badge ${STATUS[j.status].cls}">${STATUS[j.status].th}</span></span></div><div class="panel-body">
+      <div style="font-weight:600;font-size:15px;margin-bottom:6px">${esc(j.title)}</div>
+      <dl class="kv"><dt>ลูกค้า</dt><dd>${esc(j.cust)}</dd><dt>ติดต่อ</dt><dd>${esc(S.custContact || 'LINE @kantida')}</dd><dt>รับ</dt><dd>${j.when} · ${esc(place(S.pickup).th)}</dd>
+      <dt>เส้นทาง</dt><dd>${j.km} กม. · ${j.hours} ชม. · จบ ${fmtT(P.end)}</dd><dt>ราคา</dt><dd class="tnum">${baht(j.total)} (${j.mode}) · มัดจำรับแล้ว ${baht(deposit(j.total))}</dd><dt>กฎราคา</dt><dd>${RULES.version}</dd></dl></div></div>
+    <div class="panel" style="margin-top:14px"><div class="panel-head">ข้อความที่จะส่งเมื่อยืนยัน<span class="right"><div class="seg">${['LINE','WhatsApp','อีเมล'].map(c => `<button class="${S.channel===c?'on':''}" onclick="S.channel='${c}';renderAssign()">${c}</button>`).join('')}</div></span></div>
+      <div class="panel-body"><div class="msgprev">${esc(messageText())}</div></div></div>`;
+  const drivers = DRIVERS.map(d => { const match = d.vehicle === S.vehicle, dis = d.avail === 'off' || !match;
+    const av = d.avail === 'free' ? '<span class="badge b-done">ว่างทั้งวัน</span>' : d.avail === 'morning' ? '<span class="badge b-progress">มีงานช่วงเช้า</span>' : '<span class="badge b-pending">ลาหยุด</span>';
+    return `<button class="drv ${S.driver===d.id?'on':''}" ${dis?'disabled':''} onclick="S.driver='${d.id}';renderAssign()" aria-pressed="${S.driver===d.id}">
+      <span class="rad"></span><span class="avatar" style="width:40px;height:40px;font-size:14px">${esc(d.nick.slice(0,2))}</span>
+      <div class="grow"><div class="nm">${esc(d.nick)} <span class="sub" style="font-weight:400">· ${esc(d.name)}</span></div><div class="s">${esc(d.car)} · ${d.plate} · ${d.langs.join('/')} · ★ ${d.rating} · ${d.jobs} งานเดือนนี้</div>
+        <div class="s">${match ? '' : 'คนละประเภทรถกับที่ลูกค้าจอง · '}${esc(d.note)}</div></div>${av}</button>`; }).join('');
+  const right = `<div class="panel"><div class="panel-head">คนขับที่เลือกได้ · ${fmtDateTh(S.date)}<span class="right">ตรงประเภทรถ: ${RULES.vehicles[S.vehicle].th.split(' (')[0]}</span></div>${drivers}
+      <div class="panel-body" style="border-top:1px solid var(--line)">
+        <button class="btn w" ${S.driver && j.status==='pending' ? '' : 'disabled'} onclick="confirmAssign()">${j.status==='assigned' ? 'ส่งลิงก์แล้ว' : `ยืนยันคนขับและส่งลิงก์ทาง ${S.channel}`}</button>
+        ${j.status==='assigned' ? `<button class="btn sec w" style="margin-top:8px" onclick="view('job')">ดูลิงก์ที่ลูกค้าเห็น</button>` : ''}
+      </div></div>`;
+  document.getElementById('assignBody').innerHTML = left + right;
+}
+function messageText() {
+  const d = DRIVERS.find(x => x.id === S.driver), en = S.lang === 'en', name = S.custName || (en ? 'Lukas' : 'กานต์ธิดา');
+  if (en) return `Aewkan: your booking ${S.bookingNo} is confirmed.\n${fmtDate(S.date)} · pickup ${S.time} at ${place(S.pickup).en}\nDriver: ${d ? `${d.en} · ${d.carEn} · ${d.plate}` : '(select a driver)'}\nItinerary, price and driver contact: https://${S.link}\nThank you, ${name}!`;
+  return `แอ่วกัน ยืนยันการจอง ${S.bookingNo} แล้วค่ะ\n${fmtDate(S.date)} · รับ ${S.time} ที่ ${place(S.pickup).th}\nคนขับ: ${d ? `${d.nick} · ${d.car} · ${d.plate}` : '(ยังไม่ได้เลือกคนขับ)'}\nดูกำหนดการ ราคา และติดต่อคนขับได้ที่ https://${S.link}\nขอบคุณคุณ${name} ค่ะ`;
+}
+function confirmAssign() { S.booking = 'assigned'; renderAll(); toast(`ส่งลิงก์ ${S.link} ให้ลูกค้าและคนขับทาง ${S.channel} แล้ว`); }
+
+function renderPricing() {
+  document.getElementById('ruleVer3').textContent = RULES.version;
+  const num = (path, v, step=1) => `<input type="number" class="tnum" step="${step}" value="${v}" data-rule="${path}" oninput="setRule(this)">`;
+  document.getElementById('ruleTables').innerHTML = `
+    <div class="panel"><div class="panel-head">โซนราคา · วัดจากกลางเมือง (ประตูท่าแพ)</div><div class="tblwrap"><table class="tbl"><thead><tr><th>โซน</th><th>ชื่อ</th><th>รัศมีไม่เกิน (กม.)</th><th>ค่าโซน (บาท/ทริป)</th></tr></thead><tbody>
+      ${RULES.zones.map((z, i) => `<tr><td class="tnum">${z.id}</td><td>${esc(z.th)}</td><td>${i===3?'<span class="sub">เกินโซน 3</span>':num(`zones.${i}.km`, z.km)}</td><td>${num(`zones.${i}.surcharge`, z.surcharge, 50)}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="panel"><div class="panel-head">ประเภทรถ</div><div class="tblwrap"><table class="tbl"><thead><tr><th>รถ</th><th>ที่นั่ง</th><th>ต่อชั่วโมง</th><th>ต่อวัน</th><th>ต่อกม. (ขาเดียว)</th></tr></thead><tbody>
+      ${Object.entries(RULES.vehicles).map(([k, v]) => `<tr><td>${esc(v.th.split(' (')[0])}</td><td class="tnum">${v.seats}</td><td>${num(`vehicles.${k}.hourly`, v.hourly, 50)}</td><td>${num(`vehicles.${k}.daily`, v.daily, 100)}</td><td>${num(`vehicles.${k}.perKm`, v.perKm)}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="panel"><div class="panel-head">กฎของแต่ละแบบ</div><div class="tblwrap"><table class="tbl"><tbody>
+      <tr><td>เหมาชั่วโมง · ขั้นต่ำ (ชม.)</td><td>${num('minHours', RULES.minHours)}</td><td>เหมาวัน · รวมชั่วโมง</td><td>${num('dailyIncHours', RULES.dailyIncHours)}</td></tr>
+      <tr><td>เหมาวัน · รวมกม.</td><td>${num('dailyIncKm', RULES.dailyIncKm, 10)}</td><td>ล่วงเวลา (บาท/ชม.)</td><td>${num('otPerHour', RULES.otPerHour, 50)}</td></tr>
+      <tr><td>กม.ส่วนเกิน (บาท/กม.)</td><td>${num('extraKmRate', RULES.extraKmRate)}</td><td>เหมาทริป · บวกเหมารวม (%)</td><td>${num('tripPct', RULES.tripPct)}</td></tr>
+      <tr><td>ขาเดียว · ค่าขากลับรถเปล่า (%)</td><td>${num('emptyReturnPct', RULES.emptyReturnPct, 5)}</td><td>ขาเดียว · ค่าแวะ (บาท/จุด)</td><td>${num('stopFee', RULES.stopFee, 50)}</td></tr>
+      <tr><td>วันทำงานคนขับสูงสุด (ชม.)</td><td>${num('maxDayHours', RULES.maxDayHours)}</td><td>ตัวคูณถนนจริงจากเส้นตรง</td><td>${num('roadFactor', RULES.roadFactor, 0.05)}</td></tr></tbody></table></div></div>
+    <div class="panel"><div class="panel-head">ค่าเพิ่มและมัดจำ</div><div class="tblwrap"><table class="tbl"><tbody>
+      <tr><td>ค่าทางภูเขา (บาท/จุด)</td><td>${num('mountain', RULES.mountain, 50)}</td><td>คนขับภาษาต่างประเทศ (บาท)</td><td>${num('langDriver', RULES.langDriver, 50)}</td></tr>
+      <tr><td>กลางคืน 22:00–06:00 (%)</td><td>${num('nightPct', RULES.nightPct)}</td><td>เทศกาล / วันหยุดยาว (%)</td><td>${num('seasonPct', RULES.seasonPct)}</td></tr>
+      <tr><td>มัดจำ (%)</td><td>${num('depositPct', RULES.depositPct, 5)}</td><td></td><td></td></tr></tbody></table></div></div>`;
+  renderRulePreview();
+}
+function setRule(el) { const v = Number(el.value); if (!Number.isFinite(v)) return; const path = el.dataset.rule.split('.'); let o = RULES; while (path.length > 1) o = o[path.shift()]; o[path[0]] = v; renderRulePreview(); renderMap(); }
+function renderRulePreview() {
+  const {P, PR} = current(), j = liveJob();
+  document.getElementById('rulePreview').innerHTML = `<div style="font-weight:600;margin-bottom:4px">${esc(j.title)}</div><div class="sub" style="margin-bottom:12px">${j.veh} · ${j.km} กม. · ${j.hours} ชม. · โซนไกลสุด ${P.maxZone} · ทางภูเขา ${P.mtn} จุด</div>
+    ${['hourly','daily','trip','oneway'].map(k => `<div class="line"><span class="l">${T.th[MODE_KEYS[k]]}${PR.best===k?' <span class="badge b-done" style="font-size:10.5px;padding:1px 7px">คุ้มสุด</span>':''}</span><span class="a tnum">${PR[k].ok ? baht(PR[k].total) : '<span class="sub">ไม่เข้าเงื่อนไข</span>'}</span></div>`).join('')}
+    <p class="sub" style="margin-top:12px">เปลี่ยนตัวเลขทางซ้ายแล้วราคาตรงนี้และหน้าลูกค้าเปลี่ยนทันที ใบจองเดิมยังคิดด้วย ${RULES.version} เหมือนเดิม</p>`;
+}
+function saveRules() { const n = Number(RULES.version.slice(1)) + 1; RULES.version = 'v' + n; renderAll(); toast(`บันทึกกฎราคา v${n} แล้ว ใช้กับการจองใหม่ตั้งแต่ตอนนี้`); }
+
+/* ═══════════════ shell ═══════════════ */
+function view(v) {
+  document.querySelectorAll('.demobar [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  document.getElementById('v-cust').classList.toggle('on', v === 'cust');
+  document.getElementById('v-job').classList.toggle('on', v === 'job');
+  const admin = ['admin','assign','pricing'].includes(v);
+  document.getElementById('v-admin').classList.toggle('on', admin);
+  if (admin) nav(v);
+  if (v === 'job') renderJob();
+  window.scrollTo({top:0});
+}
+function nav(id, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 's-' + id));
+  document.querySelectorAll('.sidebar a, .bottomnav a').forEach(a => a.classList.toggle('active', a.dataset.nav === id));
+  document.querySelectorAll('.demobar [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === id));
+  if (id === 'admin') renderAdmin(); if (id === 'assign') renderAssign(); if (id === 'pricing') renderPricing();
+  return false;
+}
+function sheet(open) { document.querySelectorAll('.sheet, .sheet-bg').forEach(e => e.classList.toggle('on', open)); }
+function toggleTheme() {
+  const r = document.documentElement, dark = r.classList.contains('dark') || (!r.classList.contains('light') && matchMedia('(prefers-color-scheme: dark)').matches);
+  r.classList.toggle('dark', !dark); r.classList.toggle('light', dark); r.removeAttribute('data-theme');
+}
+let toastTimer; function toast(msg, ms=3000) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('on'), ms); }
+function copyText(s) { const done = () => toast(t('jlCopied') + ': ' + s); try { navigator.clipboard.writeText(s).then(done, done); } catch { done(); } }
+function setLang(l) { S.lang = l; renderAll(); }
+function renderAll() {
+  applyLang(); renderTemplates(); renderMap(); renderTrip(); renderPrice();
+  if (document.getElementById('v-job').classList.contains('on')) renderJob();
+  if (document.getElementById('s-admin').classList.contains('on')) renderAdmin();
+  if (document.getElementById('s-assign').classList.contains('on')) renderAssign();
+  if (document.getElementById('s-pricing').classList.contains('on')) renderPricing();
+}
+document.getElementById('fDate').addEventListener('change', e => { S.date = e.target.value || S.date; renderAll(); });
+document.getElementById('fTime').addEventListener('change', e => { S.time = e.target.value || S.time; renderAll(); });
+document.getElementById('fPax').addEventListener('change', e => { S.pax = Number(e.target.value); if (S.pax > RULES.vehicles[S.vehicle].seats) { const up = Object.entries(RULES.vehicles).find(([, v]) => v.seats >= S.pax); if (up) { S.vehicle = up[0]; toast(t('autoVeh', {n:S.pax, v: S.lang==='en'?up[1].en:up[1].th})); } } renderAll(); });
+document.getElementById('fVehicle').addEventListener('change', e => { S.vehicle = e.target.value; renderAll(); });
+document.getElementById('fPickup').addEventListener('change', e => { S.pickup = e.target.value; renderAll(); });
+document.getElementById('optReturn').addEventListener('change', e => { S.ret = e.target.checked; if (!S.ret) S.mode = 'oneway'; else if (S.mode === 'oneway') S.mode = null; renderAll(); });
+document.getElementById('optLang').addEventListener('change', e => { S.langDriver = e.target.checked; renderAll(); });
+document.getElementById('optSeason').addEventListener('change', e => { S.season = e.target.checked; renderAll(); });
+renderAll();
+</script>
+</body>
+</html>
