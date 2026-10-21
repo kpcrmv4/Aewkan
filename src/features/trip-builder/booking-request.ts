@@ -1,4 +1,5 @@
 import type { CreateBookingRequestDto } from '@/lib/contracts/booking';
+import { EMAIL_RE } from '@/lib/contracts/common';
 import { nameOf, type Model } from './model';
 
 export interface ContactForm {
@@ -12,12 +13,14 @@ export interface ContactForm {
 
 export const EMPTY_CONTACT: ContactForm = { name: '', contact: '', channel: 'line', hotel: '', note: '', pushOptIn: false };
 
-export type ContactErrors = Partial<Record<'name' | 'contact', true>>;
+export type ContactErrors = { name?: true; contact?: true | 'email' };
 
 export function validateContact(c: ContactForm): ContactErrors {
   const e: ContactErrors = {};
   if (!c.name.trim()) e.name = true;
-  if (c.contact.trim().length < 3) e.contact = true;
+  if (c.channel === 'email') {
+    if (!EMAIL_RE.test(c.contact.trim())) e.contact = 'email';
+  } else if (c.contact.trim().length < 3) e.contact = true;
   return e;
 }
 

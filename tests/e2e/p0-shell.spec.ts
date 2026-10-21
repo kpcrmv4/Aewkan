@@ -10,9 +10,12 @@ test('P0-PUB-01 home page renders the catalog-backed hero', async ({ page }) => 
 
 test('P0-PUB-02 language switch flips the hero to English and back', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'EN', exact: true }).click();
+  // the switch is a link to /en and back (one language per URL), not a cookie toggle
+  await page.getByRole('link', { name: 'EN', exact: true }).click();
+  await expect(page).toHaveURL(/\/en$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Draw your trip on the map and see the price instantly');
-  await page.getByRole('button', { name: 'ไทย', exact: true }).click();
+  await page.getByRole('link', { name: 'ไทย', exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('วางทริปของคุณบนแผนที่ แล้วเห็นราคาทันที');
 });
 

@@ -1,19 +1,17 @@
-import { loadPublicCatalog } from '@/lib/catalog/server';
-import { todayInBangkok } from '@/lib/format';
-import { TripBuilder } from '@/features/trip-builder/trip-builder';
+import type { Metadata } from 'next';
+import { HomeView } from '@/features/seo/home-view';
+import { homeMetadata } from '@/features/seo/metadata';
+import { parsePlacesParam } from '@/features/seo/place-data';
+import { SITE_URL } from '@/lib/env';
+
+export const metadata: Metadata = homeMetadata('th', SITE_URL);
 
 /**
- * Trip builder. `?staff=1` (bottom-nav centre action for staff) is only passed
- * through to the UI; the booking API sets created_by from the staff session.
+ * Thai home: the trip builder. `?staff=1` (bottom-nav centre action for staff) is only
+ * passed through to the UI; the booking API sets created_by from the staff session.
+ * `?places=slug1,slug2` preselects stops. The English page lives at /en.
  */
 export default async function HomePage({ searchParams }: PageProps<'/'>) {
   const sp = await searchParams;
-  const staff = sp.staff === '1';
-  let json = null;
-  try {
-    json = (await loadPublicCatalog()).json;
-  } catch (e) {
-    console.error('[home] catalog failed', e instanceof Error ? e.message : e);
-  }
-  return <TripBuilder json={json} today={todayInBangkok()} staff={staff} />;
+  return <HomeView lang="th" staff={sp.staff === '1'} prefill={parsePlacesParam(sp.places)} />;
 }

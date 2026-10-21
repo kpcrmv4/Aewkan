@@ -31,6 +31,7 @@ export function BookingPanel({ m, onReset }: { m: Model; onReset: () => void }) 
   const total = quote ? (res.best ? res.modes[res.best].total : 0) : (sel?.total ?? 0);
   const deposit = depositFor(catalog, total);
   const ok = bookable(m);
+  const isEmail = form.channel === 'email';
   const set = <K extends keyof ContactForm>(k: K, v: ContactForm[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   async function submit() {
@@ -129,10 +130,26 @@ export function BookingPanel({ m, onReset }: { m: Model; onReset: () => void }) 
                 <label className="label-base" htmlFor="bk-contact">
                   {t('sContact')}
                 </label>
-                <input id="bk-contact" className="input-base" value={form.contact} aria-invalid={Boolean(errors.contact)} aria-describedby={errors.contact ? 'bk-contact-err' : undefined} placeholder={t('phContact')} onChange={(e) => set('contact', e.target.value)} />
+                <input
+                  id="bk-contact"
+                  className="input-base"
+                  type={isEmail ? 'email' : 'text'}
+                  inputMode={isEmail ? 'email' : undefined}
+                  autoComplete={isEmail ? 'email' : undefined}
+                  value={form.contact}
+                  aria-invalid={Boolean(errors.contact)}
+                  aria-describedby={errors.contact ? 'bk-contact-err' : isEmail ? 'bk-contact-hint' : undefined}
+                  placeholder={t(isEmail ? 'phEmail' : 'phContact')}
+                  onChange={(e) => set('contact', e.target.value)}
+                />
+                {isEmail && !errors.contact && (
+                  <p id="bk-contact-hint" className="mt-1 text-sm text-muted-token" data-testid="email-hint">
+                    {t('emailHint')}
+                  </p>
+                )}
                 {errors.contact && (
                   <p id="bk-contact-err" className="mt-1 text-sm text-urgent">
-                    {t('errContact')}
+                    {t(isEmail ? 'errEmail' : 'errContact')}
                   </p>
                 )}
               </div>

@@ -323,7 +323,9 @@ test('P1-QUOTE-02 normal dates book with the deposit', async ({ page }) => {
 test('P1-LANG-01 English switch', async ({ page }) => {
   await openBuilder(page);
   const { res, mode } = firstScreen(catalog, json);
-  await page.getByRole('button', { name: 'EN', exact: true }).click();
+  // on "/" the switch is a link to "/en" (one language per URL); the builder reloads there
+  await page.getByRole('link', { name: 'EN', exact: true }).click();
+  await expect(page).toHaveURL(/\/en$/);
   await expect(page.locator('[data-mode="hourly"]')).toContainText(MODE_LABEL.hourly.en);
   await expect(page.getByTestId('book-start')).toHaveText(`Book with ${baht(depositFor(catalog, res.modes[mode!].total))} deposit`);
   const first = catalog.places.find((p) => p.category !== 'pickup')!;

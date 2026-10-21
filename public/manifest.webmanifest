@@ -1,11 +1,18 @@
 {
   "name": "แอ่วกัน · รถพร้อมคนขับเชียงใหม่",
   "short_name": "แอ่วกัน",
-  "description": "วางทริปบนแผนที่ แล้วเห็นราคาทันที",
+  "description": "รถพร้อมคนขับเชียงใหม่ วางทริปบนแผนที่ แล้วเห็นราคาทันที",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#F3F6F1",
   "theme_color": "#D2421D",
   "lang": "th",
-  "icons": []
+  "dir": "ltr",
+  "categories": ["travel", "transportation"],
+  "icons": [
+    { "src": "/brand/aewkan-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/brand/aewkan-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
 }

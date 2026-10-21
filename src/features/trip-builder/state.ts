@@ -1,3 +1,4 @@
+import { MAX_PREFILL } from '@/features/seo/place-data';
 import { addDays, vehicleFor, type Catalog, type Mode, type StopInput, type TripInput, type TripTemplate } from '@/lib/pricing';
 
 export interface BuilderState {
@@ -65,6 +66,21 @@ export function applyTemplate(catalog: Catalog, s: BuilderState, tpl: TripTempla
     pax: Math.min(s.pax, seats),
     mode: tpl.round_trip ? null : 'oneway',
   };
+}
+
+/**
+ * `?places=a,b` → those stops, in that order (landing pages and shared links).
+ * Unknown slugs, pickup points and repeats are ignored; nothing valid = state unchanged.
+ */
+export function applyPrefill(catalog: Catalog, s: BuilderState, slugs: string[]): BuilderState {
+  const stops: StopInput[] = [];
+  for (const slug of slugs) {
+    const p = catalog.places.find((x) => x.slug === slug);
+    if (!p || p.category === 'pickup' || p.id === s.pickupId || stops.some((x) => x.placeId === p.id)) continue;
+    stops.push({ placeId: p.id, dwell: p.default_dwell_min > 0 ? p.default_dwell_min : 60 });
+    if (stops.length === MAX_PREFILL) break;
+  }
+  return stops.length ? { ...s, stops, roundTrip: true, mode: null } : s;
 }
 
 export function toggleStop(s: BuilderState, placeId: string, dwell: number): BuilderState {

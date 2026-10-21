@@ -2,34 +2,32 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { homePath } from '@/features/seo/lang-url';
 import { BRAND } from '@/lib/copy/common';
 import { useLang } from './lang';
+import { LangSwitch } from './lang-switch';
 
-/** header shared by the trip builder (P1) and the job link (P3) */
+const BRAND_EN = 'AewKan';
+
+/** header shared by the trip builder (P1), the place pages (SEO) and the job link (P3) */
 export function PublicHeader({ right }: { right?: ReactNode }) {
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   return (
     <header className="mx-auto flex h-[58px] max-w-[1180px] items-center gap-3.5" style={{ paddingLeft: 'max(16px, env(safe-area-inset-left))', paddingRight: 'max(16px, env(safe-area-inset-right))' }}>
-      <Link href="/" className="flex items-center gap-2.5 font-heading text-lg font-semibold text-ink">
-        <span className="grid size-8 place-items-center rounded-sm bg-brand-solid text-sm font-semibold text-on-brand">{BRAND.mark}</span>
-        <span>
-          {BRAND.th} <span className="text-sm font-medium text-muted-token">{BRAND.en}</span>
-        </span>
+      <Link href={homePath(lang)} className="flex shrink-0 items-center" data-testid="brand-home">
+        {/* wordmark 2062x713: fixed width/height (no layout shift), webp in three sizes */}
+        <picture>
+          <source
+            type="image/webp"
+            srcSet="/brand/aewkan-logo-240.webp 240w, /brand/aewkan-logo-480.webp 480w, /brand/aewkan-logo-960.webp 960w"
+            sizes="110px"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element -- picture/source gives webp with a png fallback */}
+          <img src="/brand/aewkan-logo-480.png" width={110} height={38} alt={lang === 'en' ? `${BRAND_EN} ${BRAND.th}` : `${BRAND.th} ${BRAND_EN}`} className="h-[38px] w-[110px] object-contain" fetchPriority="high" decoding="async" />
+        </picture>
       </Link>
       <div className="ml-auto flex items-center gap-2">
-        <div role="group" aria-label={lang === 'en' ? 'Language' : 'ภาษา'} className="inline-flex gap-0.5 rounded-pill border border-line bg-surface p-[3px]">
-          {(['th', 'en'] as const).map((l) => (
-            <button
-              key={l}
-              type="button"
-              aria-pressed={lang === l}
-              onClick={() => setLang(l)}
-              className={`min-h-[30px] rounded-pill px-3 text-[13px] ${lang === l ? 'bg-ink font-semibold text-canvas' : 'text-ink-2'}`}
-            >
-              {l === 'th' ? 'ไทย' : 'EN'}
-            </button>
-          ))}
-        </div>
+        <LangSwitch variant="pill" />
         {right}
       </div>
     </header>

@@ -2,7 +2,7 @@
 
 import { Map as MapIcon, UserCog } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { PublicHeader } from '@/components/public/public-header';
 import { useLang } from '@/components/public/lang';
@@ -15,7 +15,7 @@ import { BookingPanel } from './booking-panel';
 import { buildModel } from './model';
 import { PlaceList, TemplateRow } from './place-list';
 import { PricePanel } from './price-panel';
-import { applyTemplate, initialState, moveStop, paxChange, toggleStop, type BuilderState } from './state';
+import { applyPrefill, applyTemplate, initialState, moveStop, paxChange, toggleStop, type BuilderState } from './state';
 import { SuggestPanel } from './suggest-panel';
 import { TripMap } from './trip-map';
 import { TripPanel } from './trip-panel';
@@ -25,7 +25,15 @@ interface Props {
   json: PublicCatalogJson | null;
   today: string;
   staff: boolean;
+  /** place slugs from `?places=` to preselect (already parsed, unknown ones are ignored later) */
+  prefill?: string[];
 }
+
+/**
+ * The trip in progress survives client-side navigation (Thai ↔ English are two URLs, so the
+ * page remounts); a full reload starts fresh. A `?places=` link always starts its own trip.
+ */
+let carried: BuilderState | null = null;
 
 function safeCatalog(json: PublicCatalogJson | null): Catalog | null {
   if (!json) return null;
@@ -36,7 +44,7 @@ function safeCatalog(json: PublicCatalogJson | null): Catalog | null {
   }
 }
 
-export function TripBuilder({ json, today, staff }: Props) {
+export function TripBuilder({ json, today, staff, prefill = [] }: Props) {
   const { lang } = useLang();
   const router = useRouter();
   const catalog = useMemo(() => safeCatalog(json), [json]);
@@ -58,16 +66,23 @@ export function TripBuilder({ json, today, staff }: Props) {
         ) : !catalog || catalog.places.length === 0 ? (
           <EmptyState message={`${tripText(lang, 'catalogEmptyTitle')} · ${tripText(lang, 'catalogEmptyBody')}`} />
         ) : (
-          <Builder catalog={catalog} json={json} today={today} />
+          // keyed by the prefill so following a "?places=" link on this page starts that trip
+          <Builder key={prefill.join(',')} catalog={catalog} json={json} today={today} prefill={prefill} />
         )}
       </main>
     </div>
   );
 }
 
-function Builder({ catalog, json, today }: { catalog: Catalog; json: PublicCatalogJson; today: string }) {
+function Builder({ catalog, json, today, prefill }: { catalog: Catalog; json: PublicCatalogJson; today: string; prefill: string[] }) {
   const { lang } = useLang();
-  const [state, setState] = useState<BuilderState>(() => initialState(catalog, json.templates, today));
+  const [state, setState] = useState<BuilderState>(() => {
+    if (prefill.length === 0 && carried && carried.date >= today && catalog.places.some((p) => p.id === carried!.pickupId)) return carried;
+    return applyPrefill(catalog, initialState(catalog, json.templates, today), prefill);
+  });
+  useEffect(() => {
+    carried = state;
+  }, [state]);
   const [resetKey, setResetKey] = useState(0);
   const m = useMemo(() => buildModel(catalog, state, lang), [catalog, state, lang]);
 

@@ -1,17 +1,18 @@
 'use client';
 
-import { Languages, Map, Ticket } from 'lucide-react';
+import { Map, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createContext, use, useEffect, useState, type ReactNode } from 'react';
+import { homePath } from '@/features/seo/lang-url';
 import { useLang } from './lang';
+import { LangSwitch } from './lang-switch';
 
 const NavVisibility = createContext<((hidden: boolean) => void) | null>(null);
 
 const COPY = {
   plan: { th: 'วางทริป', en: 'Plan trip' },
   trips: { th: 'ทริปของฉัน', en: 'My trips' },
-  lang: { th: 'English', en: 'ภาษาไทย' },
   menu: { th: 'เมนู', en: 'Menu' },
 } as const;
 
@@ -44,10 +45,10 @@ export function HidePublicNav() {
 
 function PublicBottomNav() {
   const path = usePathname();
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   const item = 'flex min-h-11 flex-col items-center justify-center gap-0.5 text-[11px]';
   const tone = (on: boolean) => (on ? 'font-semibold text-brand' : 'text-muted-token');
-  const onPlan = path === '/';
+  const onPlan = path === '/' || path === '/en';
   const onTrips = path === '/trips' || path.startsWith('/j/');
   return (
     <nav
@@ -55,7 +56,7 @@ function PublicBottomNav() {
       className="fixed inset-x-0 bottom-0 z-20 grid h-16 grid-cols-3 border-t border-line bg-surface lg:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)', boxSizing: 'content-box' }}
     >
-      <Link href="/" aria-current={onPlan ? 'page' : undefined} className={`${item} ${tone(onPlan)}`}>
+      <Link href={homePath(lang)} aria-current={onPlan ? 'page' : undefined} className={`${item} ${tone(onPlan)}`}>
         <Map className="size-5" aria-hidden />
         <span>{COPY.plan[lang]}</span>
       </Link>
@@ -63,10 +64,7 @@ function PublicBottomNav() {
         <Ticket className="size-5" aria-hidden />
         <span>{COPY.trips[lang]}</span>
       </Link>
-      <button type="button" onClick={() => setLang(lang === 'th' ? 'en' : 'th')} className={`${item} ${tone(false)}`}>
-        <Languages className="size-5" aria-hidden />
-        <span>{COPY.lang[lang]}</span>
-      </button>
+      <LangSwitch variant="tab" />
     </nav>
   );
 }
