@@ -37,7 +37,7 @@ export const POST = staffRoute('jobs.manage', AssignDriverRequest, async ({ staf
 
   const { data: row, error: uErr } = await sb
     .from('bookings')
-    .update({ driver_id: d.id, assigned_at: new Date().toISOString(), assigned_by: staff.id, status: 'assigned' })
+    .update({ driver_id: d.id, assigned_by: staff.id, status: 'assigned' }) // assigned_at: DB trigger
     .eq('id', b.id)
     .eq('status', b.status)
     .select('id')

@@ -18,8 +18,9 @@ export const POST = staffRoute('quotes.manage', SendQuoteRequest, async ({ body 
     throw new ApiError(409, 'not_quotable', 'งานนี้ไม่อยู่ในสถานะที่เสนอราคาได้');
   }
 
-  const now = new Date();
-  const deadline = new Date(now.getTime() + body.hours * 3_600_000);
+  // the values below only mark "sent"; the bookings_stamp_times trigger replaces
+  // them with now() and now() + quote_hours from the database clock
+  const marker = new Date().toISOString();
   const { data: row, error } = await sb
     .from('bookings')
     .update({
@@ -27,15 +28,15 @@ export const POST = staffRoute('quotes.manage', SendQuoteRequest, async ({ body 
       quote_deposit: body.deposit,
       quote_hours: body.hours,
       quote_message: body.message,
-      quote_sent_at: now.toISOString(),
-      quote_deadline: deadline.toISOString(),
+      quote_sent_at: marker,
+      quote_deadline: marker,
       status: 'quoted',
     })
     .eq('id', body.bookingId)
     .eq('status', cur.status)
-    .select('id')
+    .select('id, quote_sent_at, quote_deadline')
     .maybeSingle();
   if (error) throw new Error(`quote update: ${error.message}`);
-  if (!row) throw new ApiError(403, 'forbidden', 'ไม่มีสิทธิ์ทำรายการนี้หรือสถานะงานเปลี่ยนไปแล้ว');
-  return { ok: true as const, sentAt: now.toISOString(), deadline: deadline.toISOString() };
+  if (!row?.quote_sent_at || !row.quote_deadline) throw new ApiError(403, 'forbidden', 'ไม่มีสิทธิ์ทำรายการนี้หรือสถานะงานเปลี่ยนไปแล้ว');
+  return { ok: true as const, sentAt: row.quote_sent_at, deadline: row.quote_deadline };
 });

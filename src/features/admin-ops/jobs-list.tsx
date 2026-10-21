@@ -9,7 +9,7 @@ import { can, type StaffSession } from '@/lib/auth/staff';
 import { BOOKING_STATUSES, type BookingStatus } from '@/lib/contracts/common';
 import { JOBS_COPY } from '@/lib/copy/admin';
 import { MODE_LABEL, STATUS_LABEL } from '@/lib/copy/common';
-import { baht, formatTripDate, todayInBangkok } from '@/lib/format';
+import { baht, formatTripDate } from '@/lib/format';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { loadPlaceNames, loadStopPlaceIds, loadVehicles, vehicleName } from './data';
 import { cleanSearch, hhmm, PAGE_SIZE, tripTitle } from './helpers';
@@ -36,30 +36,8 @@ export async function JobsList({ staff, query }: { staff: StaffSession; query: J
   return failed ? <RefreshRetry message={JOBS_COPY.loadError} /> : el;
 }
 
-async function monthRevenue(sb: Awaited<ReturnType<typeof getSupabaseServer>>, today: string): Promise<number> {
-  const from = `${today.slice(0, 8)}01T00:00:00+07:00`;
-  let sum = 0;
-  for (let page = 0; page < 5; page++) {
-    const { data, error } = await sb
-      .from('bookings')
-      .select('id, price_total, quote_price, status')
-      .gte('created_at', from)
-      .order('created_at', { ascending: false })
-      .order('id')
-      .range(page * 1000, page * 1000 + 999);
-    if (error) throw new Error(`revenue: ${error.message}`);
-    for (const r of data ?? []) {
-      if (r.status === 'cancelled' || r.status === 'quote_requested') continue;
-      sum += r.quote_price ?? r.price_total;
-    }
-    if ((data?.length ?? 0) < 1000) break;
-  }
-  return sum;
-}
-
 async function renderJobs(staff: StaffSession, query: JobsQuery) {
   const sb = await getSupabaseServer();
-  const today = todayInBangkok();
   const status = (BOOKING_STATUSES as readonly string[]).includes(query.status) ? query.status : 'all';
   const search = cleanSearch(query.q);
   const from = (query.page - 1) * PAGE_SIZE;
@@ -73,20 +51,15 @@ async function renderJobs(staff: StaffSession, query: JobsQuery) {
   if (status !== 'all') list = list.eq('status', status);
   if (search) list = list.or(`booking_no.ilike.%${search}%,customer_name.ilike.%${search}%`);
 
-  const countFor = (s: string) => sb.from('bookings').select('id', { count: 'exact', head: true }).eq('status', s);
-  const [listRes, vehicles, todayRes, ...counts] = await Promise.all([
-    list,
-    loadVehicles(sb),
-    sb.from('bookings').select('id', { count: 'exact', head: true }).eq('travel_date', today).neq('status', 'cancelled'),
-    ...BOOKING_STATUSES.map(countFor),
-  ]);
+  const [listRes, vehicles, kpiRes] = await Promise.all([list, loadVehicles(sb), sb.rpc('admin_job_kpis')]);
   if (listRes.error) throw new Error(`list: ${listRes.error.message}`);
-  if (todayRes.error) throw new Error(`today: ${todayRes.error.message}`);
-  for (const c of counts) if (c.error) throw new Error(`count: ${c.error.message}`);
+  if (kpiRes.error) throw new Error(`kpis: ${kpiRes.error.message}`);
 
-  const byStatus = Object.fromEntries(BOOKING_STATUSES.map((s, i) => [s, counts[i].count ?? 0])) as Record<BookingStatus, number>;
+  // one round trip: counts per status, today's trips, month revenue (null without finance.read)
+  const kpi = kpiRes.data as { by_status: Record<string, number>; today: number; month_revenue: number | null };
+  const byStatus = Object.fromEntries(BOOKING_STATUSES.map((s) => [s, kpi.by_status[s] ?? 0])) as Record<BookingStatus, number>;
   const totalAll = Object.values(byStatus).reduce((a, b) => a + b, 0);
-  const revenue = can(staff, 'finance.read') ? await monthRevenue(sb, today) : null;
+  const revenue = can(staff, 'finance.read') ? (kpi.month_revenue ?? 0) : null;
 
   const rows = listRes.data ?? [];
   const stopIds = await loadStopPlaceIds(sb, rows.map((r) => r.id));
@@ -106,7 +79,7 @@ async function renderJobs(staff: StaffSession, query: JobsQuery) {
       <MetricBar>
         <Metric label={JOBS_COPY.kpi.quoteRequested} value={byStatus.quote_requested} tone="urgent" href={hrefWith('/admin/jobs', params, { status: 'quote_requested' })} />
         <Metric label={JOBS_COPY.kpi.awaitingDriver} value={byStatus.confirmed} tone="progress" href={hrefWith('/admin/jobs', params, { status: 'confirmed' })} />
-        <Metric label={JOBS_COPY.kpi.today} value={todayRes.count ?? 0} />
+        <Metric label={JOBS_COPY.kpi.today} value={kpi.today} />
         {revenue !== null && <Metric label={JOBS_COPY.kpi.monthRevenue} value={baht(revenue)} />}
       </MetricBar>
       </div>

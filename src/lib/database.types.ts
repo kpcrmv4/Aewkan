@@ -1148,6 +1148,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_job_kpis: { Args: never; Returns: Json }
+      admin_set_status: {
+        Args: {
+          p_booking: string
+          p_from: string
+          p_reason?: string
+          p_to: string
+        }
+        Returns: boolean
+      }
       current_owner_id: { Args: never; Returns: string }
       expire_quotes: { Args: never; Returns: number }
       get_integration_secret: { Args: { p_key: string }; Returns: string }
