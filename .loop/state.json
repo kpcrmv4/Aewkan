@@ -1,0 +1,88 @@
+{
+  "project": "aewkan",
+  "run": {
+    "status": "running",
+    "iteration": 1,
+    "budget": 60,
+    "started": "2026-10-21T13:00+07:00",
+    "batch": { "size": 8 },
+    "mode": "รุม",
+    "max_workers": 3
+  },
+  "phases": [
+    {
+      "id": "P0",
+      "name": "Contract: scaffold, auth, DB, pricing",
+      "tasks": [
+        { "id": "P0-01", "name": "Design records, CLAUDE.md, LOOP.md", "status": "done" },
+        { "id": "P0-02", "name": "Migrations + RLS + RBAC applied, types", "status": "done" },
+        { "id": "P0-03", "name": "Pricing engine + 28 unit tests", "status": "done" },
+        { "id": "P0-04", "name": "Next shell, staff auth, contracts, public wiring", "status": "done" },
+        { "id": "P0-05", "name": "E2E harness + staff test account (14 specs)", "status": "done" }
+      ]
+    },
+    {
+      "id": "P1",
+      "name": "Customer trip builder (worker A)",
+      "tasks": [
+        { "id": "P1-01", "name": "Trip builder UI: map, templates, stops, suggestions, 4 prices", "status": "doing" },
+        { "id": "P1-02", "name": "Booking + quote request flow, POST /api/bookings", "status": "doing" }
+      ]
+    },
+    {
+      "id": "P2a",
+      "name": "Admin operations (worker B)",
+      "tasks": [
+        { "id": "P2-01", "name": "Jobs list + KPIs + filters", "status": "doing" },
+        { "id": "P2-02", "name": "Quotes screen + send quote", "status": "doing" },
+        { "id": "P2-03", "name": "Assign driver + links + message", "status": "doing" },
+        { "id": "P2-04", "name": "Drivers and vehicles CRUD", "status": "doing" }
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "Job link customer/driver (worker C)",
+      "tasks": [
+        { "id": "P3-01", "name": "Job view API + customer page + quote countdown", "status": "doing" },
+        { "id": "P3-02", "name": "Driver view: photos, start, check-in, commission, finish", "status": "doing" },
+        { "id": "P3-03", "name": "Return-trip offer panel + booking", "status": "doing" }
+      ]
+    },
+    {
+      "id": "P2b",
+      "name": "Admin settings: pricing, places, commission, segments",
+      "tasks": [
+        { "id": "P2-05", "name": "Pricing rules editor + publish version", "status": "todo" },
+        { "id": "P2-06", "name": "Places (link/coords/map click) + measured segments", "status": "todo" },
+        { "id": "P2-07", "name": "Commission policy table + splits", "status": "todo" }
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "Payments + notifications (single owner)",
+      "tasks": [
+        { "id": "P4-01", "name": "PromptPay QR + slip upload + slip verify adapter", "status": "todo" },
+        { "id": "P4-02", "name": "Stripe + Beam checkout and webhooks", "status": "todo" },
+        { "id": "P4-03", "name": "LINE OA messages + web push + service worker", "status": "todo" },
+        { "id": "P4-04", "name": "Integrations settings page (Vault)", "status": "todo" },
+        { "id": "P4-05", "name": "Routing API adapter feeding segments", "status": "todo" }
+      ]
+    },
+    {
+      "id": "P5",
+      "name": "Team + RBAC (single owner)",
+      "tasks": [
+        { "id": "P5-01", "name": "Team list, invites, accept page", "status": "todo" },
+        { "id": "P5-02", "name": "Roles + permission editor, ownership transfer", "status": "todo" }
+      ]
+    },
+    {
+      "id": "P6",
+      "name": "Seed + full E2E + acceptance",
+      "tasks": [
+        { "id": "P6-01", "name": "Demo seed covering every status", "status": "todo" },
+        { "id": "P6-02", "name": "Full suite + acceptance matrices closed", "status": "todo" }
+      ]
+    }
+  ]
+}

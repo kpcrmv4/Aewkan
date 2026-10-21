@@ -29,7 +29,7 @@
 | Phase 0 contract ก่อน fan-out | migration + types + `src/lib/contracts` + route skeleton + copy keys + tokens + deps — เจ้าของ: orchestrator |
 | โหมดตรวจสอบ | **เร็ว** (§3) · ขนาด batch **8** (§6) |
 
-**write set ต่อ worker (P1–P3 ขนานกันได้ · P4 P5 คนเดียวตามลำดับ):**
+**write set ต่อ worker — ฉบับที่ใช้จริงคือ `WORKERS.md`** (wave 1 = A/P1 · B/P2a งาน-เสนอราคา-จัดคนขับ-คนขับ · C/P3 · wave 2 = P2b ตั้งค่าราคา-จุดหมาย-ค่าน้ำ-ระยะจริง แล้ว P4 P5 คนเดียวตามลำดับ) · ตารางด้านล่างคือแผนตั้งต้น:
 
 | worker | เฟส | เขียนได้ | ห้ามแตะ |
 |---|---|---|---|
