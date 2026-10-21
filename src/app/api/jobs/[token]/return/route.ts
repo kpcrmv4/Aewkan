@@ -1,4 +1,7 @@
+import { after } from 'next/server';
 import { ApiError, publicRoute } from '@/lib/api/handler';
+import { siteOrigin } from '@/lib/integrations/server';
+import { notifyBooking } from '@/lib/notify';
 import { looksLikeToken, newToken } from '@/lib/auth/link-token';
 import { loadPublicCatalog } from '@/lib/catalog/server';
 import { ReturnOfferRequest, type CreateBookingResponse, type JobViewJson } from '@/lib/contracts';
@@ -33,7 +36,7 @@ export const POST = publicRoute(
     return { token, view, offer };
   },
   ReturnOfferRequest,
-  async ({ auth, body }): Promise<CreateBookingResponse> => {
+  async ({ auth, body, req }): Promise<CreateBookingResponse> => {
     const admin = getSupabaseAdmin(); // throws MissingEnvError → 503 when the key is absent
     const { view, offer } = auth;
     const { catalog } = await loadPublicCatalog();
@@ -103,6 +106,11 @@ export const POST = publicRoute(
     const link = await admin.rpc('issue_job_link', { p_booking: created.id, p_audience: 'customer', p_token: customerToken });
     if (link.error) throw new Error(`issue_job_link: ${link.error.message}`);
 
+    const customerUrl = `${siteOrigin(req)}/j/${customerToken}`;
+    after(async () => {
+      await notifyBooking(created.id, 'new_booking');
+      await notifyBooking(created.id, 'booking_received', { customerUrl });
+    });
     return { bookingNo: created.booking_no, status: 'awaiting_deposit', total, deposit, customerPath: `/j/${customerToken}` };
   },
 );

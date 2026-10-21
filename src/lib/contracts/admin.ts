@@ -105,7 +105,7 @@ export const UpsertDriverRequest = z.object({
   isActive: z.boolean().default(true),
 });
 
-export const INTEGRATION_KEYS = ['line', 'stripe', 'beam', 'slip', 'routing', 'promptpay'] as const;
+export const INTEGRATION_KEYS = ['line', 'stripe', 'beam', 'slip', 'routing', 'promptpay', 'email'] as const;
 export const UpdateIntegrationRequest = z.object({
   key: z.enum(INTEGRATION_KEYS),
   isEnabled: z.boolean(),

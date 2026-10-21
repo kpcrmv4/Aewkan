@@ -21,6 +21,8 @@ export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
 export const PRICED_MODES = ['hourly', 'daily', 'trip', 'oneway'] as const;
 export const contactChannel = z.enum(['line', 'whatsapp', 'phone', 'email', 'other']);
+/** an address Resend will accept (customer e-mail channel, sender settings) */
+export const EMAIL_RE = /^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[A-Za-z]{2,}$/;
 export const lang = z.enum(['th', 'en']);
 
 /** the error body every route returns: { error: { code, message } } */

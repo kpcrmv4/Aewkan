@@ -6,6 +6,7 @@
  *   several fields    → one JSON object `{ field: value }` (LINE, Stripe, Beam), merged in SQL
  */
 import type { IntegrationKey } from '@/lib/contracts/payment';
+import { EMAIL_RE } from './email';
 
 export interface ConfigField {
   name: string;
@@ -156,6 +157,34 @@ export const INTEGRATIONS: IntegrationDef[] = [
     ],
     webhookPath: '/api/webhooks/line',
     webhookHint: 'เปิด "Use webhook" ใน LINE Developers และปิดข้อความตอบกลับอัตโนมัติถ้าไม่ต้องการให้ตอบซ้ำ',
+  },
+  {
+    key: 'email',
+    title: 'อีเมลลูกค้า (Resend)',
+    sub: 'ส่งยืนยันการจอง ราคา คนขับ และข้อเสนอขากลับ ให้ลูกค้าที่เลือกติดต่อทางอีเมล',
+    config: [
+      {
+        name: 'fromEmail',
+        label: 'อีเมลผู้ส่ง',
+        kind: 'text',
+        placeholder: 'booking@yourdomain.com',
+        hint: 'ต้องอยู่บนโดเมนที่ยืนยันแล้วใน Resend',
+        required: true,
+        pattern: EMAIL_RE,
+        patternHint: 'รูปแบบอีเมลไม่ถูกต้อง',
+      },
+      { name: 'fromName', label: 'ชื่อผู้ส่ง', kind: 'text', placeholder: 'แอ่วกัน', defaultValue: 'แอ่วกัน' },
+      {
+        name: 'replyTo',
+        label: 'อีเมลรับการตอบกลับ (ถ้ามี)',
+        kind: 'text',
+        placeholder: 'hello@yourdomain.com',
+        hint: 'ลูกค้ากดตอบกลับแล้วจะส่งมาที่นี่',
+        pattern: EMAIL_RE,
+        patternHint: 'รูปแบบอีเมลไม่ถูกต้อง',
+      },
+    ],
+    secrets: [{ name: 'apiKey', label: 'Resend API key', required: true, pattern: /^re_[A-Za-z0-9_]{8,}$/, patternHint: 'ขึ้นต้นด้วย re_' }],
   },
   {
     key: 'routing',

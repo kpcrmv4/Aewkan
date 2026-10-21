@@ -8,7 +8,7 @@
  *        Quote-mode dates create status 'quote_requested' (no price charged).
  */
 import { z } from 'zod';
-import { baht, contactChannel, hhmm, isoDate, lang, uuid, PRICED_MODES } from './common';
+import { baht, contactChannel, EMAIL_RE, hhmm, isoDate, lang, uuid, PRICED_MODES } from './common';
 
 export const StopSchema = z.object({
   placeId: uuid,
@@ -36,7 +36,7 @@ export const CustomerSchema = z.object({
   hotel: z.string().trim().max(200).default(''),
   note: z.string().trim().max(500).default(''),
   pushOptIn: z.boolean().default(false),
-});
+}).refine((c) => c.channel !== 'email' || EMAIL_RE.test(c.contact), { path: ['contact'], message: 'อีเมลไม่ถูกต้อง / invalid e-mail' });
 export type CustomerDto = z.infer<typeof CustomerSchema>;
 
 export const CreateBookingRequest = z.object({

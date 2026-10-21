@@ -1,6 +1,7 @@
 import { staffRoute } from '@/lib/api/handler';
 import { TestIntegrationRequest, type TestIntegrationResponse } from '@/lib/contracts/payment';
 import { beamPing } from '@/lib/integrations/beam';
+import { resendRequest, resendSend } from '@/lib/integrations/email';
 import { lineBotInfo } from '@/lib/integrations/line';
 import { formatPromptPayId, promptPayPayload, PROMPTPAY_ID_RE } from '@/lib/integrations/promptpay';
 import { checkVapid } from '@/lib/integrations/push';
@@ -17,7 +18,7 @@ const fail = (message: string): TestIntegrationResponse => ({ ok: false, message
  * from its config with the staff session; every other one must read its secret from Vault,
  * so it needs the service role (503 server_not_configured without it).
  */
-export const POST = staffRoute('integrations.manage', TestIntegrationRequest, async ({ body }): Promise<TestIntegrationResponse> => {
+export const POST = staffRoute('integrations.manage', TestIntegrationRequest, async ({ staff, body }): Promise<TestIntegrationResponse> => {
   if (body.key === 'promptpay') {
     const sb = await getSupabaseServer();
     const { data, error } = await sb.from('integrations').select('config').eq('key', 'promptpay').maybeSingle();
@@ -49,6 +50,16 @@ export const POST = staffRoute('integrations.manage', TestIntegrationRequest, as
         return await testSlip(i.config, i.secret.apiKey);
       case 'routing':
         return await testRouting(i.config.provider ?? 'ors', i.secret.apiKey);
+      case 'email': {
+        // a real e-mail to the staff member pressing the button
+        const req = resendRequest(
+          { fromEmail: i.config.fromEmail, fromName: i.config.fromName ?? '', replyTo: i.config.replyTo },
+          staff.email,
+          { lang: 'th', title: 'แอ่วกัน · ทดสอบอีเมล', body: 'ถ้าได้รับอีเมลนี้ แปลว่าการส่งอีเมลถึงลูกค้าผ่าน Resend พร้อมใช้งานแล้ว', bookingNo: 'TEST', url: null },
+        );
+        const id = await resendSend(i.secret.apiKey, req);
+        return ok(`ส่งอีเมลทดสอบไปที่ ${staff.email} แล้ว${id ? ` · id ${id}` : ''} (ดูในกล่องจดหมายหรือสแปม)`);
+      }
     }
   } catch (e) {
     return fail(`ทดสอบไม่ผ่าน: ${e instanceof Error ? e.message.slice(0, 200) : 'ไม่ทราบสาเหตุ'}`);

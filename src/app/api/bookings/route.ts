@@ -6,6 +6,7 @@ import { loadPublicCatalog } from '@/lib/catalog/server';
 import { CreateBookingRequest, type CreateBookingResponse } from '@/lib/contracts/booking';
 import { todayInBangkok } from '@/lib/format';
 import { planTrip, priceTrip, quoteModeActive } from '@/lib/pricing';
+import { siteOrigin } from '@/lib/integrations/server';
 import { notifyBooking } from '@/lib/notify';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { buildBookingInsert, buildStopRows, pickPrice, tripInputOf } from './build-booking';
@@ -17,7 +18,7 @@ import { buildBookingInsert, buildStopRows, pickPrice, tripInputOf } from './bui
 export const POST = publicRoute(
   async () => null,
   CreateBookingRequest,
-  async ({ body }): Promise<CreateBookingResponse> => {
+  async ({ body, req }): Promise<CreateBookingResponse> => {
     if (body.returnOf) throw new ApiError(422, 'return_via_job_link', 'ขากลับจองได้จากลิงก์งานเดิม');
 
     const admin = getSupabaseAdmin(); // throws MissingEnvError → 503 before any work when the key is absent
@@ -73,7 +74,11 @@ export const POST = publicRoute(
     const { error: lErr } = await admin.rpc('issue_job_link', { p_booking: booking.id, p_audience: 'customer', p_token: token });
     if (lErr) return compensate('link', lErr.message);
 
-    after(() => notifyBooking(booking.id, 'new_booking'));
+    const customerUrl = `${siteOrigin(req)}/j/${token}`;
+    after(async () => {
+      await notifyBooking(booking.id, 'new_booking');
+      await notifyBooking(booking.id, 'booking_received', { customerUrl }); // e-mail carries the link
+    });
     return {
       bookingNo: booking.booking_no,
       status: priced.quote ? 'quote_requested' : 'awaiting_deposit',

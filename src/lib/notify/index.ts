@@ -1,5 +1,7 @@
 import 'server-only';
+import { createHash } from 'node:crypto';
 import { loadIntegration, ready, siteOrigin, type Admin } from '@/lib/integrations/server';
+import { EMAIL_RE, resendRequest, resendSend } from '@/lib/integrations/email';
 import { lineText, linePush } from '@/lib/integrations/line';
 import { sendPush, type PushKeys } from '@/lib/integrations/push';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
@@ -9,9 +11,11 @@ import { customerMessage, STAFF_KINDS, staffMessage, type MessageInput, type Not
 export { NOTIFY_KINDS, type NotifyKind } from './messages';
 
 export type ChannelResult = 'sent' | 'failed' | 'skipped';
+type LogRow = { channel: 'push' | 'line' | 'email'; status: ChannelResult; error: string | null };
 export interface NotifyResult {
   push: ChannelResult;
   line: ChannelResult;
+  email: ChannelResult;
   reason?: string;
 }
 
@@ -21,7 +25,8 @@ export interface NotifyOptions {
 }
 
 /**
- * Tell the customer (push + LINE) or the staff (LINE group) about a booking event.
+ * Tell the customer (push + LINE + e-mail) or the staff (LINE group) about a booking event.
+ * E-mail goes to customers whose contact channel is e-mail (Resend, integration `email`).
  * Never throws and never blocks the caller's own result — call it inside `after()`.
  * Every channel writes one notification_log row: sent / failed / skipped (+ reason).
  * Without SUPABASE_SECRET_KEY it logs `skipped · server_not_configured` through the
@@ -33,13 +38,13 @@ export async function notifyBooking(bookingId: string, kind: NotifyKind, opts: N
     admin = getSupabaseAdmin();
   } catch {
     await logViaStaff(bookingId, kind, 'server_not_configured');
-    return { push: 'skipped', line: 'skipped', reason: 'server_not_configured' };
+    return { push: 'skipped', line: 'skipped', email: 'skipped', reason: 'server_not_configured' };
   }
-  const log: { channel: 'push' | 'line'; status: ChannelResult; error: string | null }[] = [];
-  const result: NotifyResult = { push: 'skipped', line: 'skipped' };
+  const log: LogRow[] = [];
+  const result: NotifyResult = { push: 'skipped', line: 'skipped', email: 'skipped' };
   try {
     const input = await loadMessageInput(admin, bookingId, opts);
-    if (!input) return { push: 'skipped', line: 'skipped', reason: 'booking_not_found' };
+    if (!input) return { push: 'skipped', line: 'skipped', email: 'skipped', reason: 'booking_not_found' };
     const staff = STAFF_KINDS.includes(kind);
 
     // LINE
@@ -59,6 +64,9 @@ export async function notifyBooking(bookingId: string, kind: NotifyKind, opts: N
       if (!msg || !to.length) log.push({ channel: 'line', status: 'skipped', error: msg ? 'not_bound' : 'no_message' });
       else result.line = await tryLine(line.secret.channelAccessToken, to, msg.text, log);
     }
+
+    // e-mail (customers who chose e-mail as their contact channel)
+    if (!staff) result.email = await emailToCustomer(admin, bookingId, kind, input, log);
 
     // web push (customers only)
     if (staff) {
@@ -84,7 +92,7 @@ export async function notifyBooking(bookingId: string, kind: NotifyKind, opts: N
   return result;
 }
 
-async function tryLine(token: string | undefined, to: string[], text: string, log: { channel: 'push' | 'line'; status: ChannelResult; error: string | null }[]): Promise<ChannelResult> {
+async function tryLine(token: string | undefined, to: string[], text: string, log: LogRow[]): Promise<ChannelResult> {
   if (!token) {
     log.push({ channel: 'line', status: 'skipped', error: 'no_token' });
     return 'skipped';
@@ -110,7 +118,7 @@ async function pushToCustomer(
   kind: NotifyKind,
   bookingNo: string,
   msg: { title: string; body: string },
-  log: { channel: 'push' | 'line'; status: ChannelResult; error: string | null }[],
+  log: LogRow[],
 ): Promise<ChannelResult> {
   const { data: keysJson, error: kErr } = await admin.rpc('get_push_private_key');
   if (kErr) throw new Error(`push keys: ${kErr.message}`);
@@ -149,10 +157,10 @@ async function pushToCustomer(
   return status;
 }
 
-async function loadMessageInput(admin: Admin, bookingId: string, opts: NotifyOptions): Promise<MessageInput | null> {
+async function loadMessageInput(admin: Admin, bookingId: string, opts: NotifyOptions): Promise<(MessageInput & { email: string | null }) | null> {
   const { data: b, error } = await admin
     .from('bookings')
-    .select('id, booking_no, customer_name, customer_lang, travel_date, pickup_time, pickup_place_id, price_total, deposit, quote_price, quote_deposit, quote_deadline, driver_id')
+    .select('id, booking_no, status, customer_name, customer_lang, contact_channel, customer_contact, travel_date, pickup_time, pickup_place_id, price_total, deposit, quote_price, quote_deposit, quote_deadline, driver_id')
     .eq('id', bookingId)
     .maybeSingle();
   if (error) throw new Error(`booking: ${error.message}`);
@@ -170,6 +178,8 @@ async function loadMessageInput(admin: Admin, bookingId: string, opts: NotifyOpt
   return {
     lang,
     bookingNo: b.booking_no,
+    status: b.status,
+    email: b.contact_channel === 'email' && EMAIL_RE.test(b.customer_contact.trim()) ? b.customer_contact.trim() : null,
     travelDate: b.travel_date,
     pickupTime: b.pickup_time,
     pickupName: (lang === 'en' ? pickup.data?.name_en : pickup.data?.name_th) ?? '',
@@ -190,11 +200,43 @@ async function loadMessageInput(admin: Admin, bookingId: string, opts: NotifyOpt
 async function logViaStaff(bookingId: string, kind: NotifyKind, reason: string): Promise<void> {
   try {
     const sb = await getSupabaseServer();
-    for (const channel of ['push', 'line'] as const) {
+    for (const channel of ['push', 'line', 'email'] as const) {
       const { error } = await sb.rpc('log_notification', { p_booking: bookingId, p_channel: channel, p_kind: kind, p_status: 'skipped', p_error: reason });
       if (error) return;
     }
   } catch {
     /* not inside a request with cookies (cron, webhook) — nothing to log with */
+  }
+}
+
+async function emailToCustomer(admin: Admin, bookingId: string, kind: NotifyKind, input: MessageInput & { email: string | null }, log: LogRow[]): Promise<ChannelResult> {
+  if (!input.email) {
+    log.push({ channel: 'email', status: 'skipped', error: 'no_email_contact' });
+    return 'skipped';
+  }
+  const msg = customerMessage(kind, input);
+  if (!msg) {
+    log.push({ channel: 'email', status: 'skipped', error: 'no_message' });
+    return 'skipped';
+  }
+  const mail = await loadIntegration(admin, 'email');
+  if (!ready(mail) || !mail.config.fromEmail) {
+    log.push({ channel: 'email', status: 'skipped', error: 'email_not_configured' });
+    return 'skipped';
+  }
+  try {
+    const req = resendRequest(
+      { fromEmail: mail.config.fromEmail, fromName: mail.config.fromName ?? '', replyTo: mail.config.replyTo },
+      input.email,
+      { lang: input.lang, title: msg.title, body: msg.body, bookingNo: input.bookingNo, url: input.customerUrl },
+    );
+    // same booking + kind + wording = one e-mail even if notify runs twice; a new quote is new wording
+    const key = `${bookingId}:${kind}:${createHash('sha256').update(msg.body).digest('hex').slice(0, 16)}`;
+    await resendSend(mail.secret.apiKey, req, key);
+    log.push({ channel: 'email', status: 'sent', error: null });
+    return 'sent';
+  } catch (e) {
+    log.push({ channel: 'email', status: 'failed', error: (e instanceof Error ? e.message : String(e)).slice(0, 300) });
+    return 'failed';
   }
 }

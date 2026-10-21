@@ -7,7 +7,7 @@
 import { BRAND } from '@/lib/copy/common';
 import { baht, formatDeadline, formatTripDate } from '@/lib/format';
 
-export const NOTIFY_KINDS = ['new_booking', 'quote_ready', 'deposit_received', 'slip_review', 'confirmed', 'driver_assigned', 'return_offer'] as const;
+export const NOTIFY_KINDS = ['new_booking', 'booking_received', 'quote_ready', 'deposit_received', 'slip_review', 'confirmed', 'driver_assigned', 'return_offer'] as const;
 export type NotifyKind = (typeof NOTIFY_KINDS)[number];
 
 /** kinds that go to the staff LINE target instead of the customer */
@@ -16,6 +16,8 @@ export const STAFF_KINDS: readonly NotifyKind[] = ['new_booking', 'slip_review']
 export interface MessageInput {
   lang: 'th' | 'en';
   bookingNo: string;
+  /** booking status at send time (booking_received words a quote request differently) */
+  status?: string;
   travelDate: string;
   pickupTime: string;
   pickupName: string;
@@ -47,6 +49,21 @@ export function customerMessage(kind: NotifyKind, m: MessageInput): CustomerMess
   let title: string;
   let body: string;
   switch (kind) {
+    case 'booking_received': {
+      // first message: the only one that can always carry the trip link (e-mail)
+      const quote = m.status === 'quote_requested';
+      title = quote
+        ? th ? `${brand} · ได้รับคำขอราคาแล้ว` : `${brand} · We got your price request`
+        : th ? `${brand} · ได้รับการจองแล้ว` : `${brand} · Booking received`;
+      body = quote
+        ? th
+          ? `การจอง ${m.bookingNo} · ${when} · ทีมงานจะส่งราคาให้เร็วที่สุด`
+          : `Booking ${m.bookingNo} · ${when} · we will send your price shortly`
+        : th
+          ? `การจอง ${m.bookingNo} · ${when} · ราคา ${baht(m.total)} · โอนมัดจำ ${baht(m.deposit)} ในลิงก์ทริปเพื่อยืนยัน`
+          : `Booking ${m.bookingNo} · ${when} · ${baht(m.total)} · pay the ${baht(m.deposit)} deposit in your trip link to confirm`;
+      break;
+    }
     case 'quote_ready': {
       if (!m.quote) return null;
       const by = m.quote.deadline ? formatDeadline(m.quote.deadline, m.lang) : '';
