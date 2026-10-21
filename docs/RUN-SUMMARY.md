@@ -8,7 +8,7 @@ Mode รุม (3 workers per wave) · loop everything · verification เร็
 |---|---|
 | typecheck · build · verify (portability, route guards) · types:check · lessons:check | pass |
 | unit (vitest) | 191 passed |
-| E2E (Playwright, desktop + phone, real Supabase) | **548 passed · 0 failed · 28 not run** |
+| E2E (Playwright, desktop + phone, real Supabase) | **550 passed · 0 failed · 26 skipped** (re-run with `SUPABASE_SECRET_KEY`) |
 | Supabase advisors — security | only intended items: token-checked RPCs for links/payments, permission-checked SECURITY DEFINER functions, "leaked password protection" off |
 | Supabase advisors — performance | unused indexes only (new database) |
 
@@ -26,17 +26,17 @@ Mode รุม (3 workers per wave) · loop everything · verification เร็
 | P6 | demo seed / every acceptance row run | **blocked** — see below |
 | + | customer e-mail via Resend (R-018) · owner's logo + icons (R-019) · SEO: /en, place pages, sitemap, robots, OG, JSON-LD | done |
 
-## Not run (27 E2E rows) and why
+## Skipped (26) and why
 
-- **Need `SUPABASE_SECRET_KEY`** (public booking insert, return booking, X-01, X-03): P1-API-03..06, P1-BOOK-03/04, P3-85, P3-87, P3-28.
-- **Need a second, confirmed non-staff account** (`E2E_LIMITED_EMAIL` / `E2E_LIMITED_PASSWORD`): P5-04-06 / P5-06-02.
+- Re-run with the key: the rows that needed `SUPABASE_SECRET_KEY` (P1-API-03..06, P1-BOOK-03/04, P3-85, P3-87, P3-28, X-01, X-03) and the limited account (P5-04-06 / P5-06-02) now pass.
+  Test accounts in a fresh container: `node scripts/e2e-accounts.mjs` (writes `E2E_*` to `.env.local`).
+- **22 rows test the "no key" path** (503 server_not_configured): they skip while the key is set — by design.
+- P0-RSP-03 (phone only) and SEO-EM-01 (desktop only) skip on the other project — by design.
 - **P3-21b** (paid / balance lines): can now be driven through the staff payment approval (P4) — follow-up.
 - **Need provider keys** (manual after setup): Stripe / Beam / LINE / slip check live calls, routing fetch, real invite e-mail.
 - **P6 demo seed** not created on purpose: tests run against the live project; a seed would have to be deleted by hand later.
 
 ## Owner actions (in order)
-
-0. `SUPABASE_SECRET_KEY` is set in the environment — open a **new** session so it loads, then run the full suite (the 28 not-run rows).
 
 1. Add `SUPABASE_SECRET_KEY` to the environment (cloud environment settings / Vercel env) — never in chat.
 2. Open `/admin/setup` → create the owner account.
