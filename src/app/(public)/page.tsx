@@ -1,12 +1,19 @@
 import { loadPublicCatalog } from '@/lib/catalog/server';
-import { TripBuilderPlaceholder } from './trip-builder-placeholder';
+import { todayInBangkok } from '@/lib/format';
+import { TripBuilder } from '@/features/trip-builder/trip-builder';
 
 /**
- * P0 placeholder for the trip builder (P1 replaces this file and the
- * placeholder component with src/features/trip-builder/*). It proves the
- * public catalog RPC and the pricing engine are wired end to end.
+ * Trip builder. `?staff=1` (bottom-nav centre action for staff) is only passed
+ * through to the UI; the booking API sets created_by from the staff session.
  */
-export default async function HomePage() {
-  const { json } = await loadPublicCatalog();
-  return <TripBuilderPlaceholder catalog={json} />;
+export default async function HomePage({ searchParams }: PageProps<'/'>) {
+  const sp = await searchParams;
+  const staff = sp.staff === '1';
+  let json = null;
+  try {
+    json = (await loadPublicCatalog()).json;
+  } catch (e) {
+    console.error('[home] catalog failed', e instanceof Error ? e.message : e);
+  }
+  return <TripBuilder json={json} today={todayInBangkok()} staff={staff} />;
 }
