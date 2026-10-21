@@ -1,0 +1,36 @@
+{
+  "_about": "Valid values for the owner slot of a LESSONS.md heading. `skills` is read from the kit's skills/ folder at runtime when this file sits inside the kit; the list here is the fallback for a project that copied only this script. `aliases` map names people actually write (slash commands, sub-areas, old names) to the skill that carries the rule — an owner that is not a skill is a lesson with nowhere to go.",
+  "skills": [
+    "kp-design-brainstorm",
+    "kp-cross-platform",
+    "kp-seed-and-reset",
+    "supabase-large-data",
+    "kp-work-routing",
+    "kp-autonomous-loop",
+    "kp-testing-cadence",
+    "kp-e2e-playwright-real-db",
+    "thai-saas-ui-kit",
+    "thai-admin-page-kit",
+    "kp-acceptance-test-matrix",
+    "nextjs-supabase-ssr-auth",
+    "nextjs-gotchas",
+    "supabase-rls-schema",
+    "mcp-analytics-connector",
+    "nextjs-pwa-webpush",
+    "react-pdf-thai"
+  ],
+  "aliases": {
+    "new-kp-app": "kp-design-brainstorm",
+    "setup-supabase-mcp": "supabase-rls-schema",
+    "board": "kp-work-routing",
+    "writing-plans": "kp-design-brainstorm",
+    "react": "thai-saas-ui-kit",
+    "react / i18n": "thai-saas-ui-kit",
+    "i18n": "thai-saas-ui-kit",
+    "pdf": "react-pdf-thai",
+    "LOOP guardrails": "kp-autonomous-loop",
+    "kp-supabase-nextjs": "kp-autonomous-loop",
+    "vercel-react-best-practices": "thai-saas-ui-kit",
+    "supabase-postgres-best-practices": "supabase-rls-schema"
+  }
+}

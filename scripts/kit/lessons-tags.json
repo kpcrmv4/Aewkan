@@ -1,0 +1,305 @@
+{
+  "_about": "Closed vocabulary for the `tag` in a LESSONS.md heading. One tag = one rule family across projects. `owner` is the default skill that carries the rule; a lesson may name another owner when the mechanism is theirs. Add a tag here BEFORE using it — verify-lessons.mjs rejects unknown tags, which is the point: an unknown tag is a lesson nobody can count.",
+  "tags": {
+    "checker-cannot-fail": {
+      "th": "ตัวตรวจที่แดงไม่เป็น — เขียวรอบแรก / ตัวเลขไม่ขยับ / self-test โยน exception",
+      "owner": "kp-acceptance-test-matrix"
+    },
+    "false-green": {
+      "th": "สิ่งที่ไม่ได้รันหรือไม่มีข้อมูลถูกนับเป็นผ่าน (skip, tests=0, filter เหลือ 0, null)",
+      "owner": "kp-testing-cadence"
+    },
+    "false-exit-0": {
+      "th": "exit code 0 / HTTP 200 / pipe ท้ายสุด ปิดบัง error จริง",
+      "owner": "kp-testing-cadence"
+    },
+    "shell-writes-code": {
+      "th": "เขียนโค้ดผ่าน node -e / sed / heredoc แล้ว $( backtick \\d หายเงียบ",
+      "owner": "kp-cross-platform"
+    },
+    "leftover-fixture": {
+      "th": "run ที่ตายกลางคันทิ้ง fixture ในฐานร่วม ต้องอ่าน leftovers แล้วลบตาม run id",
+      "owner": "kp-e2e-playwright-real-db"
+    },
+    "seed-collision": {
+      "th": "seed/spec ชนกันข้าม spec: org ไม่ว่าง, range ทับ, lock อนาคต, profile ปน",
+      "owner": "kp-e2e-playwright-real-db"
+    },
+    "cleanup-deletes-cited": {
+      "th": "โค้ดเก็บกวาดลบเกิน หรือลบหลักฐานที่ ledger อ้าง",
+      "owner": "kp-autonomous-loop"
+    },
+    "grant-revoke": {
+      "th": "policy ไม่มี grant = 42501 / ต้อง revoke all ก่อน grant / drop+create รีเซ็ต ACL",
+      "owner": "supabase-rls-schema"
+    },
+    "definer-leak": {
+      "th": "security definer อ่านข้อมูลข้าม org / ต้องเป็น invoker เว้น helper ที่ policy เรียก",
+      "owner": "supabase-rls-schema"
+    },
+    "policy-null-column": {
+      "th": "คอลัมน์ที่ policy ใช้ตัดสินเป็น null (default auth.uid() ไม่พอ ต้อง trigger) + แถวทดสอบฝั่งบวก",
+      "owner": "supabase-rls-schema"
+    },
+    "row-vs-column-visibility": {
+      "th": "ค่าที่คนละบทบาทเห็นต่างกันต้องอยู่คนละตาราง — column grant ใช้ไม่ได้เมื่อทุกคนเป็น authenticated",
+      "owner": "supabase-rls-schema"
+    },
+    "late-binding-plpgsql": {
+      "th": "apply-clean ≠ run-clean: plpgsql ผูกชื่อตอนรัน ต้องมี execute-path test",
+      "owner": "supabase-rls-schema"
+    },
+    "migration-immutable": {
+      "th": "migration ที่ apply แล้วห้ามแก้ / เปลี่ยนสัญญา RPC แล้ว seed+spec ต้องตาม",
+      "owner": "supabase-rls-schema"
+    },
+    "direct-grant-bypass": {
+      "th": "grant ตรงที่ตารางเปิดช่องเขียนข้าม RPC ที่ตรวจ",
+      "owner": "supabase-rls-schema"
+    },
+    "postgrest-shape": {
+      "th": "รูปทรงคำตอบ PostgREST (setof=array, to-one=object) ต้อง normalize ก่อน index",
+      "owner": "supabase-rls-schema"
+    },
+    "postgrest-1000": {
+      "th": "เพดาน 1000 แถว / หน้าเกินหน้าสุดท้าย / วนทีละ 500",
+      "owner": "supabase-large-data"
+    },
+    "loading-tsx": {
+      "th": "loading.tsx เหนือหน้าที่เรียก notFound()/redirect() → ตอบ 200 / skeleton ซ้อน",
+      "owner": "nextjs-gotchas"
+    },
+    "stale-artifact": {
+      "th": "ของเก่ายังเสิร์ฟอยู่ (.next, chunk, CSS cache, typegen) — ตัดแคชก่อนสรุปว่าโค้ดผิด",
+      "owner": "nextjs-gotchas"
+    },
+    "typegen-tsc": {
+      "th": "typecheck = next typegen && tsc --noEmit ตั้งแต่ scaffold",
+      "owner": "nextjs-gotchas"
+    },
+    "use-client-exports": {
+      "th": "ไฟล์ 'use client' export ได้เฉพาะ component / 'use server' เฉพาะ async fn",
+      "owner": "nextjs-gotchas"
+    },
+    "resource-hints": {
+      "th": "preload()/Suspense/notFound() ใต้ shell ของ React 19 + Next 16 ให้ผลไม่ตรงคาด",
+      "owner": "nextjs-gotchas"
+    },
+    "build-vs-devserver": {
+      "th": "build กับชุดตรวจที่คุยกับ dev server ห้ามรันพร้อมกัน",
+      "owner": "kp-testing-cadence"
+    },
+    "tree-moved": {
+      "th": "แก้ไฟล์ tracked ระหว่าง run → run invalid",
+      "owner": "kp-testing-cadence"
+    },
+    "infra-not-code": {
+      "th": "แดงย้ายที่บน tree เดียวกัน / 429 502 504 = infrastructure ไม่ใช่โค้ด",
+      "owner": "kp-testing-cadence"
+    },
+    "control-height": {
+      "th": "control ดิบ 23px / เกณฑ์ความสูงต้องอยู่ที่ primitive กลางและวัดใน sweep",
+      "owner": "thai-admin-page-kit"
+    },
+    "two-layouts": {
+      "th": "mobile card / desktop table — element มีแต่ hidden, locator ต้อง :visible",
+      "owner": "kp-e2e-playwright-real-db"
+    },
+    "thai-substring": {
+      "th": "label ไทยซ้อนกันเป็น substring → exact: true, หาแถวด้วยข้อความที่ test เขียนเอง",
+      "owner": "kp-e2e-playwright-real-db"
+    },
+    "read-owning-element": {
+      "th": "อ่านค่าจาก element ที่เป็นเจ้าของ ไม่ใช่ HTML ทั้งหน้า (RSC payload, เมนู, comment ของ React)",
+      "owner": "kp-acceptance-test-matrix"
+    },
+    "measure-too-early": {
+      "th": "วัดก่อน animation/skeleton จบ, locator กำกวมชั่วครู่",
+      "owner": "kp-e2e-playwright-real-db"
+    },
+    "state-from-prop": {
+      "th": "useState(prop) + router.refresh() ไม่รีเซ็ต → remount ด้วย key",
+      "owner": "thai-saas-ui-kit"
+    },
+    "form-reset-react19": {
+      "th": "<form action> ของ React 19 รีเซ็ตทุกครั้ง / effect deps เป็น object / pending ค้าง",
+      "owner": "thai-saas-ui-kit"
+    },
+    "error-tsx-retry": {
+      "th": "error.tsx ต้อง router.refresh()+reset() ใน transition และทดสอบว่าเนื้อหากลับมา",
+      "owner": "thai-admin-page-kit"
+    },
+    "thai-grapheme": {
+      "th": "Array.from(name)[0] ตัดวรรณยุกต์ไทย → Intl.Segmenter",
+      "owner": "thai-saas-ui-kit"
+    },
+    "contrast-resolve-var": {
+      "th": "ตัวตรวจ contrast/เงา ต้อง resolve var()/color-mix() และแยก --brand จาก --brand-solid",
+      "owner": "thai-admin-page-kit"
+    },
+    "second-truth": {
+      "th": "สำเนาความจริงที่สอง (ค่าคงที่ซ้ำ, รายการยกเว้นล้าสมัย, แผนก๊อปเนื้อไฟล์อื่น)",
+      "owner": "kp-autonomous-loop"
+    },
+    "meaning-drift": {
+      "th": "ความหมายของข้อมูลเดิมเปลี่ยนโดยไม่มีบรรทัดไหนเปลี่ยน (accrual vs cash, status ใหม่, snapshot ถ่ายซ้ำ)",
+      "owner": "supabase-rls-schema"
+    },
+    "accrual-vs-cash": {
+      "th": "แอปการเงินต้องเลือกว่าอะไรคือ 'รายจ่าย' ตั้งแต่ออกแบบ ไม่งั้นนับสองรอบ",
+      "owner": "kp-design-brainstorm"
+    },
+    "matrix-first": {
+      "th": "ถาม 'พฤติกรรมนี้มีแถวแล้วหรือยัง' ไม่ใช่ 'id นี้ว่างไหม' / โค้ดจาก summary โดยไม่อ่าน matrix",
+      "owner": "kp-acceptance-test-matrix"
+    },
+    "who-refused": {
+      "th": "การปฏิเสธเป็นหลักฐานเมื่อรู้ว่าใครปฏิเสธ (403 vs 404, constraint name) + permitted twin",
+      "owner": "kp-acceptance-test-matrix"
+    },
+    "mutant-survived": {
+      "th": "mutant รอด/CONTAMINATED เพราะ fixture มีผู้ปฏิเสธหลายชั้น ไม่ใช่เพราะกฎ",
+      "owner": "kp-acceptance-test-matrix"
+    },
+    "magic-link-takeover": {
+      "th": "session จาก magic link/OTP เปลี่ยนรหัสผ่านได้โดยไม่มี current_password แม้เปิด require-current-password",
+      "owner": "nextjs-supabase-ssr-auth"
+    },
+    "session-revoke": {
+      "th": "proxy ใช้ getClaims() layout ใช้ getUser() → session ถูก revoke แต่ JWT ยังผ่าน วนลูป redirect",
+      "owner": "nextjs-supabase-ssr-auth"
+    },
+    "logout-replace": {
+      "th": "logout ต้องจบด้วย location.replace() และแถวทดสอบ 'กด Back แล้วยังอยู่ /login'",
+      "owner": "nextjs-supabase-ssr-auth"
+    },
+    "open-redirect": {
+      "th": "?next= ตรวจด้วย prefix ยังพาออกนอกเว็บได้ ต้องตัดสินด้วย URL parser",
+      "owner": "nextjs-supabase-ssr-auth"
+    },
+    "signup-default-open": {
+      "th": "โปรเจ็ค Supabase ใหม่เปิด public signup / anonymous เป็นค่าเริ่มต้น",
+      "owner": "nextjs-supabase-ssr-auth"
+    },
+    "redirect-in-try": {
+      "th": "redirect() ใน try/catch กลืน NEXT_REDIRECT / instanceof ข้าม chunk เป็น false",
+      "owner": "nextjs-supabase-ssr-auth"
+    },
+    "pipestatus": {
+      "th": "$PIPESTATUS / set -o pipefail อ่านผิดหลัง echo หรือคำสั่งคั่น",
+      "owner": "kp-cross-platform"
+    },
+    "port-pid": {
+      "th": "kill ไม่ตาย / port ค้าง / เครื่องมือระบบค้างเกิน 120 วิ — ตรวจ port ไม่ใช่ exit code",
+      "owner": "kp-cross-platform"
+    },
+    "iframe-sweep": {
+      "th": "sweep หลาย viewport ในแท็บเดียวด้วย iframe same-origin (resize_page ต่ำกว่า 500 ไม่ได้)",
+      "owner": "kp-testing-cadence"
+    },
+    "scaffold-hygiene": {
+      "th": "scaffold ลงรากไม่ว่าง: ignore ref/demo/docs, @types/node ตรง major, .gitattributes วันแรก",
+      "owner": "kp-design-brainstorm"
+    },
+    "design-vs-kit": {
+      "th": "kit พกหน้าตาตัวเองมาขัดกับเดโม่ที่อนุมัติ / แผนสั่งสองอย่างที่ขัดกัน / mockup รวมเลขผิด",
+      "owner": "kp-design-brainstorm"
+    },
+    "gate-bookkeeping": {
+      "th": "commit ต่อท้ายคำสั่งเทสต์โดยไม่ดู exit, ไฟล์ผลลัพธ์หลุดเข้า git, matrix ของเฟสที่ปิดถูกแก้",
+      "owner": "kp-autonomous-loop"
+    },
+    "ledger-time": {
+      "th": "เวลาใน ledger ที่พิมพ์เองคลาดจากนาฬิกาจริง — ใช้ date -u",
+      "owner": "kp-autonomous-loop"
+    },
+    "project-only": {
+      "th": "ผูกกับ schema/tooling ของโปรเจ็คนี้เท่านั้น ไม่ยกเข้า skill",
+      "owner": "kp-autonomous-loop"
+    },
+    "cross-platform-host": {
+      "th": "ทุกสคริปต์ที่แตะ path, บรรทัดใหม่, พอร์ต หรือฆ่าโปรเซส ต้องรันได้บนทุกแพลตฟอร์มที่ kit อ้างว่าครอบ และต้องอ้าง…",
+      "owner": "kp-cross-platform"
+    },
+    "scanner-regex-precision": {
+      "th": "ตัวสแกนที่ตัดสินด้วย regex/ข้อความต้องมี red-test ทั้ง false negative และ false positive และต้องยึดกับโครงสร้า…",
+      "owner": "kp-acceptance-test-matrix"
+    },
+    "mutant-contaminated": {
+      "th": "mutant ที่รายงาน CONTAMINATED ให้สงสัยว่าแถวแชร์ actor/ชื่อเทสต์/ไฟล์สำรองกันก่อนเสมอ และ chain ต้องคืนทั้งซอร…",
+      "owner": "kp-acceptance-test-matrix"
+    },
+    "wait-for-success-element": {
+      "th": "เทสต์ต้องรอ element ที่มีเฉพาะสถานะสำเร็จ (และรอ `getAnimations()`/`toHaveCount(1)` ก่อนวัด) ห้ามเชื่อ `waitFo…",
+      "owner": "kp-e2e-playwright-real-db"
+    },
+    "rate-limit-backoff": {
+      "th": "ทุกสคริปต์ที่คุยกับ Management API หรือ Auth ต้องรวมคำสั่งเป็นชุด ถอยแล้วลองใหม่เมื่อเจอ 429 และผู้เรียกต้องตร…",
+      "owner": "kp-e2e-playwright-real-db"
+    },
+    "env-drift": {
+      "th": "ทุก runner นอก Next ต้องมี env loader ของตัวเอง, แม่แบบ `.env` วางคำใบ้บรรทัดบนค่า และเมื่อ `.env.local` เปลี่…",
+      "owner": "kp-seed-and-reset"
+    },
+    "secret-scanner": {
+      "th": "ตัวตรวจความลับต้องเทียบเฉพาะ key ของ name-map, เลือกขอบคำตามชนิดอักษร, ประกอบคำค้นจากชิ้นส่วน และรันกับไฟล์ที่…",
+      "owner": "kp-seed-and-reset"
+    },
+    "ddl-idempotent": {
+      "th": "ทุก `create policy`/`add constraint`/seed/reset ต้องรันซ้ำได้และมี drop guard · และห้ามเขียนแล้วอ่านกลับในคำสั…",
+      "owner": "supabase-rls-schema"
+    },
+    "migration-discipline": {
+      "th": "migration ที่ apply แล้วห้ามแก้ไฟล์เดิม ให้เขียนไฟล์ใหม่เสมอ, เลขต้องเรียงตามเวลาที่ลงจริง, และไม่ถือว่า done…",
+      "owner": "supabase-rls-schema"
+    },
+    "silent-noop": {
+      "th": "ทางที่ 'ไม่มีสาขาให้ทำ' ต้อง raise หรือคืน error ให้ผู้เรียกเสมอ และคลาส/ชื่อที่ไม่มีนิยามจริงต้องถูกตัวตรวจจั…",
+      "owner": "supabase-rls-schema"
+    },
+    "mcp-project-ref": {
+      "th": "ก่อนแตะฐานข้อมูลทุกครั้ง ตรวจว่า `get_project_url` ไม่มี `${` และ host ตรงกับ ref ใน `.env.local` · การผูก MCP…",
+      "owner": "supabase-rls-schema"
+    },
+    "postgrest-limits": {
+      "th": "ทุก read ต้องวน `.range()` จนหน้าสั้น, `.in()` เกิน 100 id ต้อง chunk, นับแถวใน DB ห้ามใช้ `.length` — กฎนี้ใช…",
+      "owner": "supabase-large-data"
+    },
+    "contract-fanout": {
+      "th": "เปลี่ยนสัญญาที่ใดที่หนึ่ง (RPC, schema, เวอร์ชัน template, รายการ route/namespace/ไฟล์สาธารณะ) ต้องไล่แก้ทุกที…",
+      "owner": "kp-acceptance-test-matrix"
+    },
+    "clock-and-timezone": {
+      "th": "เทสต์และ seed ต้องส่งเวลาคงที่เอง ห้ามพึ่งนาฬิกาเครื่อง และการแสดงวันต้องแปลงเป็นเขตเวลาไทยพร้อมลดปลายช่วง hal…",
+      "owner": "kp-acceptance-test-matrix"
+    },
+    "scaffold-tooling": {
+      "th": "ตอน scaffold ต้องตั้ง `globalIgnores`/`exclude` ของโฟลเดอร์ที่ไม่ใช่แอป, ตรึงเวอร์ชันเครื่องมือให้ตรง peer จริ…",
+      "owner": "nextjs-gotchas"
+    },
+    "ui-gate-not-security": {
+      "th": "ด่านสิทธิ์ต้องอยู่ที่ API/DB และเรียกก่อนแปลง body เสมอ · หน้า SSR/RSC ต้องเรียก helper scope ตัวเดียวกับ API…",
+      "owner": "nextjs-supabase-ssr-auth"
+    },
+    "demo-to-code": {
+      "th": "ก่อนยก CSS/markup ของเดโม่เข้าแอป ให้ทิ้งคลาสที่ชนชื่อ utility, วาง CSS ของเดโม่ใน `@layer base/components`, แ…",
+      "owner": "kp-design-brainstorm"
+    },
+    "build-before-e2e": {
+      "th": "E2E ที่รัน `next start` ต้อง `next build` ใหม่ก่อนทุกครั้งที่แก้โค้ดแอป และห้ามรัน build พร้อมกับชุดตรวจที่ยิง…",
+      "owner": "kp-testing-cadence"
+    },
+    "plan-fidelity": {
+      "th": "แผนต้องชี้ว่า 'คัดลอกจากไฟล์ไหน บรรทัดไหน' ห้ามฝังสำเนาเนื้อหาของไฟล์อื่น และคำสั่งสองข้อในแผนเดียวกันต้องไม่ข…",
+      "owner": "kp-work-routing"
+    },
+    "pdf-render": {
+      "th": "ตัว render เอกสาร/สลิปต้องไม่พึ่ง `react-dom/server` ใน route handler และต้องยืนยันด้วยไบต์จริงของไฟล์ที่ได้ ไ…",
+      "owner": "react-pdf-thai"
+    },
+    "mcp-401-oauth": {
+      "th": "เซิร์ฟเวอร์ MCP ที่ยืนยันตัวตนด้วยคีย์ใน URL ห้ามตอบ `401` คู่กับ `WWW-Authenticate` ให้ตอบรหัสที่แปลว่า 'คีย์…",
+      "owner": "mcp-analytics-connector"
+    }
+  }
+}

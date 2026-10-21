@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Progress</title>
+<!--
+  progress.html — the loop's progress page. Copied once to docs/progress/index.html
+  by `node progress.mjs --init`; never edited by the agent afterwards.
+  Data comes from ./state.js (written by progress.mjs). Works from file://.
+  Polls by reloading state.js every 20 s; stops polling when the run is done.
+-->
+<style>
+  :root{color-scheme:light;--canvas:#f5f5f6;--card:#fff;--ink:#16181d;--ink-2:#4a4f57;--muted:#666c76;--line:#e3e5e8;
+    --brand:#0f766e;--brand-solid:#0f766e;--done:#0f7a45;--done-bg:#e4f4ec;--doing:#b45309;--doing-bg:#fdf1e1;
+    --blocked:#c0362c;--blocked-bg:#fdecec;--todo:#c9ced4;--written:#0e7490}
+  @media(prefers-color-scheme:dark){:root{color-scheme:dark;--canvas:#101316;--card:#1a1e23;--ink:#e8edea;--ink-2:#b5bcc4;--muted:#8a929c;--line:#2a2f36;
+    --brand:#2dd4bf;--done:#5bd08e;--done-bg:#172e22;--doing:#f0a860;--doing-bg:#33271a;--blocked:#f08a80;--blocked-bg:#38201e;--todo:#3a4048;--written:#67d8ea}}
+  *{box-sizing:border-box;margin:0}
+  body{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;background:var(--canvas);color:var(--ink);padding:24px 16px;min-height:100vh}
+  main{max-width:720px;margin:0 auto;display:grid;gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+  .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+  h1{font-size:20px;font-weight:600}
+  .meta{color:var(--muted);font-size:13px}
+  .big{font-size:44px;font-weight:600;letter-spacing:-.02em;line-height:1;margin:14px 0 10px}
+  .bar{height:14px;border-radius:999px;background:var(--todo);overflow:hidden;display:flex}
+  .bar i{display:block;height:100%;transition:width .6s ease}
+  .bar .d{background:var(--done)} .bar .w{background:var(--written)} .bar .g{background:var(--doing)} .bar .b{background:var(--blocked)}
+  .bar.done .d{background:linear-gradient(90deg,var(--done),var(--brand))}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:var(--ink-2)}
+  .legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .status{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:500}
+  .s-running{background:var(--doing-bg);color:var(--doing)} .s-done{background:var(--done-bg);color:var(--done)}
+  .s-blocked,.s-error{background:var(--blocked-bg);color:var(--blocked)} .s-stopped{background:var(--canvas);color:var(--muted);border:1px solid var(--line)}
+  .phase{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+  .phase:first-of-type{border-top:0;padding-top:0}
+  .phase .n{font-weight:500;min-width:0;overflow-wrap:anywhere} .phase .p{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:13px}
+  .phase .bar{grid-column:1/-1;height:8px}
+  .phase .now{grid-column:1/-1;font-size:13px;color:var(--doing)} .phase .blk{grid-column:1/-1;font-size:13px;color:var(--blocked)}
+  .kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:14px}
+  .kv span:nth-child(odd){color:var(--muted)} .kv span:nth-child(even){overflow-wrap:anywhere}
+  .banner{display:none;background:var(--done-bg);color:var(--done);border:1px solid var(--done);border-radius:16px;padding:16px 20px;font-weight:500}
+  .banner.on{display:block}
+  .stale{color:var(--blocked)}
+</style>
+</head>
+<body>
+<main>
+  <div class="banner" id="banner"></div>
+  <section class="card">
+    <div class="top"><h1 id="project">…</h1><span class="status" id="status">…</span></div>
+    <div class="big"><span id="pct">0</span>%</div>
+    <div class="bar" id="bar"><i class="d"></i><i class="w"></i><i class="g"></i><i class="b"></i></div>
+    <div class="legend">
+      <span><b style="background:var(--done)"></b>เสร็จ <span id="c-done">0</span></span>
+      <span><b style="background:var(--written)"></b>เขียนแล้วรอตรวจ <span id="c-written">0</span></span>
+      <span><b style="background:var(--doing)"></b>กำลังทำ <span id="c-doing">0</span></span>
+      <span><b style="background:var(--blocked)"></b>ติด <span id="c-blocked">0</span></span>
+      <span><b style="background:var(--todo)"></b>รอ <span id="c-todo">0</span></span>
+    </div>
+  </section>
+  <section class="card" id="phases"></section>
+  <section class="card kv" id="facts"></section>
+  <p class="meta" id="foot"></p>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const ago = (ms) => { if (!ms) return '—'; const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'เมื่อสักครู่' : m < 60 ? `${m} นาทีที่แล้ว` : `${Math.floor(m / 60)} ชม. ${m % 60} นาทีที่แล้ว`; };
+  const LABEL = { running: 'กำลังทำ', done: 'เสร็จแล้ว', blocked: 'ติดขัด', stopped: 'หยุด', error: 'อ่าน state ไม่ได้' };
+  let timer = null;
+
+  function render(P) {
+    $('project').textContent = P.project;
+    const st = $('status'); st.textContent = LABEL[P.status] || P.status; st.className = `status s-${P.status}`;
+    $('pct').textContent = P.pct;
+    const bar = $('bar'); bar.classList.toggle('done', P.status === 'done');
+    const w = (n) => (P.total ? (n / P.total) * 100 : 0) + '%';
+    bar.children[0].style.width = w(P.done); bar.children[1].style.width = w(P.written || 0); bar.children[2].style.width = w(P.doing); bar.children[3].style.width = w(P.blocked);
+    for (const k of ['done', 'written', 'doing', 'blocked', 'todo']) $('c-' + k).textContent = P[k] || 0;
+    $('phases').innerHTML = P.phases.map((ph) => `
+      <div class="phase">
+        <span class="n">${ph.id ? ph.id + ' · ' : ''}${esc(ph.name)}</span><span class="p">${ph.done}/${ph.total} · ${ph.pct}%</span>
+        <div class="bar"><i class="d" style="width:${ph.total ? ph.done / ph.total * 100 : 0}%"></i><i class="g" style="width:${ph.total ? ph.doing.length / ph.total * 100 : 0}%"></i><i class="b" style="width:${ph.total ? ph.blocked.length / ph.total * 100 : 0}%"></i></div>
+        ${ph.doing.map((t) => `<span class="now">กำลังทำ: ${esc(t)}</span>`).join('')}
+        ${ph.blocked.map((t) => `<span class="blk">ติด: ${esc(t)}</span>`).join('')}
+      </div>`).join('') || '<span class="meta">ยังไม่มีเฟสใน state.json</span>';
+    const g = P.git || {};
+    $('facts').innerHTML = [
+      ['iteration', P.run.iteration != null ? `${P.run.iteration}${P.run.budget ? ' / ' + P.run.budget : ''}` : '—'],
+      ['branch', g.branch || '—'],
+      ['commit ล่าสุด', g.hash ? `${g.hash} · ${esc(g.subject || '')} · ${ago(g.commitAt)}` : '—'],
+      ['ไฟล์ค้าง (uncommitted)', g.dirty ?? '—'],
+      ['state อัปเดต', ago(P.stateAt)],
+      ...(P.error ? [['ข้อผิดพลาด', esc(P.error)]] : []),
+    ].map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
+    const staleMin = P.stateAt ? (Date.now() - P.stateAt) / 60000 : 0;
+    $('foot').innerHTML = `หน้านี้รีเฟรชเองทุก 20 วินาที · derive เมื่อ ${ago(P.generatedAt)}` + (P.status === 'running' && staleMin > 45 ? ` · <span class="stale">state ไม่ขยับมา ${Math.round(staleMin)} นาที — loop อาจหยุดไปแล้ว</span>` : '');
+    const done = P.status === 'done';
+    $('banner').classList.toggle('on', done);
+    if (done) { $('banner').textContent = `เสร็จครบทุกงานแล้ว — ${P.done}/${P.total} · ดูสรุปที่ docs/PHASE-SUMMARY.md หรือ run report`; document.title = '✓ เสร็จแล้ว — ' + P.project; clearInterval(timer); timer = null; }
+    else document.title = `${P.pct}% — ${P.project}`;
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  function load() {
+    const s = document.createElement('script'); s.src = 'state.js?' + Date.now();
+    s.onload = () => { if (window.PROGRESS) render(window.PROGRESS); s.remove(); };
+    s.onerror = () => { $('status').textContent = 'ไม่พบ state.js — รัน node progress.mjs'; s.remove(); };
+    document.body.appendChild(s);
+  }
+  load(); timer = setInterval(load, 20000);
+</script>
+</body>
+</html>

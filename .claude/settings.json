@@ -6,5 +6,15 @@
   },
   "enabledPlugins": {
     "kp-supabase-nextjs@kp-marketplace": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/kit/guard-shell-writes.mjs\"" }
+        ]
+      }
+    ]
   }
 }
