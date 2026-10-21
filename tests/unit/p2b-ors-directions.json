@@ -1,0 +1,27 @@
+{
+  "routes": [
+    {
+      "summary": { "distance": 34218.4, "duration": 2713.9 },
+      "segments": [
+        {
+          "distance": 34218.4,
+          "duration": 2713.9,
+          "steps": [
+            { "distance": 120.5, "duration": 20.1, "type": 11, "instruction": "Head north on Ratchadamnoen Road", "name": "Ratchadamnoen Road", "way_points": [0, 3] },
+            { "distance": 0, "duration": 0, "type": 10, "instruction": "Arrive at your destination", "name": "-", "way_points": [210, 210] }
+          ]
+        }
+      ],
+      "way_points": [0, 210],
+      "geometry": "q~dpAsyjnTcAb@"
+    }
+  ],
+  "bbox": [98.89, 18.78, 99.01, 18.9],
+  "metadata": {
+    "attribution": "openrouteservice.org | OpenStreetMap contributors",
+    "service": "routing",
+    "timestamp": 1760000000000,
+    "query": { "coordinates": [[98.9853, 18.7883], [98.9, 18.9]], "profile": "driving-car", "format": "json" },
+    "engine": { "version": "8.0.0", "build_date": "2025-01-01T00:00:00Z" }
+  }
+}
