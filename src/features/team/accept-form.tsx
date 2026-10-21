@@ -107,6 +107,8 @@ export function AcceptForm({ token, email, signedInEmail }: { token: string; ema
         setHint(A.existsHint);
         return;
       }
+      // Supabase's built-in mailer only reaches the project's own team; real invitees need custom SMTP
+      if (/not authori[sz]ed|smtp|sending.*email/i.test(err.message)) return setError(A.signUpMail);
       return setError(A.signUpFailed);
     }
     if (data.session) return accept(name);

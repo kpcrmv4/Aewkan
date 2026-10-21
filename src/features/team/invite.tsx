@@ -11,12 +11,13 @@ import { TEAM_COPY as C } from '@/lib/copy/team';
 import { formatDeadline } from '@/lib/format';
 import { copyText, postTeam } from './api-client';
 import { ConfirmSheet } from './confirm';
-import type { InviteRow } from './model';
+import { inviteMessage, type InviteRow } from './model';
 
 export interface InviteResult {
   path: string;
-  message: string;
   expiresAt: string;
+  company: string;
+  roleName: string;
 }
 
 interface RoleOption {
@@ -56,12 +57,13 @@ function CopyField({ label, value, multiline, testId }: { label: string; value: 
 /** the one moment the raw link exists outside the URL bar — shown once, never stored */
 export function InviteResultSheet({ result, onClose }: { result: InviteResult | null; onClose: () => void }) {
   const url = result && typeof window !== 'undefined' ? `${window.location.origin}${result.path}` : (result?.path ?? '');
+  const message = result ? inviteMessage({ company: result.company, roleName: result.roleName, url, expiresAt: result.expiresAt }) : '';
   return (
     <Sheet open={result !== null} onOpenChange={(o) => !o && onClose()} title={C.inviteDone} description={C.inviteOnce}>
       {result && (
         <div className="space-y-3">
           <CopyField label={C.inviteLink} value={url} testId="invite-link" />
-          <CopyField label={C.inviteMessage} value={result.message} multiline testId="invite-message" />
+          <CopyField label={C.inviteMessage} value={message} multiline testId="invite-message" />
           <p className="text-sm text-muted-token">{C.expires(formatDeadline(result.expiresAt, 'th'))}</p>
           <div className="flex justify-end">
             <button type="button" className="btn-primary min-h-11" onClick={onClose}>

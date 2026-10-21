@@ -1,4 +1,4 @@
-import { inviteMessage, invitePath } from '@/features/team/model';
+import { invitePath } from '@/features/team/model';
 import { throwRpcError } from '@/features/team/server';
 import { staffRoute } from '@/lib/api/handler';
 import { newToken } from '@/lib/auth/link-token';
@@ -23,13 +23,15 @@ export const POST = staffRoute('team.manage', InviteRequest, async ({ body, req 
   ]);
   if (rErr || sErr) throw new Error(`invite lookup: ${(rErr ?? sErr)?.message}`);
 
-  const path = invitePath(token);
-  const url = `${new URL(req.url).origin}${path}`;
+  // the page builds the absolute link from the address bar it is on (the server
+  // behind a proxy or in dev cannot know the public host); `url` is for API callers
   return {
     ok: true as const,
     inviteId: created.id,
     expiresAt: created.expires_at,
-    path,
-    message: inviteMessage({ company: settings?.company_name_th ?? '', roleName: role?.name_th ?? body.roleKey, url, expiresAt: created.expires_at }),
+    path: invitePath(token),
+    url: `${new URL(req.url).origin}${invitePath(token)}`,
+    company: settings?.company_name_th ?? '',
+    roleName: role?.name_th ?? body.roleKey,
   };
 });

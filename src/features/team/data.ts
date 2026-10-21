@@ -88,14 +88,17 @@ export async function loadTeam(): Promise<TeamData> {
       // display only; accept_staff_invite re-checks expiry against the database clock
       expired: Date.parse(i.expires_at) <= Date.now(),
     })),
-    roles: (rolesRes.data ?? []).map((r) => ({
-      key: r.key,
-      nameTh: r.name_th,
-      description: r.description,
-      isSystem: r.is_system,
-      // the owner holds every permission whatever rows exist
-      permissions: r.key === 'owner' ? allKeys : (permsByRole.get(r.key) ?? []),
-      members: members.get(r.key) ?? 0,
-    })),
+    roles: (rolesRes.data ?? [])
+      .map((r) => ({
+        key: r.key,
+        nameTh: r.name_th,
+        description: r.description,
+        isSystem: r.is_system,
+        // the owner holds every permission whatever rows exist; chips follow the permission order
+        permissions: r.key === 'owner' ? allKeys : allKeys.filter((k) => (permsByRole.get(r.key) ?? []).includes(k)),
+        members: members.get(r.key) ?? 0,
+      }))
+      // owner first, then the other system role, then custom roles oldest first
+      .sort((a, b) => Number(b.key === 'owner') - Number(a.key === 'owner')),
   };
 }
