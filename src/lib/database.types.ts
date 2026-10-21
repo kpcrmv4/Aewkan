@@ -910,14 +910,17 @@ export type Database = {
       role_permissions: {
         Row: {
           permission_key: string
+          revoked_at: string | null
           role_key: string
         }
         Insert: {
           permission_key: string
+          revoked_at?: string | null
           role_key: string
         }
         Update: {
           permission_key?: string
+          revoked_at?: string | null
           role_key?: string
         }
         Relationships: [
@@ -939,6 +942,7 @@ export type Database = {
       }
       roles: {
         Row: {
+          archived_at: string | null
           created_at: string
           description: string
           is_system: boolean
@@ -946,6 +950,7 @@ export type Database = {
           name_th: string
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           description?: string
           is_system?: boolean
@@ -953,6 +958,7 @@ export type Database = {
           name_th: string
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           description?: string
           is_system?: boolean
@@ -1050,6 +1056,7 @@ export type Database = {
       staff_invites: {
         Row: {
           accepted_at: string | null
+          accepted_by: string | null
           created_at: string
           email: string
           expires_at: string
@@ -1061,6 +1068,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          accepted_by?: string | null
           created_at?: string
           email: string
           expires_at?: string
@@ -1072,6 +1080,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          accepted_by?: string | null
           created_at?: string
           email?: string
           expires_at?: string
@@ -1082,6 +1091,13 @@ export type Database = {
           token_hash?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "staff_invites_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "staff_invites_invited_by_fkey"
             columns: ["invited_by"]
@@ -1148,6 +1164,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_staff_invite: {
+        Args: { p_full_name: string; p_token: string }
+        Returns: string
+      }
       admin_job_kpis: { Args: never; Returns: Json }
       admin_set_status: {
         Args: {
@@ -1158,11 +1178,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      archive_role: { Args: { p_key: string }; Returns: undefined }
+      create_staff_invite: {
+        Args: { p_email: string; p_role: string; p_token: string }
+        Returns: Json
+      }
       current_owner_id: { Args: never; Returns: string }
       expire_quotes: { Args: never; Returns: number }
       get_integration_secret: { Args: { p_key: string }; Returns: string }
       get_job_view: { Args: { p_token: string }; Returns: Json }
       get_public_catalog: { Args: never; Returns: Json }
+      get_staff_invite: { Args: { p_token: string }; Returns: Json }
       has_perm: { Args: { p_key: string }; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
@@ -1231,16 +1257,32 @@ export type Database = {
       my_permissions: { Args: never; Returns: string[] }
       next_booking_no: { Args: never; Returns: string }
       owner_exists: { Args: never; Returns: boolean }
+      perms_within_mine: { Args: { p_perms: string[] }; Returns: boolean }
       publish_rule_set: {
         Args: { p_note?: string; p_rules: Json }
         Returns: number
       }
+      revoke_staff_invite: { Args: { p_id: string }; Returns: undefined }
+      role_perms: { Args: { p_role: string }; Returns: string[] }
       set_integration_secret: {
         Args: { p_key: string; p_secret: string }
         Returns: undefined
       }
       token_hash: { Args: { p_token: string }; Returns: string }
       transfer_ownership: { Args: { p_new_owner: string }; Returns: undefined }
+      update_staff: {
+        Args: { p_active?: boolean; p_role?: string; p_staff: string }
+        Returns: undefined
+      }
+      upsert_role: {
+        Args: {
+          p_description: string
+          p_key: string
+          p_name: string
+          p_permissions: string[]
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
