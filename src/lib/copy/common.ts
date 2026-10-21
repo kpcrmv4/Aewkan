@@ -7,7 +7,7 @@ import type { BookingStatus } from '@/lib/contracts/common';
 
 export const BRAND = { th: 'แอ่วกัน', en: 'AewKan', mark: 'แอ่ว' } as const;
 /** owner's wordmark (scripts/brand-assets.mjs → public/brand) · aspect 2062:713 */
-export const LOGO = { src: '/brand/aewkan-logo-480.webp', png: '/brand/aewkan-logo-480.png', ratio: 2062 / 713, icon: '/brand/aewkan-pin.svg' } as const;
+export const LOGO = { src: '/brand/aewkan-logo-480.webp', png: '/brand/aewkan-logo-480.png', ratio: 2062 / 713, icon: '/brand/aewkan-mark.svg' } as const;
 
 export const STATUS_LABEL: Record<BookingStatus, { th: string; en: string; tone: 'pending' | 'progress' | 'done' | 'info' | 'urgent' }> = {
   quote_requested: { th: 'รอเสนอราคา', en: 'Waiting for our quote', tone: 'urgent' },

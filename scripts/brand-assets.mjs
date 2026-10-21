@@ -23,14 +23,17 @@ for (const w of [240, 480, 960]) {
 await sharp(meta.data).resize({ width: 480 }).png({ compressionLevel: 9, palette: true }).toFile(`${out}/aewkan-logo-480.png`);
 await sharp(meta.data).resize({ width: 1200 }).png({ compressionLevel: 9, palette: true, quality: 90 }).toFile(`${out}/aewkan-logo-1200.png`);
 
-// square icon = the wordmark's red map pin, redrawn as SVG (public/brand/aewkan-pin.svg) so it
-// stays crisp at 32 px; cropping the raster pulled in the neighbouring letters
-const pinBuf = await sharp(`${out}/aewkan-pin.svg`, { density: 1200 }).png().toBuffer();
+// square icon = the small mark from the owner's brand sheet (sun, peaks, road, pin), drawn as
+// SVG (public/brand/aewkan-mark.svg) so it stays crisp at 32 px. 32 = transparent favicon;
+// 180/192/512 = white square for apple-touch / PWA (the OS rounds the corners)
+const markBuf = await sharp(`${out}/aewkan-mark.svg`, { density: 1200 }).png().toBuffer();
 for (const s of [32, 180, 192, 512]) {
-  await sharp(pinBuf)
-    .resize({ width: Math.round(s * 0.78), height: Math.round(s * 0.78), fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .extend({ top: Math.round(s * 0.11), bottom: s - Math.round(s * 0.78) - Math.round(s * 0.11), left: Math.round(s * 0.11), right: s - Math.round(s * 0.78) - Math.round(s * 0.11), background: { r: 255, g: 255, b: 255, alpha: s === 32 ? 0 : 1 } })
+  const inner = s === 32 ? s : Math.round(s * 0.8);
+  const off = Math.round((s - inner) / 2);
+  await sharp(markBuf)
+    .resize({ width: inner, height: inner, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .extend({ top: off, bottom: s - inner - off, left: off, right: s - inner - off, background: { r: 255, g: 255, b: 255, alpha: s === 32 ? 0 : 1 } })
     .png({ compressionLevel: 9 })
-    .toFile(`${out}/aewkan-pin-${s}.png`);
+    .toFile(`${out}/aewkan-icon-${s}.png`);
 }
-console.log(`logo ${W}×${H} → ${out}/ (wordmark 240/480/960 webp, 480/1200 png, pin 32/180/192/512)`);
+console.log(`logo ${W}×${H} → ${out}/ (wordmark 240/480/960 webp, 480/1200 png, icon 32/180/192/512)`);
