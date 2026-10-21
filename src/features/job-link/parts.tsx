@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useLang } from '@/components/public/lang';
 import { STATUS_LABEL, priceLineText } from '@/lib/copy/common';
 import { jt, type JobCopyKey } from '@/lib/copy/job';
-import { baht, formatDeadline, formatDuration, formatTime, formatTripDate, TZ_NOTE } from '@/lib/format';
+import { baht, formatDeadline, formatDuration, formatTripDate, TZ_NOTE } from '@/lib/format';
 import type { BookingStatus } from '@/lib/contracts/common';
 import { isQuoteFlow, name, plannedArrivals, stepperFor, tripTotals, type JobModel, type Lang } from './model';
 

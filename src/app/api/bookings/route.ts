@@ -1,3 +1,4 @@
+import { after } from 'next/server';
 import { ApiError, publicRoute } from '@/lib/api/handler';
 import { getStaff } from '@/lib/auth/staff';
 import { newToken } from '@/lib/auth/link-token';
@@ -5,6 +6,7 @@ import { loadPublicCatalog } from '@/lib/catalog/server';
 import { CreateBookingRequest, type CreateBookingResponse } from '@/lib/contracts/booking';
 import { todayInBangkok } from '@/lib/format';
 import { planTrip, priceTrip, quoteModeActive } from '@/lib/pricing';
+import { notifyBooking } from '@/lib/notify';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { buildBookingInsert, buildStopRows, pickPrice, tripInputOf } from './build-booking';
 
@@ -71,6 +73,7 @@ export const POST = publicRoute(
     const { error: lErr } = await admin.rpc('issue_job_link', { p_booking: booking.id, p_audience: 'customer', p_token: token });
     if (lErr) return compensate('link', lErr.message);
 
+    after(() => notifyBooking(booking.id, 'new_booking'));
     return {
       bookingNo: booking.booking_no,
       status: priced.quote ? 'quote_requested' : 'awaiting_deposit',

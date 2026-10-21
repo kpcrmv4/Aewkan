@@ -2,6 +2,8 @@
 
 import { Check } from 'lucide-react';
 import { useLang } from '@/components/public/lang';
+import { NotifyOptIn } from '@/features/payments/notify-opt-in';
+import { PayDeposit } from '@/features/payments/pay-deposit';
 import { formatTime } from '@/lib/format';
 import { latestPhoto, name, type JobModel } from './model';
 import { useRememberTrip } from './orchestrator-hooks';
@@ -30,6 +32,7 @@ export function CustomerView({ job, token, now, vehicle, refresh }: { job: JobMo
     <div className="space-y-4" data-testid="customer-view">
       <HeaderCard job={job} vehicle={vehicle} />
       <QuoteBox job={job} now={now} />
+      <PayDeposit token={token} status={job.status} onChanged={refresh} />
       {job.status === 'done' ? <ReturnOffer job={job} token={token} onChanged={refresh} /> : null}
       {proof ? (
         <Panel>
@@ -50,6 +53,7 @@ export function CustomerView({ job, token, now, vehicle, refresh }: { job: JobMo
         </Panel>
       ) : null}
       {DRIVER_STAGES.includes(job.status) ? <DriverCard job={job} /> : null}
+      <NotifyOptIn token={token} status={job.status} />
       <ItineraryPanel job={job} />
       <PricePanel job={job} />
     </div>

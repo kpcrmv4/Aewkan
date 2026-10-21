@@ -236,19 +236,37 @@ test.describe('P2-03 assign', () => {
     expect((live ?? []).map((l) => l.audience).sort()).toEqual(['customer', 'driver']);
   });
 
-  test('P2-03-08 re-assigning revokes the old links and issues new ones', async ({ page }) => {
-    const { data: before } = await sb.from('job_links').select('token_hash').eq('booking_id', h.id).is('revoked_at', null);
+  test('P2-03-08 re-assigning keeps the customer link and issues a new driver link', async ({ page }) => {
+    const { data: before } = await sb.from('job_links').select('token_hash, audience').eq('booking_id', h.id).is('revoked_at', null);
+    const oldCustomer = (before ?? []).find((l) => l.audience === 'customer')!.token_hash;
+    const oldDriver = (before ?? []).find((l) => l.audience === 'driver')!.token_hash;
     await page.goto(`/admin/assign?id=${h.id}`);
     const confirm = page.getByRole('button', { name: 'เปลี่ยนคนขับและส่งลิงก์ใหม่ทาง LINE' });
     await driverRadio(page, busyDriver.nickname).click();
     await confirm.click();
-    await expect(page.getByTestId('issued-links')).toBeVisible();
+    const links = page.getByTestId('issued-links');
+    await expect(links).toBeVisible();
+    await expect(links.locator('input')).toHaveCount(1); // driver link only
+    await expect(links).toContainText('ลูกค้าใช้ลิงก์เดิม');
     const { data: live } = await sb.from('job_links').select('token_hash, audience').eq('booking_id', h.id).is('revoked_at', null);
     expect(live).toHaveLength(2);
+    expect(live!.find((l) => l.audience === 'customer')!.token_hash).toBe(oldCustomer);
+    expect(live!.find((l) => l.audience === 'driver')!.token_hash).not.toBe(oldDriver);
+    const { count } = await sb.from('job_links').select('id', { count: 'exact', head: true }).eq('booking_id', h.id);
+    expect(count).toBe(3);
+  });
+
+  test('P2-03-08b ticking "new customer link" replaces the customer link too', async ({ page }) => {
+    const { data: before } = await sb.from('job_links').select('token_hash').eq('booking_id', h.id).is('revoked_at', null);
+    await page.goto(`/admin/assign?id=${h.id}`);
+    await driverRadio(page, busyDriver.nickname).click();
+    await page.getByRole('checkbox', { name: /ออกลิงก์ลูกค้าใหม่/ }).check();
+    await page.getByRole('button', { name: 'เปลี่ยนคนขับและส่งลิงก์ใหม่ทาง LINE' }).click();
+    const links = page.getByTestId('issued-links');
+    await expect(links.locator('input')).toHaveCount(2);
+    const { data: live } = await sb.from('job_links').select('token_hash').eq('booking_id', h.id).is('revoked_at', null);
     const old = new Set((before ?? []).map((l) => l.token_hash));
     for (const l of live ?? []) expect(old.has(l.token_hash)).toBe(false);
-    const { count } = await sb.from('job_links').select('id', { count: 'exact', head: true }).eq('booking_id', h.id);
-    expect(count).toBe(4);
   });
 
   test('P2-03-09 copy uses the clipboard and falls back to selecting the text', async ({ page }) => {

@@ -39,7 +39,7 @@ type Channel = keyof typeof C.channels;
 const CHANNELS = Object.keys(C.channels) as Channel[];
 
 interface Issued {
-  customerPath: string;
+  customerPath: string | null;
   driverPath: string;
   message: string;
 }
@@ -80,6 +80,7 @@ export function AssignPanel({ ctx, drivers, vehicleLabel }: { ctx: AssignContext
   const [channel, setChannel] = useState<Channel>('line');
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<Issued | null>(null);
+  const [reissue, setReissue] = useState(false);
 
   const chosen = drivers.find((d) => d.id === driverId) ?? null;
   const preview = assignMessage({
@@ -90,14 +91,14 @@ export function AssignPanel({ ctx, drivers, vehicleLabel }: { ctx: AssignContext
     pickupName: ctx.pickupName,
     customerName: ctx.customerName,
     driver: chosen,
-    link: C.linkPlaceholder,
+    link: reissue || !ctx.assigned ? C.linkPlaceholder : null,
   });
   const channelLabel = C.channels[channel];
 
   async function submit() {
     if (!chosen || busy) return;
     setBusy(true);
-    const res = await postJson<Issued>('/api/admin/assign', { bookingId: ctx.bookingId, driverId: chosen.id, channel });
+    const res = await postJson<Issued>('/api/admin/assign', { bookingId: ctx.bookingId, driverId: chosen.id, channel, reissueCustomerLink: reissue });
     setBusy(false);
     if (!res.ok) {
       toast.error(res.message);
@@ -190,6 +191,10 @@ export function AssignPanel({ ctx, drivers, vehicleLabel }: { ctx: AssignContext
           </div>
         )}
         <div className="border-t border-line px-4 py-3">
+          <label className="mb-3 flex min-h-11 cursor-pointer items-start gap-2.5 text-sm">
+            <input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-[var(--brand)]" checked={reissue} onChange={(e) => setReissue(e.target.checked)} />
+            <span>{C.reissueCustomer}</span>
+          </label>
           <button type="button" className="btn-primary w-full min-h-11" disabled={!chosen || busy} onClick={submit}>
             {busy && <Loader2 className="size-4 animate-spin" />}
             {ctx.assigned ? C.reassign(channelLabel) : channel === 'copy' ? C.confirmCopy : C.confirm(channelLabel)}
@@ -201,7 +206,7 @@ export function AssignPanel({ ctx, drivers, vehicleLabel }: { ctx: AssignContext
         <section className="panel order-3 lg:col-span-2" data-testid="issued-links">
           <div className="panel-head">{C.linksHead}</div>
           <div className="grid gap-3 px-4 py-3 md:grid-cols-2">
-            <LinkField label={C.customerLink} path={issued.customerPath} />
+            {issued.customerPath ? <LinkField label={C.customerLink} path={issued.customerPath} /> : <p className="text-sm text-muted-token">{C.customerKeeps}</p>}
             <LinkField label={C.driverLink} path={issued.driverPath} />
             <p className="text-sm text-muted-token md:col-span-2">{C.linksNote}</p>
           </div>

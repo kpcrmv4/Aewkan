@@ -1,4 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
+import { BookingPayments } from '@/features/payments/booking-payments';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/shell/page-header';
@@ -37,13 +38,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!UUID_RE.test(id)) notFound();
 
   const sb = await getSupabaseServer();
-  const [b, stops, pays, events] = await Promise.all([
+  const [b, stops, events] = await Promise.all([
     sb.from('bookings').select('*').eq('id', id).maybeSingle(),
     sb.from('booking_stops').select('seq, place_id, dwell_min, planned_minutes, checked_in_at').eq('booking_id', id).order('seq').range(0, 99),
-    sb.from('payments').select('id, purpose, method, amount, status, created_at, paid_at').eq('booking_id', id).order('created_at', { ascending: false }).range(0, 49),
     sb.from('booking_events').select('id, kind, data, actor, at').eq('booking_id', id).order('at', { ascending: false }).order('id', { ascending: false }).range(0, 99),
   ]);
-  const failed = b.error ?? stops.error ?? pays.error ?? events.error;
+  const failed = b.error ?? stops.error ?? events.error;
   if (failed) {
     console.error('[job detail] load failed', failed.message);
     return (
@@ -145,26 +145,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           </div>
         </section>
 
-        <section className="panel">
-          <div className="panel-head">{DETAIL_COPY.payments}</div>
-          {(pays.data ?? []).length === 0 ? (
-            <p className="px-4 py-4 text-sm text-muted-token">{DETAIL_COPY.noPayments}</p>
-          ) : (
-            <ul>
-              {(pays.data ?? []).map((p) => (
-                <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft px-4 py-2.5 text-sm last:border-b-0">
-                  <span>
-                    {DETAIL_COPY.paymentPurpose[p.purpose] ?? p.purpose} · {DETAIL_COPY.paymentMethod[p.method] ?? p.method}
-                  </span>
-                  <span className="flex items-center gap-3">
-                    <span className="tnum">{baht(p.amount)}</span>
-                    <span className="chip text-status-pending bg-status-pending-bg ring-status-pending-ring">{DETAIL_COPY.paymentStatus[p.status] ?? p.status}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <BookingPayments bookingId={id} />
 
         <section className="panel lg:col-span-2">
           <div className="panel-head">{DETAIL_COPY.statusActions}</div>

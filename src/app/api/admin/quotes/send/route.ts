@@ -1,6 +1,8 @@
+import { after } from 'next/server';
 import { QUOTE_STATUSES } from '@/features/admin-ops/transitions';
 import { ApiError, staffRoute } from '@/lib/api/handler';
 import { SendQuoteRequest } from '@/lib/contracts/admin';
+import { notifyBooking } from '@/lib/notify';
 import { getSupabaseServer } from '@/lib/supabase/server';
 
 /**
@@ -38,5 +40,6 @@ export const POST = staffRoute('quotes.manage', SendQuoteRequest, async ({ body 
     .maybeSingle();
   if (error) throw new Error(`quote update: ${error.message}`);
   if (!row?.quote_sent_at || !row.quote_deadline) throw new ApiError(403, 'forbidden', 'ไม่มีสิทธิ์ทำรายการนี้หรือสถานะงานเปลี่ยนไปแล้ว');
+  after(() => notifyBooking(body.bookingId, 'quote_ready'));
   return { ok: true as const, sentAt: row.quote_sent_at, deadline: row.quote_deadline };
 });

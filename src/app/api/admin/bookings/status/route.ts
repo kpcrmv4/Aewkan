@@ -1,7 +1,9 @@
+import { after } from 'next/server';
 import { canTransition } from '@/features/admin-ops/transitions';
 import { ApiError, staffRoute } from '@/lib/api/handler';
 import { SetStatusRequest } from '@/lib/contracts/admin';
 import type { BookingStatus } from '@/lib/contracts/common';
+import { notifyBooking } from '@/lib/notify';
 import { getSupabaseServer } from '@/lib/supabase/server';
 
 /** manual status change; allowed moves live in features/admin-ops/transitions.ts */
@@ -31,5 +33,6 @@ export const POST = staffRoute('jobs.manage', SetStatusRequest, async ({ body })
     if (again && again.status !== from) throw new ApiError(409, 'status_changed', 'สถานะงานเปลี่ยนไปแล้ว รีเฟรชหน้าแล้วลองใหม่');
     throw new ApiError(403, 'forbidden', 'ไม่มีสิทธิ์ทำรายการนี้');
   }
+  if (body.status === 'confirmed') after(() => notifyBooking(body.bookingId, 'confirmed'));
   return { ok: true as const, status: body.status };
 });

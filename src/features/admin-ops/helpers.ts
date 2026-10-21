@@ -54,16 +54,17 @@ export function assignMessage(o: {
   pickupName: string;
   customerName: string;
   driver: { nickname: string; nameEn: string; carTh: string; carEn: string; plate: string } | null;
-  link: string;
+  /** null = the customer keeps the link they already have */
+  link: string | null;
 }): string {
   const date = formatTripDate(o.date, o.lang);
   const time = hhmm(o.time);
   if (o.lang === 'en') {
     const d = o.driver ? `${o.driver.nameEn || o.driver.nickname} · ${o.driver.carEn || o.driver.carTh} · ${o.driver.plate}` : '(select a driver)';
-    return `Aewkan: your booking ${o.bookingNo} is confirmed.\n${date} · pickup ${time} at ${o.pickupName}\nDriver: ${d}\nItinerary, price and driver contact: ${o.link}\nThank you, ${o.customerName}!`;
+    return `Aewkan: your booking ${o.bookingNo} is confirmed.\n${date} · pickup ${time} at ${o.pickupName}\nDriver: ${d}\nItinerary, price and driver contact: ${o.link ?? 'the link you received when booking'}\nThank you, ${o.customerName}!`;
   }
   const d = o.driver ? `${o.driver.nickname} · ${o.driver.carTh} · ${o.driver.plate}` : '(ยังไม่ได้เลือกคนขับ)';
-  return `แอ่วกัน ยืนยันการจอง ${o.bookingNo} แล้วค่ะ\n${date} · รับ ${time} ที่ ${o.pickupName}\nคนขับ: ${d}\nดูกำหนดการ ราคา และติดต่อคนขับได้ที่ ${o.link}\nขอบคุณคุณ${o.customerName} ค่ะ`;
+  return `แอ่วกัน ยืนยันการจอง ${o.bookingNo} แล้วค่ะ\n${date} · รับ ${time} ที่ ${o.pickupName}\nคนขับ: ${d}\nดูกำหนดการ ราคา และติดต่อคนขับได้ที่ ${o.link ?? 'ลิงก์เดิมที่ได้รับตอนจอง'}\nขอบคุณคุณ${o.customerName} ค่ะ`;
 }
 
 export interface DepositRule {

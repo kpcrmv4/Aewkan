@@ -37,6 +37,8 @@ export const AssignDriverRequest = z.object({
   bookingId: uuid,
   driverId: uuid,
   channel: z.enum(['line', 'whatsapp', 'email', 'copy']),
+  /** false (default): keep the customer's live link so saved links keep working */
+  reissueCustomerLink: z.boolean().default(false),
 });
 
 export const SetStatusRequest = z.object({

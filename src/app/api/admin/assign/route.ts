@@ -1,14 +1,17 @@
+import { after } from 'next/server';
 import { assignMessage } from '@/features/admin-ops/helpers';
 import { ASSIGN_STATUSES } from '@/features/admin-ops/transitions';
 import { ApiError, staffRoute } from '@/lib/api/handler';
 import { newToken } from '@/lib/auth/link-token';
 import { AssignDriverRequest } from '@/lib/contracts/admin';
+import { notifyBooking } from '@/lib/notify';
 import { getSupabaseServer } from '@/lib/supabase/server';
 
 /**
- * Assign (or reassign) a driver, then issue a NEW customer link and a NEW
- * driver link (the RPC revokes the older live ones). Sending the message over
- * LINE / WhatsApp / email is phase P4; the staff copies the links for now.
+ * Assign (or reassign) a driver and issue a NEW driver link (the RPC revokes
+ * the older one). The customer keeps their live link unless reissueCustomerLink;
+ * a booking without a live customer link gets one. The customer is notified
+ * over LINE OA / web push when configured (notifyBooking, after the response).
  */
 export const POST = staffRoute('jobs.manage', AssignDriverRequest, async ({ staff, body, req }) => {
   const sb = await getSupabaseServer();
@@ -45,15 +48,26 @@ export const POST = staffRoute('jobs.manage', AssignDriverRequest, async ({ staf
   if (uErr) throw new Error(`booking update: ${uErr.message}`);
   if (!row) throw new ApiError(403, 'forbidden', 'ไม่มีสิทธิ์ทำรายการนี้หรือสถานะงานเปลี่ยนไปแล้ว');
 
-  const customerToken = newToken();
+  // the customer keeps their live link (saved in "my trips", LINE, e-mail) unless
+  // staff asks for a new one; the driver link is always new (reassign revokes it)
+  const { data: live, error: liveErr } = await sb
+    .from('job_links')
+    .select('id')
+    .eq('booking_id', b.id)
+    .eq('audience', 'customer')
+    .is('revoked_at', null)
+    .limit(1)
+    .maybeSingle();
+  if (liveErr) throw new Error(`job_links read: ${liveErr.message}`);
+  const customerToken = !live || body.reissueCustomerLink ? newToken() : null;
   const driverToken = newToken();
   const [c, dr] = await Promise.all([
-    sb.rpc('issue_job_link', { p_booking: b.id, p_audience: 'customer', p_token: customerToken }),
+    customerToken ? sb.rpc('issue_job_link', { p_booking: b.id, p_audience: 'customer', p_token: customerToken }) : Promise.resolve({ error: null }),
     sb.rpc('issue_job_link', { p_booking: b.id, p_audience: 'driver', p_token: driverToken }),
   ]);
   if (c.error || dr.error) throw new Error(`issue_job_link: ${(c.error ?? dr.error)?.message}`);
 
-  const customerPath = `/j/${customerToken}`;
+  const customerPath = customerToken ? `/j/${customerToken}` : null;
   const driverPath = `/j/${driverToken}`;
   const lang = b.customer_lang === 'en' ? 'en' : 'th';
   const message = assignMessage({
@@ -64,7 +78,9 @@ export const POST = staffRoute('jobs.manage', AssignDriverRequest, async ({ staf
     pickupName: (lang === 'en' ? pickup?.name_en : pickup?.name_th) ?? '',
     customerName: b.customer_name,
     driver: { nickname: d.nickname, nameEn: d.name_en, carTh: d.car_th, carEn: d.car_en, plate: d.plate },
-    link: `${new URL(req.url).origin}${customerPath}`,
+    link: customerPath ? `${new URL(req.url).origin}${customerPath}` : null,
   });
+  const customerUrl = customerPath ? `${new URL(req.url).origin}${customerPath}` : undefined;
+  after(() => notifyBooking(b.id, 'driver_assigned', { customerUrl }));
   return { ok: true as const, channel: body.channel, customerPath, driverPath, message };
 });
