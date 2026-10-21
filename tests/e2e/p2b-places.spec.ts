@@ -43,10 +43,17 @@ test.describe('P2B-02 places', () => {
     await expect(nav.getByRole('link', { name: 'จุดหมาย' })).toBeVisible();
     await expect(nav.getByRole('link', { name: 'ระยะจริง' })).toBeVisible();
     await expect(addButton(page)).toBeVisible();
+    // earlier E2E runs leave hidden "E2E P2B" rows that sort first, so look the seed rows up by name
     const list = page.getByTestId('places-list');
-    await expect(list).toContainText('ประตูท่าแพ');
-    await expect(list).toContainText('ดอย');
+    await expect(list.locator('> *').first()).toContainText('แก้ไข');
+    await page.goto(`/admin/places?q=${encodeURIComponent('ประตูท่าแพ')}`);
     await expect(list).toContainText('จุดรับ');
+    await expect(list).toContainText('ในเมือง');
+    await expect(list).not.toContainText('ซ่อน');
+    await page.goto(`/admin/places?q=${encodeURIComponent('Doi Inthanon')}`);
+    await expect(list).toContainText('ดอยอินทนนท์');
+    await expect(list).toContainText('ธรรมชาติ');
+    await page.goto('/admin/places');
     const { count } = await sb.from('places').select('id', { count: 'exact', head: true });
     await expect(page.getByTestId('places-count')).toHaveText(`${count} จุด`);
   });
@@ -215,8 +222,8 @@ test.describe('P2B-03 measured segments', () => {
 
   let sb: Sb;
   const run = newRunId();
-  const nameX = `E2E P2B ${run} ต้นทาง`;
-  const nameY = `E2E P2B ${run} ปลายทาง`;
+  const nameX = 'E2E P2B fixture ต้นทาง';
+  const nameY = 'E2E P2B fixture ปลายทาง';
   let x = '';
   let y = '';
   let a = '';
@@ -224,17 +231,24 @@ test.describe('P2B-03 measured segments', () => {
 
   test.beforeAll(async () => {
     sb = await staffClient();
-    // the pair is made of two fresh places, so no real measured segment can be touched
-    const rows = [nameX, nameY].map((n, i) => ({ slug: `e2e-p2b-${run}-${i}`, name_th: n, name_en: `${n} en`, lat: 18.8 + i / 100, lng: 98.95, category: 'city', is_hidden: true }));
-    const { data, error } = await sb.from('places').insert(rows).select('id, name_th');
-    if (error || !data) throw new Error(`fixture places failed: ${error?.message}`);
-    x = data.find((p) => p.name_th === nameX)!.id;
-    y = data.find((p) => p.name_th === nameY)!.id;
+    // the pair is two dedicated hidden places (created once, reused by every run: staff cannot
+    // delete places), so no real measured segment can be touched
+    const slugs = ['e2e-p2b-fixture-a', 'e2e-p2b-fixture-b'];
+    const found = await sb.from('places').select('id, slug').in('slug', slugs).range(0, 9);
+    if (found.error) throw new Error(`fixture places read failed: ${found.error.message}`);
+    const missing = slugs.filter((s) => !found.data!.some((p) => p.slug === s));
+    if (missing.length) {
+      const rows = missing.map((slug, i) => ({ slug, name_th: slug.endsWith('-a') ? nameX : nameY, name_en: `E2E P2B fixture ${i}`, lat: 18.8 + i / 100, lng: 98.95, category: 'city', is_hidden: true }));
+      const ins = await sb.from('places').insert(rows).select('id, slug');
+      if (ins.error || !ins.data) throw new Error(`fixture places failed: ${ins.error?.message}`);
+      found.data!.push(...ins.data);
+    }
+    x = found.data!.find((p) => p.slug === slugs[0])!.id;
+    y = found.data!.find((p) => p.slug === slugs[1])!.id;
     [a, b] = orderPair(x, y);
   });
   test.afterAll(async () => {
     await sb.from('segments').delete().in('place_a', [x, y]);
-    await sb.from('places').update({ is_hidden: true }).in('id', [x, y]);
   });
 
   const rowOf = (page: Page) => page.getByTestId('segments-list').locator('> *').filter({ hasText: nameX });
