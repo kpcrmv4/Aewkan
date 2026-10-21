@@ -42,3 +42,10 @@
 - หลักฐาน: 6 failed · 4 passed (เฉพาะ spec ที่ใช้ request) → ตั้ง executablePath แล้ว 10 passed
 - กฎ: ใน cloud container ให้ playwright.config ชี้ executablePath ไป /opt/pw-browsers/chromium ถ้ามีอยู่ แทนการ playwright install
 - status: new
+
+## L-002 · 2026-10-21 · supabase-rls-schema · scaffold-tooling
+- อาการ: apply_migration ตอบ cancelled และ execute_sql ที่มี DELETE ค้างจน timeout 60 วิ ทั้งที่ DB ไม่มีอะไรล็อก
+- สาเหตุ: Supabase connector รอผู้ใช้ยืนยันคำสั่งที่ดูเป็น destructive (drop … if exists, delete) เมื่อไม่มีคนกดก็ยกเลิกเงียบ ๆ
+- หลักฐาน: timeout 60 s ×2 · pg_stat_activity 0 แถว · bookings ยังเป็น 1 แถว · migration เดียวกันที่ตัด drop 21 บรรทัดผ่านทันที
+- กฎ: migration ของ DB ใหม่ไม่ใส่ drop if exists และงาน cleanup ใน run ที่ไม่มีคนเฝ้าใช้ update สถานะแทน delete ผ่าน MCP
+- status: new

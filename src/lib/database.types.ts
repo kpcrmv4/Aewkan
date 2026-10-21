@@ -1151,10 +1151,73 @@ export type Database = {
       current_owner_id: { Args: never; Returns: string }
       expire_quotes: { Args: never; Returns: number }
       get_integration_secret: { Args: { p_key: string }; Returns: string }
+      get_job_view: { Args: { p_token: string }; Returns: Json }
       get_public_catalog: { Args: never; Returns: Json }
       has_perm: { Args: { p_key: string }; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      issue_job_link: {
+        Args: { p_audience: string; p_booking: string; p_token: string }
+        Returns: string
+      }
+      job_checkin: { Args: { p_seq: number; p_token: string }; Returns: number }
+      job_commission: {
+        Args: { p_sale: number; p_seq: number; p_token: string }
+        Returns: Json
+      }
+      job_driver_link: {
+        Args: { p_token: string }
+        Returns: {
+          audience: string
+          booking_id: string
+          created_at: string
+          id: string
+          last_seen_at: string | null
+          revoked_at: string | null
+          token_hash: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "job_links"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      job_finish: { Args: { p_cash: number; p_token: string }; Returns: Json }
+      job_link_for: {
+        Args: { p_token: string }
+        Returns: {
+          audience: string
+          booking_id: string
+          created_at: string
+          id: string
+          last_seen_at: string | null
+          revoked_at: string | null
+          token_hash: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "job_links"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      job_photo_path_ok: { Args: { p_name: string }; Returns: boolean }
+      job_push_subscribe: {
+        Args: {
+          p_auth: string
+          p_endpoint: string
+          p_p256dh: string
+          p_token: string
+        }
+        Returns: undefined
+      }
+      job_record_photo: {
+        Args: { p_kind: string; p_path: string; p_token: string }
+        Returns: undefined
+      }
+      job_return_dismiss: { Args: { p_token: string }; Returns: undefined }
+      job_start: { Args: { p_token: string }; Returns: undefined }
       my_permissions: { Args: never; Returns: string[] }
       next_booking_no: { Args: never; Returns: string }
       owner_exists: { Args: never; Returns: boolean }
@@ -1166,6 +1229,7 @@ export type Database = {
         Args: { p_key: string; p_secret: string }
         Returns: undefined
       }
+      token_hash: { Args: { p_token: string }; Returns: string }
       transfer_ownership: { Args: { p_new_owner: string }; Returns: undefined }
     }
     Enums: {
