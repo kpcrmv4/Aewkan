@@ -3,18 +3,19 @@
 import { AlertTriangle, ArrowDown, ArrowUp, Clock, Home, MapPin, X } from 'lucide-react';
 import { formatClock, whatIfRemove } from '@/lib/pricing';
 import { tripText, type TripKey } from '@/lib/copy/trip';
-import { bahtDelta, formatTripDate } from '@/lib/format';
+import { bahtDelta, formatTripDate, TZ_NOTE } from '@/lib/format';
 import { nameOf, type Model } from './model';
 import { maxSeats, pickupPlaces, type BuilderState } from './state';
 
 const DWELLS = [0, 30, 45, 60, 90, 120, 150, 180];
 const hours = (min: number) => (min / 60).toFixed(1).replace(/\.0$/, '');
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <label className="block">
       <span className="label-base">{label}</span>
       {children}
+      {hint ? <span className="mt-1 block text-xs text-muted-token">{hint}</span> : null}
     </label>
   );
 }
@@ -49,7 +50,7 @@ export function TripPanel({ m, today, onPatch, onPax, onMove, onDwell, onRemove 
           <Field label={t('fDate')}>
             <input className="input-base" aria-label={t('fDate')} type="date" min={today} value={state.date} onChange={(e) => e.target.value && onPatch({ date: e.target.value })} />
           </Field>
-          <Field label={t('fTime')}>
+          <Field label={t('fTime')} hint={TZ_NOTE[lang]}>
             <input className="input-base" aria-label={t('fTime')} type="time" step={900} value={state.time} onChange={(e) => e.target.value && onPatch({ time: e.target.value })} />
           </Field>
           <Field label={t('fPax')}>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock3, TimerOff } from 'lucide-react';
+import { useLang } from '@/components/public/lang';
 import { baht } from '@/lib/format';
 import { formatRemain, quoteState, remainingMs, type JobModel } from './model';
 import { deadlineClock, useJt } from './parts';
@@ -8,6 +9,7 @@ import { deadlineClock, useJt } from './parts';
 /** quote stage before the deposit: waiting / quoted with a live countdown / expired */
 export function QuoteBox({ job, now }: { job: JobModel; now: number }) {
   const t = useJt();
+  const { lang } = useLang();
   const state = quoteState(job, now);
   if (!state) return null;
 
@@ -55,7 +57,7 @@ export function QuoteBox({ job, now }: { job: JobModel; now: number }) {
           <div className="num-display text-3xl" data-testid="quote-countdown" role="timer" aria-live="off">
             {formatRemain(rem)}
           </div>
-          <div className="text-sm">{t('quoteDeadline', { t: q.deadline ? deadlineClock(q.deadline) : '—' })}</div>
+          <div className="text-sm">{t('quoteDeadline', { t: q.deadline ? deadlineClock(q.deadline, lang) : '—' })}</div>
         </div>
       </div>
       {q.message ? <p className="mt-3 text-sm">{q.message}</p> : null}

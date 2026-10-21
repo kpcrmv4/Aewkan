@@ -27,6 +27,17 @@ export function formatTime(ts: string | number | Date): string {
   return new Date(ts).toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+/** customers abroad read every clock as Thailand time — say so next to it */
+export const TZ_NOTE = { th: 'เวลาไทย', en: 'Thailand time, GMT+7' } as const;
+
+/** a timestamp → '24 ต.ค. 14:30 (เวลาไทย)' / '24 Oct 14:30 (Thailand time, GMT+7)' */
+export function formatDeadline(ts: string | number | Date, lang: 'th' | 'en' = 'th'): string {
+  const ymd = new Date(ts).toLocaleDateString('en-CA', { timeZone: TZ });
+  const [, m, d] = ymd.split('-').map(Number);
+  const day = lang === 'en' ? `${d} ${new Date(Date.UTC(2000, m - 1, 1)).toLocaleDateString('en-GB', { timeZone: 'UTC', month: 'short' })}` : `${d} ${TH_MONTHS[m - 1]}`;
+  return `${day} ${formatTime(ts)} (${TZ_NOTE[lang]})`;
+}
+
 /** today in Bangkok as 'YYYY-MM-DD' */
 export function todayInBangkok(now: Date = new Date()): string {
   return now.toLocaleDateString('en-CA', { timeZone: TZ });

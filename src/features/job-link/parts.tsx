@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useLang } from '@/components/public/lang';
 import { STATUS_LABEL, priceLineText } from '@/lib/copy/common';
 import { jt, type JobCopyKey } from '@/lib/copy/job';
-import { baht, formatDuration, formatTime, formatTripDate } from '@/lib/format';
+import { baht, formatDeadline, formatDuration, formatTime, formatTripDate, TZ_NOTE } from '@/lib/format';
 import type { BookingStatus } from '@/lib/contracts/common';
 import { isQuoteFlow, name, plannedArrivals, stepperFor, tripTotals, type JobModel, type Lang } from './model';
 
@@ -65,7 +65,7 @@ export function HeaderCard({ job, vehicle, showRule }: { job: JobModel; vehicle:
               {t('jlTitle')} · <span data-testid="booking-no">{job.bookingNo}</span>
             </h1>
             <p className="mt-1 text-sm text-muted-token">
-              {formatTripDate(job.travelDate, lang)} · {t('start')} {job.pickupTime} · {name(job.pickup, lang)} · {vehicle} · {t('pax', { n: job.pax })}
+              {formatTripDate(job.travelDate, lang)} · {t('start')} {job.pickupTime} ({TZ_NOTE[lang]}) · {name(job.pickup, lang)} · {vehicle} · {t('pax', { n: job.pax })}
             </p>
             {showRule ? <p className="mt-0.5 text-xs text-muted-token">{t('jlRule', { v: job.ruleVersion })}</p> : null}
           </div>
@@ -244,7 +244,7 @@ export function PricePanel({ job }: { job: JobModel }) {
             <Line label={t('jlRest')} amount={Math.max(0, job.total - job.paid)} strong />
           </>
         ) : job.status === 'quoted' && job.quote ? (
-          <Line label={t('jlDue', { t: job.quote.deadline ? deadlineClock(job.quote.deadline) : '—' })} amount={job.quote.deposit} strong />
+          <Line label={t('jlDue', { t: job.quote.deadline ? deadlineClock(job.quote.deadline, lang) : '—' })} amount={job.quote.deposit} strong />
         ) : (
           <p className="pt-1 text-muted-token">{t('refPrice')}</p>
         )}
@@ -253,7 +253,7 @@ export function PricePanel({ job }: { job: JobModel }) {
   );
 }
 
-export const deadlineClock = (iso: string) => formatTime(iso);
+export const deadlineClock = (iso: string, lang: 'th' | 'en') => formatDeadline(iso, lang);
 
 function Line({ label, amount, strong, tone }: { label: string; amount: number; strong?: boolean; tone?: 'done' }) {
   return (
