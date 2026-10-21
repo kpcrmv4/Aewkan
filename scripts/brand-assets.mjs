@@ -1,7 +1,8 @@
 // Brand assets from the owner's logo (transparent PNG). Re-run when the logo changes:
-//   node scripts/brand-assets.mjs <logo.png>
+//   node scripts/brand-assets.mjs <logo.png> [square.png]
 // Writes public/brand/*: web wordmarks (webp + png fallback), an e-mail/OG png,
-// and a square map-pin icon cropped from the wordmark (used for favicon / apple icon).
+// the square icon from public/brand/aewkan-mark.svg (favicon / apple / PWA), and — when the
+// owner's 1:1 file is given — square profile images for LINE / Facebook / Google Business.
 import { mkdirSync } from 'node:fs';
 import sharp from 'sharp';
 
@@ -37,3 +38,19 @@ for (const s of [32, 180, 192, 512]) {
     .toFile(`${out}/aewkan-icon-${s}.png`);
 }
 console.log(`logo ${W}×${H} → ${out}/ (wordmark 240/480/960 webp, 480/1200 png, icon 32/180/192/512)`);
+
+const square = process.argv[3];
+if (square) {
+  const t = await sharp(square).trim().png().toBuffer();
+  for (const s of [512, 1024]) {
+    const inner = Math.round(s * 0.86);
+    const off = Math.round((s - inner) / 2);
+    await sharp(t)
+      .resize({ width: inner, height: inner, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .extend({ top: off, bottom: s - inner - off, left: off, right: s - inner - off, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .flatten({ background: '#FFFFFF' })
+      .png({ compressionLevel: 9, palette: true })
+      .toFile(`${out}/aewkan-square-${s}.png`);
+  }
+  console.log(`square ${square} → ${out}/aewkan-square-512.png, -1024.png (profile pictures)`);
+}
