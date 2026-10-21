@@ -1,0 +1,15 @@
+# Commit LF, check out whatever the OS wants. Lives in the repo so it beats
+# each contributor's core.autocrlf — see skills/kp-cross-platform.
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.mjs  text eol=lf
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.pdf  binary
+*.ttf  binary
+*.woff2 binary

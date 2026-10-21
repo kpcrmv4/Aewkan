@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "kp-marketplace": {
+      "source": { "source": "github", "repo": "kpcrmv4/kp-supabase-nextjs" }
+    }
+  },
+  "enabledPlugins": {
+    "kp-supabase-nextjs@kp-marketplace": true
+  }
+}
