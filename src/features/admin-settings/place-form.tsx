@@ -73,7 +73,7 @@ function PlaceFormBody({ place, onClose }: { place: PlaceRow | null; onClose: ()
   const outside = point !== null && !inServiceArea(point);
   const setPoint = (c: Coords) => setForm((f) => ({ ...f, lat: String(c.lat), lng: String(c.lng) }));
 
-  async function usePaste() {
+  async function applyPaste() {
     const r = classifyPaste(paste);
     if (r.coords) {
       setPoint(r.coords);
@@ -130,6 +130,7 @@ function PlaceFormBody({ place, onClose }: { place: PlaceRow | null; onClose: ()
 
   return (
     <form
+      noValidate
       className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
@@ -149,7 +150,7 @@ function PlaceFormBody({ place, onClose }: { place: PlaceRow | null; onClose: ()
           </select>
         </Field>
         <Field label={C.f.dwell}>
-          <input className="input-base tnum min-h-11" type="number" inputMode="numeric" min={0} max={600} step={5} value={form.dwell} data-testid="place-dwell" onChange={(e) => set('dwell', e.target.value)} />
+          <input className="input-base tnum min-h-11" type="number" inputMode="numeric" min={0} max={600} step={1} value={form.dwell} data-testid="place-dwell" onChange={(e) => set('dwell', e.target.value)} />
         </Field>
       </div>
       <div className="grid gap-x-3 sm:grid-cols-2">
@@ -171,12 +172,12 @@ function PlaceFormBody({ place, onClose }: { place: PlaceRow | null; onClose: ()
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  void usePaste();
+                  void applyPaste();
                 }
               }}
             />
           </Field>
-          <button type="button" className="btn-secondary min-h-11 shrink-0" disabled={finding || !paste.trim()} onClick={() => void usePaste()} data-testid="place-use-paste">
+          <button type="button" className="btn-secondary min-h-11 shrink-0" disabled={finding || !paste.trim()} onClick={() => void applyPaste()} data-testid="place-use-paste">
             {finding ? <Loader2 className="size-4 animate-spin" /> : <Crosshair className="size-4" />}
             {finding ? C.loc.finding : C.loc.use}
           </button>

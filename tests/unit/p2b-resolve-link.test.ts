@@ -5,7 +5,8 @@ const redirect = (to: string, status = 302) => new Response(null, { status, head
 
 describe('P2B-02-06 short links', () => {
   it('follows redirects by hand and reads coordinates from the final Location', async () => {
-    const fetchMock = vi.fn(async (url: string, _init: RequestInit) => {
+    const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+      void init;
       if (url.startsWith('https://maps.app.goo.gl/')) return redirect('https://www.google.com/maps/place/Wat/@18.8048,98.9217,17z/data=!3d18.8048!4d98.9217');
       throw new Error(`unexpected fetch ${url}`);
     });

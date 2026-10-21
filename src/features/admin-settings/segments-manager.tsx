@@ -180,6 +180,7 @@ export function SegmentsManager({ rows, places, filtered, filters, total }: { ro
       <Sheet open={form !== null} onOpenChange={(o) => !o && !working && setForm(null)} title={form?.editing ? C.formEdit : C.formAdd} description={form && form.source !== 'driven' ? `${C.sources[form.source]} · ${C.routingNote}` : undefined}>
         {form && (
           <form
+            noValidate
             className="space-y-3"
             onSubmit={(e) => {
               e.preventDefault();
@@ -208,7 +209,7 @@ export function SegmentsManager({ rows, places, filtered, filters, total }: { ro
                 </select>
               </Field>
               <Field label={C.kmField}>
-                <input className="input-base tnum min-h-11" type="number" inputMode="decimal" min={0} step={0.1} value={form.km} data-testid="segment-km" onChange={(e) => set('km', e.target.value)} />
+                <input className="input-base tnum min-h-11" type="number" inputMode="decimal" min={0} step="any" value={form.km} data-testid="segment-km" onChange={(e) => set('km', e.target.value)} />
               </Field>
               <Field label={C.minField}>
                 <input className="input-base tnum min-h-11" type="number" inputMode="numeric" min={0} step={1} value={form.minutes} data-testid="segment-minutes" onChange={(e) => set('minutes', e.target.value)} />

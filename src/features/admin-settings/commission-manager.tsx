@@ -147,6 +147,7 @@ export function CommissionManager({ rows, places, splits, canManage }: { rows: C
       <Sheet open={form !== null} onOpenChange={(o) => !o && !busy && setForm(null)} title={form?.isNew ? C.formAdd : C.formEdit}>
         {form && (
           <form
+            noValidate
             className="space-y-3"
             onSubmit={(e) => {
               e.preventDefault();
@@ -154,7 +155,7 @@ export function CommissionManager({ rows, places, splits, canManage }: { rows: C
             }}
           >
             <Field label={C.place}>
-              <select className="input-base min-h-11" value={form.placeId} disabled={!form.isNew} onChange={(e) => set('placeId', e.target.value)}>
+              <select className="input-base min-h-11" value={form.placeId} disabled={!form.isNew} data-testid="comm-place" onChange={(e) => set('placeId', e.target.value)}>
                 {form.isNew && <option value="">{C.pickPlace}</option>}
                 {(form.isNew ? free : places.filter((p) => p.id === form.placeId)).map((p) => (
                   <option key={p.id} value={p.id}>
@@ -175,7 +176,7 @@ export function CommissionManager({ rows, places, splits, canManage }: { rows: C
                 </select>
               </Field>
               <Field label={form.type === 'sale' ? C.amountPct : C.amount}>
-                <input className="input-base tnum min-h-11" type="number" inputMode="numeric" min={0} max={form.type === 'sale' ? 100 : 100000} step={form.type === 'sale' ? 1 : 10} value={form.amount} onChange={(e) => set('amount', e.target.value)} />
+                <input className="input-base tnum min-h-11" type="number" inputMode="numeric" min={0} max={form.type === 'sale' ? 100 : 100000} step={1} value={form.amount} onChange={(e) => set('amount', e.target.value)} />
               </Field>
             </div>
             <Field label={C.split}>
