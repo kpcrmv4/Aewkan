@@ -444,6 +444,7 @@
   <button class="chip" data-view="quote" onclick="view('quote')">เสนอราคา</button>
   <button class="chip" data-view="assign" onclick="view('assign')">จัดคนขับ</button>
   <button class="chip" data-view="pricing" onclick="view('pricing')">ตั้งค่าราคา</button>
+  <button class="chip" data-view="places" onclick="view('places')">จุดหมาย</button>
   <span class="spacer"></span>
   <button class="chip on" data-var="a" onclick="setVariant('a')">แบบ A โครัล × เซจ</button>
   <button class="chip" data-var="b" onclick="setVariant('b')">แบบ B น้ำเงิน × เลมอน</button>
@@ -572,6 +573,7 @@
     <a href="#" onclick="toast('หน้าปฏิทินคนขับอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg><span class="txt">ปฏิทินคนขับ<span class="sub">ตารางงานและวันหยุด</span></span></a>
     <div class="cat">ตั้งค่า</div>
     <a href="#" data-nav="pricing" onclick="return nav('pricing',this)"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3.5-5-3.5S7 4.6 7 6.5 9.2 10 12 10s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5"/></svg><span class="txt">กฎราคา<span class="sub">โซน ประเภทรถ และค่าเพิ่ม</span></span></a>
+    <a href="#" data-nav="places" onclick="return nav('places',this)"><svg class="icon" viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span class="txt">จุดหมาย<span class="sub">เพิ่มและแก้สถานที่บนแผนที่</span></span></a>
     <a href="#" onclick="toast('หน้าคนขับและรถอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><path d="M5 17h14l1-6-2-5H6L4 11z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg><span class="txt">คนขับและรถ<span class="sub">ทะเบียน ภาษา ประเภทรถ</span></span></a>
     <div class="me"><span class="avatar">กร</span><span class="txt" style="min-width:0"><div style="font-weight:600">คุณกรกนก</div><div class="sub" style="font-size:11.5px">แอดมิน</div></span></div>
   </nav>
@@ -604,6 +606,14 @@
       <div class="two" id="quoteBody"></div>
     </section>
 
+    <!-- ── จุดหมาย ── -->
+    <section id="s-places" class="screen">
+      <div class="topbar">
+        <div><h1>จุดหมาย</h1><div class="sub">เพิ่มจุดใหม่ได้ 3 ทาง: วางลิงก์ Google Maps หรือพิกัด · จิ้มบนแผนที่ · พิมพ์ชื่อให้ระบบค้นหา (แอปจริง) โซนและระยะทางคำนวณให้เอง</div></div>
+      </div>
+      <div class="two" id="placesBody"></div>
+    </section>
+
     <!-- ── กฎราคา ── -->
     <section id="s-pricing" class="screen">
       <div class="topbar">
@@ -634,6 +644,7 @@
 <div class="sheet" role="dialog" aria-label="เพิ่มเติม">
   <div class="grab"></div>
   <div class="sec">เมนูอื่น</div>
+  <a href="#" onclick="sheet(false);nav('places');return false"><svg class="icon" viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>จุดหมาย</a>
   <a href="#" onclick="sheet(false);nav('pricing');return false"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3.5-5-3.5S7 4.6 7 6.5 9.2 10 12 10s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5"/></svg>กฎราคาและโหมดเสนอราคา</a>
   <a href="#" onclick="sheet(false);toast('หน้าปฏิทินคนขับอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>ปฏิทินคนขับ</a>
   <a href="#" onclick="sheet(false);toast('หน้าคนขับและรถอยู่ในเฟสถัดไป');return false"><svg class="icon" viewBox="0 0 24 24"><path d="M5 17h14l1-6-2-5H6L4 11z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>คนขับและรถ</a>
@@ -993,7 +1004,7 @@ const fmtDelta = d => d > 0 ? `+${baht(d)}` : d < 0 ? `−${baht(-d)}` : '±฿0
 const fmtMins = m => m >= 60 ? `${(m/60).toFixed(1).replace(/\.0$/, '')} ${t('hrShort')}` : `${Math.round(m)} ${t('min')}`;
 function addStopAt(id, idx) { S.stops.splice(idx, 0, {id, dwell: place(id).dwell ?? 60}); resetBooking(); renderAll(); }
 function renderSuggest() {
-  const cands = PLACES.filter(p => p.cat !== 'pickup' && p.id !== S.pickup && !S.stops.some(s => s.id === p.id)).map(p => ({p, ...whatIfAdd(p)})).sort((a, b) => a.detour - b.detour);
+  const cands = PLACES.filter(p => p.cat !== 'pickup' && !p.hidden && p.id !== S.pickup && !S.stops.some(s => s.id === p.id)).map(p => ({p, ...whatIfAdd(p)})).sort((a, b) => a.detour - b.detour);
   const near = cands.filter(c => c.detour <= 30).slice(0, 5);
   const rows = near.length ? near : cands.slice(0, 3);
   document.getElementById('suggest').innerHTML = `<h2 class="sec" style="margin:14px 0 2px;font-size:15px">${t('sugTitle')}<span class="count">${t('sugSub')}</span></h2>` + (rows.length ? rows.map(c => `
@@ -1036,6 +1047,7 @@ function renderMap() {
   if (S.ret && S.stops.length) pts.push(proj(pk));
   if (pts.length > 1) h += `<polyline class="route" points="${pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}"/>`;
   PLACES.forEach(p => {
+    if (p.hidden && !S.stops.some(s => s.id === p.id) && p.id !== S.pickup) return;
     if (S.cat !== 'all' && p.cat !== S.cat && !S.stops.some(s => s.id === p.id) && p.id !== S.pickup) return;
     const {x, y} = proj(p), idx = S.stops.findIndex(s => s.id === p.id), isStart = p.id === S.pickup;
     const off = {r:[9, 4, 'start'], l:[-9, 4, 'end'], t:[0, -10, 'middle'], b:[0, 15, 'middle']}[p.lp];
@@ -1047,7 +1059,7 @@ function renderMap() {
   svg.innerHTML = h;
   document.getElementById('legZones').textContent = RULES.zones.slice(0, 3).map(z => `${t('zone')} ${z.id} ≤ ${z.km} ${t('km')}`).join(' · ');
   document.getElementById('cats').innerHTML = CATS.map(c => `<button class="pill ${S.cat===c.id?'on':''}" onclick="S.cat='${c.id}';renderMap()">${esc(S.lang==='en'?c.en:c.th)}</button>`).join('');
-  document.getElementById('places').innerHTML = PLACES.filter(p => p.cat !== 'pickup' && (S.cat === 'all' || p.cat === S.cat)).map(p => {
+  document.getElementById('places').innerHTML = PLACES.filter(p => p.cat !== 'pickup' && !p.hidden && (S.cat === 'all' || p.cat === S.cat)).map(p => {
     const z = zoneOf(p), idx = S.stops.findIndex(s => s.id === p.id), sel = idx >= 0;
     const delta = sel ? whatIfRemove(idx) : whatIfAdd(p).delta;
     return `<button class="place ${sel?'sel':''}" onclick="toggleStop('${p.id}')" aria-pressed="${sel}">
@@ -1535,6 +1547,57 @@ function addMeas() {
   const a = document.getElementById('mFrom').value, b = document.getElementById('mTo').value; if (a === b) return toast('เลือกจุดต้นทางและปลายทางให้ต่างกัน');
   const A = place(a), B = place(b); MEAS[`${a}>${b}`] = {km: Math.round(roadKm(A, B)), min: Math.round(roadKm(A, B) / SPEED[zoneOf(B)] * 60), src:'ขับวัดจริง ' + fmtDateTh('2026-10-21').slice(3)}; renderAll(); toast('เพิ่มช่วงแล้ว แก้ตัวเลขกม.และนาทีตามที่วัดได้');
 }
+/* ═══════════════ places admin: add a place by pasted link/coords or by clicking the map ═══════════════ */
+let NEW = {th:'', en:'', cat:'nature', mtn:false, dwell:60, lat:null, lng:null, loc:''};
+function unproj(x, y) {
+  const dx = x - CX, dy = CY - y, r = Math.hypot(dx, dy); if (r < 1) return {lat:CM.lat, lng:CM.lng};
+  const d = (r / K) ** 2, dxKm = d * dx / r, dyKm = d * dy / r;
+  return {lat: CM.lat + dyKm / 110.57, lng: CM.lng + dxKm / (Math.cos(CM.lat*Math.PI/180) * 111.32)};
+}
+function parseLoc(text) {
+  const m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || text.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || text.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/) || text.match(/(-?\d{1,2}\.\d+)[,\s]+(-?\d{2,3}\.\d+)/);
+  return m ? {lat:+m[1], lng:+m[2]} : null;
+}
+function pickOnMap(ev) {
+  const svg = ev.currentTarget, r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * 680, y = (ev.clientY - r.top) / r.height * 620;
+  Object.assign(NEW, unproj(x, y), {loc:''}); renderPlaces();
+}
+function setLoc(text) { NEW.loc = text; const c = parseLoc(text); if (c) Object.assign(NEW, c); renderPlaces(); }
+function addPlace() {
+  if (!NEW.th.trim()) return toast('ใส่ชื่อจุดก่อน'); if (NEW.lat == null) return toast('ระบุตำแหน่ง: วางลิงก์/พิกัด หรือจิ้มบนแผนที่');
+  const p = {id:'p' + Date.now().toString(36), th:NEW.th.trim(), en:(NEW.en || NEW.th).trim(), lat:NEW.lat, lng:NEW.lng, cat:NEW.cat, lp:'r', mtn:NEW.mtn, dwell:NEW.dwell};
+  PLACES.push(p); const z = zoneOf(p); NEW = {th:'', en:'', cat:NEW.cat, mtn:false, dwell:60, lat:null, lng:null, loc:''}; renderAll();
+  toast(`เพิ่ม "${p.th}" แล้ว · โซน ${z} · ${straightKm(CM, p).toFixed(0)} กม.จากกลางเมือง · ลูกค้าเห็นบนแผนที่ทันที`, 5000);
+}
+function renderPlaces() {
+  const z = NEW.lat != null ? zoneOf(NEW) : null, pin = NEW.lat != null ? proj(NEW) : null;
+  const mini = `<svg class="map" viewBox="0 0 680 620" style="cursor:crosshair;border-radius:var(--r-md)" onclick="pickOnMap(event)" role="img" aria-label="จิ้มเพื่อกำหนดตำแหน่ง">
+    ${[2,1,0].map(i => { const zz = RULES.zones[i], r = K*Math.sqrt(zz.km); return `<circle class="z${zz.id}" cx="${CX}" cy="${CY}" r="${r.toFixed(1)}"/>`; }).join('')}
+    ${RULES.zones.slice(0,3).map(zz => { const r = K*Math.sqrt(zz.km); return `<text class="ringlbl" x="${CX + r*0.707 + 4}" y="${(CY - r*0.707 - 4).toFixed(1)}">โซน ${zz.id} · ${zz.km} กม.</text>`; }).join('')}
+    ${PLACES.map(p => { const q = proj(p); return `<g class="pin" style="pointer-events:none;opacity:${p.hidden?.35:1}"><circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="4"/><text x="${(q.x+7).toFixed(1)}" y="${(q.y+4).toFixed(1)}" style="font-size:9.5px">${esc(p.th)}</text></g>`; }).join('')}
+    ${pin ? `<g class="pin sel" style="pointer-events:none"><circle cx="${pin.x.toFixed(1)}" cy="${pin.y.toFixed(1)}" r="9"/><text x="${(pin.x+12).toFixed(1)}" y="${(pin.y+4).toFixed(1)}" style="font-weight:600">${esc(NEW.th || 'จุดใหม่')}</text></g>` : ''}</svg>`;
+  const left = `<div class="panel"><div class="panel-head">เพิ่มจุดใหม่</div><div class="panel-body">
+      <div class="frow">
+        <label class="f"><span>ชื่อ (ไทย)</span><input class="in" value="${esc(NEW.th)}" placeholder="เช่น สวนส้มธนาธร ฝาง" oninput="NEW.th=this.value" onchange="renderPlaces()"></label>
+        <label class="f"><span>ชื่อ (English)</span><input class="in" value="${esc(NEW.en)}" placeholder="Thanathorn Orange Farm" oninput="NEW.en=this.value"></label>
+        <label class="f"><span>หมวด</span><select class="in" onchange="NEW.cat=this.value">${CATS.filter(c => c.id !== 'all').map(c => `<option value="${c.id}" ${c.id===NEW.cat?'selected':''}>${c.th}</option>`).join('')}</select></label>
+        <label class="f"><span>เวลาแวะเริ่มต้น</span><select class="in" onchange="NEW.dwell=Number(this.value)">${[0,30,45,60,90,120,150].map(m => `<option value="${m}" ${m===NEW.dwell?'selected':''}>${m ? m + ' นาที' : 'ส่งอย่างเดียว'}</option>`).join('')}</select></label>
+        <label class="f" style="grid-column:1/-1"><span>ตำแหน่ง · วางลิงก์ Google Maps หรือพิกัด lat, lng</span><input class="in" value="${esc(NEW.loc)}" placeholder="https://maps.google.com/...@19.9127,99.2169... หรือ 19.9127, 99.2169" oninput="setLoc(this.value)"></label>
+      </div>
+      <div class="opts" style="margin-top:10px"><label><input type="checkbox" ${NEW.mtn?'checked':''} onchange="NEW.mtn=this.checked;renderPlaces()"> ทางภูเขา (คิดค่าทางดอย)</label></div>
+      <div class="sub" style="margin:12px 0 6px">${pin ? `ตำแหน่ง ${NEW.lat.toFixed(4)}, ${NEW.lng.toFixed(4)} · <b style="color:var(--ink)">โซน ${z}</b> · ${straightKm(CM, NEW).toFixed(0)} กม.จากกลางเมือง · ระยะทางและเวลาไปจุดนี้ใช้ค่าประมาณจนกว่าจะมีการวัดจริง` : 'ยังไม่มีตำแหน่ง · วางลิงก์ด้านบน หรือจิ้มบนแผนที่'}</div>
+      ${mini}
+      <button class="btn w" style="margin-top:14px" onclick="addPlace()">เพิ่มจุดนี้</button>
+      <p class="sub" style="margin-top:10px">แอปจริง: พิมพ์ชื่อแล้วระบบค้นหาพิกัดจาก OpenStreetMap / Google Places ให้เลือก ระยะทางถนนมาจาก routing engine ไม่ต้องวัดเอง และคนขับส่งพิกัดจากหน้างานผ่านปุ่ม "เสนอจุดใหม่" ได้</p></div></div>`;
+  const right = `<div class="panel"><div class="panel-head">จุดทั้งหมด<span class="right">${PLACES.length} จุด · ${PLACES.filter(p => p.hidden).length} ซ่อน</span></div><div class="tblwrap"><table class="tbl"><thead><tr><th>จุด</th><th>หมวด</th><th>โซน</th><th>ดอย</th><th>แวะ</th><th>ค่าน้ำ</th><th></th></tr></thead><tbody>
+    ${PLACES.filter(p => p.cat !== 'pickup').map(p => `<tr style="${p.hidden?'opacity:.5':''}"><td><div style="font-weight:500">${esc(p.th)}</div><div class="sub" style="font-size:12px">${esc(p.en)}</div></td><td style="white-space:nowrap">${CATS.find(c => c.id === p.cat)?.th ?? p.cat}</td><td class="tnum">${zoneOf(p)}</td>
+      <td><input type="checkbox" ${p.mtn?'checked':''} onchange="PLACES.find(x=>x.id==='${p.id}').mtn=this.checked;renderAll()" style="width:16px;height:16px;accent-color:var(--brand-solid)"></td>
+      <td><input type="number" step="15" value="${p.dwell ?? 60}" style="width:70px" onchange="PLACES.find(x=>x.id==='${p.id}').dwell=Number(this.value);renderAll()"></td>
+      <td class="sub" style="white-space:nowrap">${COMM[p.id] ? commLabel(COMM[p.id]) : '—'}</td>
+      <td style="white-space:nowrap"><button class="btn ghost sm" onclick="PLACES.find(x=>x.id==='${p.id}').hidden=!${!!p.hidden};renderAll()">${p.hidden ? 'แสดง' : 'ซ่อน'}</button>${p.id.startsWith('p') && p.id.length > 6 ? `<button class="ib" aria-label="ลบ" onclick="PLACES.splice(PLACES.findIndex(x=>x.id==='${p.id}'),1);S.stops=S.stops.filter(s=>s.id!=='${p.id}');renderAll()"><svg class="icon sm" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>` : ''}</td></tr>`).join('')}
+  </tbody></table></div></div>`;
+  document.getElementById('placesBody').innerHTML = left + right;
+}
 function setComm(id, k, v) { COMM[id][k] = v; renderAll(); }
 function setQuote(el) { const k = el.dataset.q; const q = RULES.quote; q[k] = el.type === 'checkbox' ? el.checked : k === 'useRange' ? el.value === '1' : (k === 'hours' || k === 'pct') ? Number(el.value) : el.value; renderAll(); }
 function setRule(el) { const v = Number(el.value); if (!Number.isFinite(v)) return; const path = el.dataset.rule.split('.'); let o = RULES; while (path.length > 1) o = o[path.shift()]; o[path[0]] = v; renderRulePreview(); renderMap(); }
@@ -1551,7 +1614,7 @@ function view(v) {
   document.querySelectorAll('.demobar [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === v));
   document.getElementById('v-cust').classList.toggle('on', v === 'cust');
   document.getElementById('v-job').classList.toggle('on', v === 'job');
-  const admin = ['admin','assign','quote','pricing'].includes(v);
+  const admin = ['admin','assign','quote','pricing','places'].includes(v);
   document.getElementById('v-admin').classList.toggle('on', admin);
   if (admin) nav(v);
   if (v === 'job') renderJob();
@@ -1562,7 +1625,7 @@ function nav(id, el) {
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 's-' + id));
   document.querySelectorAll('.sidebar a, .bottomnav a').forEach(a => a.classList.toggle('active', a.dataset.nav === id));
   document.querySelectorAll('.demobar [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === id));
-  if (id === 'admin') renderAdmin(); if (id === 'assign') renderAssign(); if (id === 'quote') renderQuote(); if (id === 'pricing') renderPricing();
+  if (id === 'admin') renderAdmin(); if (id === 'assign') renderAssign(); if (id === 'quote') renderQuote(); if (id === 'pricing') renderPricing(); if (id === 'places') renderPlaces();
   return false;
 }
 function sheet(open) { document.querySelectorAll('.sheet, .sheet-bg').forEach(e => e.classList.toggle('on', open)); }
@@ -1581,6 +1644,7 @@ function renderAll() {
   if (document.getElementById('s-assign').classList.contains('on')) renderAssign();
   if (document.getElementById('s-quote').classList.contains('on')) renderQuote();
   if (document.getElementById('s-pricing').classList.contains('on')) renderPricing();
+  if (document.getElementById('s-places').classList.contains('on')) renderPlaces();
   renderPush();
 }
 document.getElementById('fDate').addEventListener('change', e => { S.date = e.target.value || S.date; if (S.booking === 'none') S.step = 0; renderAll(); });
