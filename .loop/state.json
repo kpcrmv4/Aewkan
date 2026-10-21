@@ -43,9 +43,9 @@
       "id": "P3",
       "name": "Job link customer/driver (worker C)",
       "tasks": [
-        { "id": "P3-01", "name": "Job view API + customer page + quote countdown", "status": "doing" },
-        { "id": "P3-02", "name": "Driver view: photos, start, check-in, commission, finish", "status": "doing" },
-        { "id": "P3-03", "name": "Return-trip offer panel + booking", "status": "doing" }
+        { "id": "P3-01", "name": "Job view API + customer page + quote countdown", "status": "done" },
+        { "id": "P3-02", "name": "Driver view: photos, start, check-in, commission, finish", "status": "done" },
+        { "id": "P3-03", "name": "Return-trip offer panel + booking", "status": "done" }
       ]
     },
     {
